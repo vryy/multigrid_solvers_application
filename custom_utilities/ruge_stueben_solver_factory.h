@@ -1,0 +1,518 @@
+/*
+==============================================================================
+Kratos
+A General Purpose Software for Multi-Physics Finite Element Analysis
+Version 1.0 (Released on march 05, 2007).
+
+Copyright 2007
+Pooyan Dadvand, Riccardo Rossi
+pooyan@cimne.upc.edu
+rrossi@cimne.upc.edu
+CIMNE (International Center for Numerical Methods in Engineering),
+Gran Capita' s/n, 08034 Barcelona, Spain
+
+Permission is hereby granted, free  of charge, to any person obtaining
+a  copy  of this  software  and  associated  documentation files  (the
+"Software"), to  deal in  the Software without  restriction, including
+without limitation  the rights to  use, copy, modify,  merge, publish,
+distribute,  sublicense and/or  sell copies  of the  Software,  and to
+permit persons to whom the Software  is furnished to do so, subject to
+the following condition:
+
+Distribution of this code for  any  commercial purpose  is permissible
+ONLY BY DIRECT ARRANGEMENT WITH THE COPYRIGHT OWNER.
+
+The  above  copyright  notice  and  this permission  notice  shall  be
+included in all copies or substantial portions of the Software.
+
+THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
+EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT  SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY
+CLAIM, DAMAGES OR  OTHER LIABILITY, WHETHER IN AN  ACTION OF CONTRACT,
+TORT  OR OTHERWISE, ARISING  FROM, OUT  OF OR  IN CONNECTION  WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+==============================================================================
+*/
+
+//
+//   Project Name:        Kratos
+//   Last Modified by:    $Author: hbui $
+//   Date:                $Date: 2015 Mar 30 $
+//   Revision:            $Revision: 1.1 $
+//
+//
+
+
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_RUGE_STUEBEN_SOLVER_FACTORY_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_RUGE_STUEBEN_SOLVER_FACTORY_H_INCLUDED
+
+
+
+// System includes
+#include <string>
+#include <iostream>
+#include <sstream>
+#include <cstddef>
+
+
+// External includes
+//#include "external_includes/pyamg/relaxation.h"
+//#include "external_includes/pyamg/ruge_stuben.h"
+
+
+// Project includes
+#include "includes/define.h"
+#include "linear_solvers/linear_solver.h"
+#include "custom_utilities/amg_level.h"
+#include "custom_utilities/amg_utils.h"
+#include "custom_utilities/parameter_list.h"
+#include "custom_utilities/multilevel_solver_factory.h"
+#include "custom_linear_solvers/multilevel_solver.h"
+
+#define DEBUG_MULTILEVEL_SOLVER_FACTORY
+
+namespace Kratos
+{
+
+///@name Kratos Globals
+///@{
+
+///@}
+///@name Type Definitions
+///@{
+
+///@}
+///@name  Enum's
+///@{
+
+///@}
+///@name  Functions
+///@{
+
+///@}
+///@name Kratos Classes
+///@{
+
+template<class TSparseSpaceType, class TDenseSpaceType>
+class RugeStuebenSolverFactory : public MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>
+{
+public:
+    ///@name Type Definitions
+    ///@{
+
+    /// Pointer definition of RugeStuebenSolverFactory
+    KRATOS_CLASS_POINTER_DEFINITION(RugeStuebenSolverFactory);
+
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType> LinearSolverType;
+
+    typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> BaseType;
+    
+    typedef typename LinearSolverType::Pointer LinearSolverPointerType;
+
+    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
+
+    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+
+    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
+
+    typedef typename TSparseSpaceType::VectorType VectorType;
+
+    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+
+    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    
+    typedef AMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    
+    typedef typename boost::shared_ptr<LevelType> LevelPointerType;
+    
+    typedef std::vector<LevelPointerType> LevelContainerType;
+
+    typedef typename LevelContainerType::iterator LevelIteratorType;
+
+    typedef Kratos::ParameterList<std::string> ParameterListType;
+    
+    typedef AMGUtils<TSparseSpaceType> AMGUtilsType;
+    
+    typedef typename AMGUtilsType::IndexVectorType IndexVectorType;
+    
+    typedef typename AMGUtilsType::ValueContainerType ValueContainerType;
+    
+    typedef typename AMGUtilsType::IndexContainerType IndexContainerType;
+    
+    typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
+
+    typedef boost::numeric::ublas::unbounded_array<VectorType> VectorContainerType;
+    
+    typedef std::size_t  SizeType;
+    
+    typedef unsigned int  IndexType;
+    
+    typedef int  IntegerType;
+
+    ///@}
+    ///@name Life Cycle
+    ///@{
+
+    /// Default constructor.
+    RugeStuebenSolverFactory(ParameterListType& amg_parameter_list) : BaseType(amg_parameter_list)
+    {
+    }
+    
+    
+    /// Copy constructor.
+    RugeStuebenSolverFactory(const RugeStuebenSolverFactory& Other) : BaseType(Other)
+    {
+    }
+
+    /// Destructor.
+    virtual ~RugeStuebenSolverFactory() {}
+
+
+    ///@}
+    ///@name Operators
+    ///@{
+
+    /// Assignment operator.
+    RugeStuebenSolverFactory& operator=(const RugeStuebenSolverFactory& Other)
+    {
+        BaseType::operator=(Other);
+        return *this;
+    }
+
+
+    ///@}
+    ///@name Operations
+    ///@{
+    
+    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA)
+    {
+        #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+        std::cout << "#######################" << std::endl;
+        std::cout << "At generate_ruge_stuben" << std::endl;
+        #endif
+        
+        // general parameters
+        ParameterListType& amg_parameter_list = BaseType::mamg_parameter_list;
+        
+        IndexType max_levels = amg_parameter_list.get<int>("max_levels", 10);
+        IndexType max_coarse = amg_parameter_list.get<int>("max_coarse", 500);
+        
+        // strength
+        ParameterListType strength_param = amg_parameter_list.sublist("strength");
+        std::string strength_name = strength_param.get("name", "classical");
+        
+        // splitting method
+        std::string CF = amg_parameter_list.get("CF", "RS");
+
+        #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+        std::cout << "...ruge_stuben parameters:" << std::endl;
+        KRATOS_WATCH(max_levels)
+        KRATOS_WATCH(max_coarse)
+        KRATOS_WATCH(strength_name)
+        KRATOS_WATCH(CF)
+        #endif
+
+        SizeType last_size = TSparseSpaceType::Size1(rA);
+        
+        // set up level 0
+        solver.CreateLevel();
+        LevelType& first_level = solver.GetLastLevel();
+        SparseMatrixPointerType pA = first_level.GetCoarsenMatrix();
+        TSparseSpaceType::Resize(*pA, last_size, last_size);
+        TSparseSpaceType::Copy(rA, *pA);
+        
+        int cnt = 0;
+        while(solver.GetNumberOfLevels() < max_levels && last_size > max_coarse)
+        {
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "#######" << std::endl;
+            std::cout << "...generating level " << cnt << std::endl;
+            #endif
+
+            LevelType& current_level = solver.GetLastLevel();
+
+            SparseMatrixPointerType A = current_level.GetCoarsenMatrix();
+            
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "...retrieved initial matrix for level " << cnt << std::endl;
+            KRATOS_WATCH(A->size1())
+            KRATOS_WATCH(A->size2())
+            KRATOS_WATCH(last_size)
+            #endif
+
+            // compute strength of connection
+            SparseMatrixType C(last_size, last_size);
+            if(strength_name == std::string("classical"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...calculating classical strength of connection";
+                #endif
+
+                double theta = strength_param.get("theta", 0.25);
+                AMGUtilsType::ClassicalStrengthOfConnection(C, *A, theta);
+
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " completed" << std::endl;
+                #endif
+            }
+            else if(strength_name == std::string("symmetric"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...calculating symmetric strength of connection";
+                #endif
+
+                double theta = strength_param.get("theta", 1.0);
+                AMGUtilsType::SymmetricStrengthOfConnection(C, *A, theta);
+
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " completed" << std::endl;
+                #endif
+            }
+            else if(strength_name == std::string("None"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...use coarse matrix as strength of connection" << std::endl;
+                #endif
+                TSparseSpaceType::Copy(*A, C);
+            }
+            else
+                KRATOS_THROW_ERROR(std::logic_error, "strength_name is undefined or not supported:", strength_name)
+            
+            // compute splitting
+            IndexVectorType splitting(last_size, 0);
+            
+            if(CF == std::string("RS"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...calculating RS splitting";
+                #endif
+
+                AMGUtilsType::RS(splitting, C);
+                
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " completed" << std::endl;
+                #endif
+            }
+            else if(CF == std::string("PMIS"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...calculating PMIS splitting";
+                #endif
+
+                AMGUtilsType::PMIS(splitting, C);
+
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " completed" << std::endl;
+                #endif
+            }
+            else if(CF == std::string("PMISc"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...calculating PMISc splitting";
+                #endif
+
+                std::string& coloring_method = strength_param.get("coloring_method", "JP");
+                AMGUtilsType::PMISc(splitting, C, coloring_method);
+
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " completed" << std::endl;
+                #endif
+            }
+            else if(CF == std::string("CLJP"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...calculating CLJP splitting";
+                #endif
+                
+                AMGUtilsType::CLJP(splitting, C);
+
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " completed" << std::endl;
+                #endif
+            }
+            else if(CF == std::string("CLJPc"))
+            {
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << "...calculating CLJPc splitting" << std::endl;
+                #endif
+
+                AMGUtilsType::CLJPc(splitting, C);
+
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " completed" << std::endl;
+                #endif
+            }
+            
+            // generate prolongation operator
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "...compute prolongation operator";
+            #endif
+
+            SparseMatrixPointerType P = current_level.GetProlongationOperator();
+            AMGUtilsType::DirectInterpolation(*P, *A, C, splitting); // P will be resized here
+            
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << " completed" << std::endl;
+            #endif
+
+            // generate restriction operator
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "...compute restriction operator";
+            #endif
+
+            SizeType AfterCoarsenSize  = TSparseSpaceType::Size2(*P);
+            SizeType BeforeCoarsenSize = TSparseSpaceType::Size1(*P);
+            SparseMatrixPointerType R = current_level.GetRestrictionOperator();
+            TSparseSpaceType::Resize(*R, AfterCoarsenSize, BeforeCoarsenSize);
+
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "{ BeforeCoarsenSize: " << BeforeCoarsenSize;
+            std::cout << ", AfterCoarsenSize: " << AfterCoarsenSize << " }";
+            #endif
+
+            AMGUtilsType::Transpose(*P, *R);
+
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << " completed" << std::endl;
+            #endif
+
+//            current_level->PrintData(std::cout);
+            
+            // generate coarsen matrix for next level
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "...compute next level coarse matrix";
+            #endif
+
+            solver.CreateLevel();
+            LevelType& last_level = solver.GetLastLevel();
+            SparseMatrixType tmp(BeforeCoarsenSize, AfterCoarsenSize);
+            AMGUtilsType::Mult(*A, *P, tmp);
+            SparseMatrixPointerType Ac = last_level.GetCoarsenMatrix();
+            TSparseSpaceType::Resize(*Ac, AfterCoarsenSize, AfterCoarsenSize);
+            AMGUtilsType::Mult(*R, tmp, *Ac);
+            
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << " completed" << std::endl;
+            #endif
+            
+            last_size = AfterCoarsenSize;
+            
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "...generated level " << cnt << " completed" << std::endl;
+            #endif
+
+            ++cnt;
+        }
+        
+        #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+        std::cout << "generate_ruge_stuben completed" << std::endl;
+        std::cout << "#######################" << std::endl;
+//        KRATOS_WATCH(first_level);
+//        KRATOS_WATCH(solver);
+        #endif
+    }
+    
+    ///@}
+    ///@name Access
+    ///@{
+
+
+    ///@}
+    ///@name Inquiry
+    ///@{
+
+
+    ///@}
+    ///@name Input and output
+    ///@{
+
+
+    ///@}
+    ///@name Friends
+    ///@{
+
+
+    ///@}
+
+protected:
+    ///@name Protected static Member Variables
+    ///@{
+
+    ///@}
+    ///@name Protected member Variables
+    ///@{
+
+    ///@}
+    ///@name Protected Operators
+    ///@{
+
+    ///@}
+    ///@name Protected Operations
+    ///@{
+
+    ///@}
+    ///@name Protected  Access
+    ///@{
+
+    ///@}
+    ///@name Protected Inquiry
+    ///@{
+
+    ///@}
+    ///@name Protected LifeCycle
+    ///@{
+
+    ///@}
+
+private:
+    ///@name Static Member Variables
+    ///@{
+
+    ///@}
+    ///@name Member Variables
+    ///@{
+
+    ///@}
+    ///@name Private Operators
+    ///@{
+
+    ///@}
+    ///@name Private Operations
+    ///@{
+    
+    ///@}
+    ///@name Private  Access
+    ///@{
+
+    ///@}
+    ///@name Private Inquiry
+    ///@{
+
+    ///@}
+    ///@name Un accessible methods
+    ///@{
+
+    ///@}
+
+}; // Class RugeStuebenSolverFactory
+
+///@}
+
+///@name Type Definitions
+///@{
+
+
+///@}
+///@name Input and output
+///@{
+
+
+}  // namespace Kratos.
+
+#undef DEBUG_MULTILEVEL_SOLVER_FACTORY
+
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_SMOOTHED_AGGREGATION_SOLVER_FACTORY_H_INCLUDED  defined 
+
+
