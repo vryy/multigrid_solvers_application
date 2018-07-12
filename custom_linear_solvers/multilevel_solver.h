@@ -112,11 +112,11 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolver);
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
-    
+
     typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> FactoryType;
-    
+
     typedef typename FactoryType::Pointer FactoryPointerType;
-    
+
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
     typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
@@ -126,13 +126,13 @@ public:
     typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
-    
+
     typedef AMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
-    
+
     typedef typename BaseType::Pointer LinearSolverPointerType;
-    
+
     typedef std::size_t SizeType;
-    
+
     typedef unsigned int IndexType;
 
     ///@}
@@ -151,7 +151,7 @@ public:
         mMaxCoarseSize(500)
     {
     }
-    
+
     MultilevelSolver(LinearSolverPointerType pCoarseSolver) :
         mpCoarseSolver(pCoarseSolver),
         mCycle("V"),
@@ -164,7 +164,7 @@ public:
         mMaxCoarseSize(500)
     {
     }
-    
+
     MultilevelSolver(LinearSolverPointerType pCoarseSolver, const std::string Cycle) :
         mpCoarseSolver(pCoarseSolver),
         mCycle(Cycle),
@@ -177,8 +177,8 @@ public:
         mMaxCoarseSize(500)
     {
     }
-    
-    MultilevelSolver(double NewTolerance, IndexType NewMaxIterationsNumber, 
+
+    MultilevelSolver(double NewTolerance, IndexType NewMaxIterationsNumber,
             LinearSolverPointerType pCoarseSolver, const std::string Cycle) :
         mpCoarseSolver(pCoarseSolver),
         mCycle(Cycle),
@@ -191,7 +191,7 @@ public:
         mMaxCoarseSize(500)
     {
     }
-    
+
     /// Copy constructor.
     MultilevelSolver(const MultilevelSolver& Other) : BaseType(Other)
     {
@@ -275,35 +275,35 @@ public:
     {
         if(this->IsNotConsistent(rA, rX, rB))
             return false;
-        
+
         if(mpFactory != NULL)
         {
             mLevels.clear();
             mResidualNorm = 0.00;
             mIterationsNumber = 0;
             mBNorm = 0.00;
-            
+
 //            KRATOS_WATCH(GetNumberOfLevels());
-            
+
             mpFactory->GenerateMultilevelSolver(*this, rA);
-            
+
             this->SetUpSmoothers();
-            
+
             std::cout << Info();
         }
-        
+
         mBNorm = TSparseSpaceType::TwoNorm(rB);
         KRATOS_WATCH(mBNorm);
         KRATOS_WATCH(mTolerance);
 //        KRATOS_WATCH(&rA);
-        
+
 //        KRATOS_WATCH(*mpCoarseSolver);
 //        KRATOS_WATCH(GetNumberOfLevels());
-        
+
 //        KRATOS_WATCH(mLevels[0]);
-//        KRATOS_WATCH(mLevels[0].GetCoarsenMatrix());        
-//        KRATOS_WATCH(*(mLevels[0].GetCoarsenMatrix()));        
-        
+//        KRATOS_WATCH(mLevels[0].GetCoarsenMatrix());
+//        KRATOS_WATCH(*(mLevels[0].GetCoarsenMatrix()));
+
         const SizeType size = TSparseSpaceType::Size(rX);
         VectorType r(size, 0.00);
 
@@ -314,7 +314,7 @@ public:
 //                mpCoarseSolver->Solve(rA, rX, rB);
 
                 SparseMatrixPointerType A = GetLevel(0).GetCoarsenMatrix();
-                
+
                 mpCoarseSolver->Solve(*A, rX, rB);
 
                 return true; // the reason to return here is that if the coarse solver is direct solver, it may not solve accurately to the tolerance required (sounds strange but it happens with multiphase_cube example).
@@ -323,21 +323,21 @@ public:
             {
                 RecursiveSolve(0, rX, rB, mCycle);
             }
-            
+
             // compute the norm
-            
+
             TSparseSpaceType::Mult(rA, rX, r);
-            
+
             TSparseSpaceType::UnaliasedAdd(r, -1.00, rB);
 
             mResidualNorm = TSparseSpaceType::TwoNorm(r);
-            
+
             mIterationsNumber++;
-            
+
             std::cout << "iteration number = " << mIterationsNumber << ", residual = " << mResidualNorm/mBNorm << std::endl;
         }
         while(IterationNeeded());
-        
+
         return IsConverged();
     }
 
@@ -359,12 +359,12 @@ public:
     {
         mpFactory = Factory;
     }
-    
+
     void AddPreSmoother(LinearSolverPointerType pPreSmootherSolver)
     {
         mPreSmoothers.push_back(pPreSmootherSolver);
     }
-    
+
     void ChangePreSmoother(IndexType lvl, LinearSolverPointerType pPreSmootherSolver)
     {
         GetLevel(lvl).SetPreSmoother(pPreSmootherSolver);
@@ -374,22 +374,22 @@ public:
     {
         mPostSmoothers.push_back(pPostSmootherSolver);
     }
-    
+
     void ChangePostSmoother(IndexType lvl, LinearSolverPointerType pPostSmootherSolver)
     {
         GetLevel(lvl).SetPostSmoother(pPostSmootherSolver);
     }
-    
+
     void SetUpSmoothers()
     {
         if(mPreSmoothers.size() == 0 || mPostSmoothers.size() == 0)
         {
             KRATOS_THROW_ERROR(std::logic_error, "PreSmoother/PostSmoother must be assigned before solving", "");
         }
-        
+
         // set up presmoother
         SizeType num_pre_smoothers = mPreSmoothers.size();
-        
+
         for(IndexType i = 0; i < GetNumberOfLevels(); i++)
         {
             if(i < num_pre_smoothers)
@@ -397,10 +397,10 @@ public:
             else
                 GetLevel(i).SetPreSmoother(mPreSmoothers.back());
         }
-        
+
         // set up postsmoother
         SizeType num_post_smoothers = mPostSmoothers.size();
-        
+
         for(IndexType i = 0; i < GetNumberOfLevels(); i++)
         {
             if(i < num_post_smoothers)
@@ -409,7 +409,7 @@ public:
                 GetLevel(i).SetPostSmoother(mPostSmoothers.back());
         }
     }
-    
+
     ///@}
     ///@name Access
     ///@{
@@ -430,11 +430,11 @@ public:
             buffer << "The maximum number of levels is " << mMaxLevels << std::endl;
             KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
         }
-        
+
 //        KRATOS_WATCH(level);
 //        KRATOS_WATCH(level.GetCoarsenMatrix());
 //        KRATOS_WATCH(*(level.GetCoarsenMatrix()));
-//        
+//
 //        KRATOS_WATCH(mLevels[0]);
 //        KRATOS_WATCH(mLevels[0].GetCoarsenMatrix());
 //        KRATOS_WATCH(*(mLevels[0].GetCoarsenMatrix()));
@@ -455,7 +455,7 @@ public:
             KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
         }
     }
-    
+
     LevelType& GetLevel(IndexType idx)
     {
         return mLevels[idx];
@@ -465,17 +465,17 @@ public:
     {
         return mLevels.back();
     }
-    
+
     void SetCoarseSolver(LinearSolverPointerType pCoarseSolver)
     {
         mpCoarseSolver = pCoarseSolver;
     }
-    
+
     void SetCycle(const std::string Cycle)
     {
         mCycle = Cycle;
     }
-    
+
     void SetMaxIterationsNumber(IndexType NewMaxIterationsNumber)
     {
         mMaxIterationsNumber = NewMaxIterationsNumber;
@@ -500,12 +500,12 @@ public:
     {
         mMaxCoarseSize = MaxCoarseSize;
     }
-    
+
     IndexType GetMaxCoarseSize()
     {
         return mMaxCoarseSize;
     }
-    
+
     ///@}
     ///@name Inquiry
     ///@{
@@ -514,7 +514,7 @@ public:
     {
         return mLevels.size();
     }
-    
+
     ///@}
     ///@name Input and output
     ///@{
@@ -549,7 +549,7 @@ public:
 //            rOStream << (*level).Info();
 //            (*level).PrintData(rOStream);
 //        }
-        
+
         if (mBNorm == 0.00)
             if (mResidualNorm != 0.00)
                 rOStream << "    Residual ratio : infinite" << std::endl;
@@ -574,7 +574,7 @@ public:
     ///@name Friends
     ///@{
     friend class MultilevelPreconditioner<TSparseSpaceType, TDenseSpaceType>;
-    
+
 
     ///@}
 
@@ -618,7 +618,7 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
-    
+
 
     ///@}
     ///@name Member Variables
@@ -636,10 +636,10 @@ private:
     IndexType mMaxCoarseSize;
 
     FactoryPointerType mpFactory;
-    
+
     std::vector<LinearSolverPointerType> mPreSmoothers;
     std::vector<LinearSolverPointerType> mPostSmoothers;
-    
+
     ///@}
     ///@name Private Operators
     ///@{
@@ -652,28 +652,28 @@ private:
     void RecursiveSolve(const IndexType lvl, VectorType& rX, VectorType& rB, const std::string Cycle)
     {
         SparseMatrixPointerType rA = GetLevel(lvl).GetCoarsenMatrix();
-        
+
         // Pre smoothing
         GetLevel(lvl).ApplyPreSmoother(*rA, rX, rB);
-        
+
         // restriction
         const SizeType size = TSparseSpaceType::Size(rX);
         VectorType r(size, 0.00);
 
         TSparseSpaceType::Mult(*rA, rX, r); // r = A*x
-        
+
         TSparseSpaceType::UnaliasedAdd(r, -1.00, rB); // r = A*x - b
 
         TSparseSpaceType::InplaceMult(r, -1.00); // r = b - A*x
 
         const SizeType csize = GetLevel(lvl).GetCoarsenSize();
 //        KRATOS_WATCH(csize);
-        
+
         VectorType cB(csize, 0.00);
         VectorType cX(csize, 0.00);
-        
+
         GetLevel(lvl).ApplyRestriction(r, cB);
-        
+
         // solve
         if(lvl == GetNumberOfLevels() - 2)
         {
@@ -701,17 +701,17 @@ private:
                 KRATOS_THROW_ERROR (std::logic_error,"valid multilevel cycles are 'V', 'W' or 'F'","");
             }
         }
-        
+
         // prolongation
         VectorType Dx(size, 0.00);
         GetLevel(lvl).ApplyProlongation(cX, Dx);
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
-        
+
         // Post smoothing
         GetLevel(lvl).ApplyPostSmoother(*rA, rX, rB);
     }
-    
-    
+
+
     ///@}
     ///@name Private  Access
     ///@{
@@ -775,5 +775,5 @@ inline std::ostream& operator << (std::ostream& rOStream,
 
 }  // namespace Kratos.
 
-#endif // KRATOS_MULTILEVEL_SOLVER_H_INCLUDED  defined 
+#endif // KRATOS_MULTILEVEL_SOLVER_H_INCLUDED  defined
 

@@ -1,5 +1,5 @@
-//   
-//   Project Name:        Kratos       
+//
+//   Project Name:        Kratos
 //   Last modified by:    $Author: hbui $
 //   Date:                $Date: Apr 19, 2012 $
 //   Revision:            $Revision: 1.0 $
@@ -7,9 +7,9 @@
 //
 
 
-// System includes 
+// System includes
 
-// External includes 
+// External includes
 #include <boost/python.hpp>
 
 // Project includes
@@ -38,12 +38,12 @@ namespace Python
     {
         typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
         typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
-        
+
         typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
         typedef DirectSolver<SparseSpaceType, LocalSpaceType> DirectSolverType;
         typedef IterativeSolver<SparseSpaceType, LocalSpaceType> IterativeSolverType;
         typedef Preconditioner<SparseSpaceType, LocalSpaceType> PreconditionerType;
-	    
+
 	    // multilevel solvers & pyamg port
 	    typedef GaussSeidelIterativeSolver<SparseSpaceType, LocalSpaceType> GaussSeidelIterativeSolverType;
 	    typedef JacobiIterativeSolver<SparseSpaceType, LocalSpaceType> JacobiIterativeSolverType;
@@ -55,19 +55,19 @@ namespace Python
         //***************************************************************************
         //linear solvers
         //***************************************************************************
-        
+
         class_<GaussSeidelIterativeSolverType, GaussSeidelIterativeSolverType::Pointer, bases<LinearSolverType> >( "GaussSeidelIterativeSolver")
         .def(init< >())
         .def(init<unsigned int, std::string >())
         .def(self_ns::str(self))
         ;
-                
+
         class_<JacobiIterativeSolverType, JacobiIterativeSolverType::Pointer, bases<LinearSolverType> >( "JacobiIterativeSolver")
         .def(init< >())
         .def(init<unsigned int, double >())
         .def(self_ns::str(self))
         ;
-        
+
         /* multilevel solver */
         class_<MultilevelSolverType, MultilevelSolverType::Pointer, bases<LinearSolverType> >("MultilevelSolver", init<>())
         .def(init<LinearSolverType::Pointer >())
@@ -102,23 +102,23 @@ namespace Python
         class_<RugeStuebenSolverFactoryType, RugeStuebenSolverFactoryType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
         ( "RugeStuebenSolverFactory", init<MultilevelSolverFactoryType::ParameterListType& >())
         ;
-        
+
 //        typedef SmoothedAggregationSolverFactory<SparseSpaceType, LocalSpaceType> SmoothedAggregationSolverFactoryType;
 //        class_<SmoothedAggregationSolverFactoryType, SmoothedAggregationSolverFactoryType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
 //        ( "SmoothedAggregationSolverFactory", init<MultilevelSolverFactoryType::ParameterListType& >())
 //        ;
-    
+
         //****************************************************************************************************
         //preconditioners
         //****************************************************************************************************
-        
+
         class_<MultilevelPreconditionerType, MultilevelPreconditionerType::Pointer, bases<PreconditionerType> >("MultilevelPreconditioner", init<MultilevelSolverType::Pointer>())
         .def(self_ns::str(self))
         .def("SetMultilevelSolver",&MultilevelPreconditionerType::SetMultilevelSolver)
         ;
 
     }
-	
+
 }  // namespace Python.
 
 } // Namespace Kratos

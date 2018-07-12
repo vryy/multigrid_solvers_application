@@ -1,5 +1,5 @@
-//   
-//   Project Name:        Kratos       
+//
+//   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
 //   Date:                $Date: Apr 19, 2012 $
 //   Revision:            $Revision: 1.1 $
@@ -12,10 +12,10 @@
 
 
 
-// System includes 
+// System includes
 
 
-// External includes 
+// External includes
 
 
 // Project includes
@@ -31,7 +31,7 @@ namespace Python
     void MultigridSolversApp_AddLinearSolversToPython();
 
 }  // namespace Python.
-  
+
 }  // namespace Kratos.
 
-#endif // KRATOS_MULTIGRID_SOLVERS_APP_ADD_LINEAR_SOLVERS_TO_PYTHON_H_INCLUDED defined 
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_ADD_LINEAR_SOLVERS_TO_PYTHON_H_INCLUDED defined

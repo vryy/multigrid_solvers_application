@@ -114,7 +114,7 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(JacobiIterativeSolver);
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
-    
+
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
     typedef typename TSparseSpaceType::VectorType VectorType;
@@ -134,12 +134,12 @@ public:
     JacobiIterativeSolver() : mMaxIterationsNumber(1), mOmega(1.0)
     {
     }
-    
+
     JacobiIterativeSolver(const IndexType NewMaxIterationsNumber, const double Omega)
         : mMaxIterationsNumber(NewMaxIterationsNumber), mOmega(Omega)
     {
     }
-    
+
     /// Copy constructor.
     JacobiIterativeSolver(const JacobiIterativeSolver& Other) : BaseType(Other),
         mMaxIterationsNumber(Other.mMaxIterationsNumber),
@@ -194,10 +194,10 @@ public:
     {
         if(this->IsNotConsistent(rA, rX, rB))
             return false;
-        
+
         for(IndexType i = 0; i < mMaxIterationsNumber; i++)
             SolveOneStep(rA, rX, rB, mOmega);
-        
+
         return true;
     }
 
@@ -297,7 +297,7 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
-    
+
 
     ///@}
     ///@name Member Variables
@@ -317,17 +317,17 @@ private:
     void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const double Omega)
     {
         IndexType row_start, row_stop, row_step;
-    
+
         row_start = 0;
         row_stop = TSparseSpaceType::Size(rX);
         row_step = 1;
-        
+
         IndexType size = TSparseSpaceType::Size(rX);
         VectorType temp(size);
-        
+
         jacobi(rA.index1_data(), rA.index2_data(), rA.value_data(), rX, rB, temp, row_start, row_stop, row_step, &Omega);
     }
-    
+
 
     ///@}
     ///@name Private  Access
@@ -383,6 +383,6 @@ inline std::ostream& operator << (std::ostream& rOStream,
 
 }  // namespace Kratos.
 
-#endif // KRATOS_JACOBI_ITERATIVE_SOLVER_H_INCLUDED  defined 
+#endif // KRATOS_JACOBI_ITERATIVE_SOLVER_H_INCLUDED  defined
 
 

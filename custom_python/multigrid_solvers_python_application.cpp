@@ -36,7 +36,7 @@ namespace Python
                ("KratosMultigridSolversApplication");
 
         MultigridSolversApp_AddUtilitiesToPython();
-        
+
         MultigridSolversApp_AddLinearSolversToPython();
     }
 

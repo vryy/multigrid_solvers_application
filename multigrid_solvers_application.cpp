@@ -4,7 +4,7 @@
 //   Date:                $Date: Nov 2, 2014$
 //   Revision:            $Revision: 1.0 $
 //
-// 
+//
 //Change log:
 //  +   2/11/2014: create multigrid_solvers_application.cpp
 
@@ -21,7 +21,7 @@
 
 namespace Kratos
 {
-    
+
     void KratosMultigridSolversApplication::Register()
     {
         // calling base class register to register Kratos components

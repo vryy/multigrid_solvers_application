@@ -114,7 +114,7 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(GaussSeidelIterativeSolver);
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
-    
+
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
     typedef typename TSparseSpaceType::VectorType VectorType;
@@ -134,12 +134,12 @@ public:
     GaussSeidelIterativeSolver() : mMaxIterationsNumber(1), mSweepMode("symmetric")
     {
     }
-    
+
     GaussSeidelIterativeSolver(const IndexType NewMaxIterationsNumber, const std::string SweepMode)
         : mMaxIterationsNumber(NewMaxIterationsNumber), mSweepMode(SweepMode)
     {
     }
-    
+
     /// Copy constructor.
     GaussSeidelIterativeSolver(const GaussSeidelIterativeSolver& Other) : BaseType(Other),
         mMaxIterationsNumber(Other.mMaxIterationsNumber),
@@ -194,7 +194,7 @@ public:
     {
         if(this->IsNotConsistent(rA, rX, rB))
             return false;
-        
+
         if(mSweepMode.compare("forward") == 0 || mSweepMode.compare("backward") == 0)
         {
             for(IndexType i = 0; i < mMaxIterationsNumber; i++)
@@ -212,7 +212,7 @@ public:
         {
             KRATOS_THROW_ERROR(std::logic_error, "valid sweep directions are 'forward', 'backward', and 'symmetric'", "")
         }
-        
+
         return true;
     }
 
@@ -312,7 +312,7 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
-    
+
 
     ///@}
     ///@name Member Variables
@@ -332,7 +332,7 @@ private:
     void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const std::string Sweep)
     {
         IndexType row_start, row_stop, row_step;
-    
+
         if(Sweep.compare("forward") == 0)
         {
             row_start = 0;
@@ -347,9 +347,9 @@ private:
         }
 
         gauss_seidel(rA.index1_data(), rA.index2_data(), rA.value_data(), rX, rB, row_start, row_stop, row_step);
-        
+
     }
-    
+
 
     ///@}
     ///@name Private  Access
@@ -405,6 +405,6 @@ inline std::ostream& operator << (std::ostream& rOStream,
 
 }  // namespace Kratos.
 
-#endif // KRATOS_GAUSS_SEIDEL_ITERATIVE_SOLVER_H_INCLUDED  defined 
+#endif // KRATOS_GAUSS_SEIDEL_ITERATIVE_SOLVER_H_INCLUDED  defined
 
 

@@ -106,7 +106,7 @@ public:
     typedef Preconditioner<TSparseSpaceType, TDenseSpaceType> BaseType;
 
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
-    
+
     typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
 
     typedef typename TSparseSpaceType::VectorType VectorType;
@@ -114,7 +114,7 @@ public:
     typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
 
     typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
-    
+
     typedef typename MultilevelSolverType::Pointer MultilevelSolverPointerType;
 
     typedef std::size_t  SizeType;
@@ -156,12 +156,12 @@ public:
         return *this;
     }
 
-    
+
     void SetMultilevelSolver(MultilevelSolverPointerType ml_solver)
     {
         mml_solver = ml_solver;
     }
-    
+
 
     ///@}
     ///@name Operations
@@ -169,7 +169,7 @@ public:
 
     virtual void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
     {
-        
+
         mml_solver->Initialize(rA, rX, rB);
 
         mml_solver->SetMaxIterationsNumber(1);
@@ -183,15 +183,15 @@ public:
             mml_solver->mBNorm = 0.00;
 
             mml_solver->mpFactory->GenerateMultilevelSolver(*mml_solver, rA);
-            
+
             mml_solver->SetUpSmoothers();
-            
+
             std::cout << "multilevel structure is generated" << std::endl;
 
         }
     }
-    
-    
+
+
     virtual bool AdditionalPhysicalDataIsNeeded()
     {
         return false;
@@ -212,15 +212,15 @@ public:
     virtual VectorType& ApplyLeft(VectorType& rX)
     {
         SizeType size = TSparseSpaceType::Size(rX);
-        
+
         VectorType pX(size, 0.00);
-        
+
         SolveOneStep(pX, rX);
-        
+
 //        KRATOS_WATCH(pX);
-        
+
         TSparseSpaceType::Copy(pX, rX);
-        
+
         return rX;
     }
 
@@ -266,7 +266,7 @@ public:
     ///@}
     ///@name Friends
     ///@{
-    
+
 
     ///@}
 
@@ -278,7 +278,7 @@ protected:
     ///@}
     ///@name Protected member Variables
     ///@{
-    
+
 
     ///@}
     ///@name Protected Operators
@@ -289,7 +289,7 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    
+
     ///@}
     ///@name Protected  Access
     ///@{
@@ -329,24 +329,24 @@ private:
 
     void SolveOneStep(VectorType &rX, VectorType& rB)
     {
-    
+
         if(mml_solver->GetNumberOfLevels() == 1)
         {
 
             SparseMatrixPointerType A = mml_solver->GetLevel(0).GetCoarsenMatrix();
-                
+
             mml_solver->mpCoarseSolver->Solve(*A, rX, rB);
 
         }
         else
         {
-            
+
             mml_solver->RecursiveSolve(0, rX, rB, mml_solver->mCycle);
-            
+
         }
-    
+
     }
-    
+
     ///@}
     ///@name Private  Access
     ///@{
@@ -403,5 +403,5 @@ inline std::ostream& operator << (std::ostream& OStream, const MultilevelPrecond
 }  // namespace Kratos.
 
 
-#endif // KRATOS_BUI_MULTILEVEL_PRECONDITIONER_H_INCLUDED  defined 
+#endif // KRATOS_BUI_MULTILEVEL_PRECONDITIONER_H_INCLUDED  defined
 

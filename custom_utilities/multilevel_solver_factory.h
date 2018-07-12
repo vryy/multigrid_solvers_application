@@ -103,7 +103,7 @@ public:
     KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolverFactory);
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType> LinearSolverType;
-    
+
     typedef typename LinearSolverType::Pointer LinearSolverPointerType;
 
     typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
@@ -117,33 +117,33 @@ public:
     typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
-    
+
     typedef AMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
-    
+
     typedef typename boost::shared_ptr<LevelType> LevelPointerType;
-    
+
     typedef std::vector<LevelPointerType> LevelContainerType;
 
     typedef typename LevelContainerType::iterator LevelIteratorType;
 
     typedef Kratos::ParameterList<std::string> ParameterListType;
-    
+
     typedef AMGUtils<TSparseSpaceType> AMGUtilsType;
-    
+
     typedef typename AMGUtilsType::IndexVectorType IndexVectorType;
-    
+
     typedef typename AMGUtilsType::ValueContainerType ValueContainerType;
-    
+
     typedef typename AMGUtilsType::IndexContainerType IndexContainerType;
-    
+
     typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
 
     typedef boost::numeric::ublas::unbounded_array<VectorType> VectorContainerType;
-    
+
     typedef std::size_t  SizeType;
-    
+
     typedef unsigned int  IndexType;
-    
+
     typedef int  IntegerType;
 
     ///@}
@@ -154,8 +154,8 @@ public:
     MultilevelSolverFactory(ParameterListType& amg_parameter_list) : mamg_parameter_list(amg_parameter_list)
     {
     }
-    
-    
+
+
     /// Copy constructor.
     MultilevelSolverFactory(const MultilevelSolverFactory& Other)
     {
@@ -181,12 +181,12 @@ public:
     ///@}
     ///@name Operations
     ///@{
-    
+
     virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA)
     {
         KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
     }
-    
+
     ///@}
     ///@name Access
     ///@{
@@ -198,7 +198,7 @@ public:
     ///@{
 
 
-    
+
     ///@}
     ///@name Input and output
     ///@{
@@ -272,7 +272,7 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
-    
+
     ///@}
     ///@name Member Variables
     ///@{
@@ -284,7 +284,7 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-    
+
     ///@}
     ///@name Private  Access
     ///@{
@@ -334,6 +334,6 @@ inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolver
 
 }  // namespace Kratos.
 
-#endif // KRATOS_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED  defined 
+#endif // KRATOS_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED  defined
 
 

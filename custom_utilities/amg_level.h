@@ -113,7 +113,7 @@ public:
     typedef typename LinearSolver<TSparseSpaceType, TDenseSpaceType, ReordererType>::Pointer LinearSolverPointerType;
 
     typedef std::size_t  SizeType;
-    
+
     typedef unsigned int  IndexType;
 
     ///@}
@@ -125,14 +125,14 @@ public:
     {
         Initialize();
     }
-    
+
     AMGLevel(LinearSolverPointerType pPreSmootherSolver, LinearSolverPointerType pPostSmootherSolver) : mLevelDepth(0)
     {
         mpPreSmootherSolver = pPreSmootherSolver;
         mpPostSmootherSolver = pPostSmootherSolver;
         Initialize();
     }
-    
+
     /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
     AMGLevel(const AMGLevel& Other) : mpPreSmootherSolver(Other.mpPreSmootherSolver),
                                       mpPostSmootherSolver(Other.mpPostSmootherSolver),
@@ -142,11 +142,11 @@ public:
                                       mpP(Other.mpP)
     {
     }
-    
+
     /// Destructor.
     virtual ~AMGLevel() {}
-    
-    
+
+
     ///@}
     ///@name Operators
     ///@{
@@ -176,7 +176,7 @@ public:
     {
         mpPostSmootherSolver->Solve(rA, rX, rB);
     }
-    
+
     void ApplyRestriction(VectorType& rX, VectorType& rY)
     {
         if(mpR == NULL)
@@ -187,7 +187,7 @@ public:
         }
         TSparseSpaceType::Mult(*mpR, rX, rY);
     }
-    
+
     void ApplyProlongation(VectorType& rX, VectorType& rY)
     {
         if(mpP == NULL)
@@ -198,7 +198,7 @@ public:
         }
         TSparseSpaceType::Mult(*mpP, rX, rY);
     }
-    
+
     ///@}
     ///@name Access
     ///@{
@@ -212,17 +212,17 @@ public:
     {
         mpPostSmootherSolver = pPostSmootherSolver;
     }
-    
+
 //    void SetRestrictionOperator(SparseMatrixType& R)
 //    {
 //        mpR = boost::make_shared<SparseMatrixType>(R);
 //    }
-//    
+//
 //    void SetProlongationOperator(SparseMatrixType& P)
 //    {
 //        mpP = boost::make_shared<SparseMatrixType>(P);
 //    }
-//    
+//
 //    void SetCoarsenMatrix(SparseMatrixType& A)
 //    {
 //        KRATOS_WATCH("at amg_level");
@@ -230,7 +230,7 @@ public:
 //        mpA = boost::make_shared<SparseMatrixType>(A);
 //        KRATOS_WATCH(&(*mpA));
 //    }
-    
+
 //    void ComputeCoarsenMatrix(SparseMatrixPointerType& R, SparseMatrixPointerType& A, SparseMatrixPointerType& P)
 //    {
 ////        KRATOS_WATCH("ComputeCoarsenMatrix");
@@ -248,12 +248,12 @@ public:
 ////        mpA.swap(pC);
 //        mpA = boost::make_shared<SparseMatrixType>(C);
 //    }
-    
+
     void SetLevelDepth(IndexType lvl)
     {
         mLevelDepth = lvl;
     }
-    
+
     ///@}
     ///@name Inquiry
     ///@{
@@ -263,19 +263,19 @@ public:
     {
         mpR = boost::make_shared<SparseMatrixType>(R);
     }
-    
+
     // this is kept to make compatible with python; should not use it to avoid copying memory
     void SetProlongationOperator(SparseMatrixType& P)
     {
         mpP = boost::make_shared<SparseMatrixType>(P);
     }
-    
+
     // this is kept to make compatible with python; should not use it to avoid copying memory
     void SetCoarsenMatrix(SparseMatrixType& A)
     {
         mpA = boost::make_shared<SparseMatrixType>(A);
     }
-    
+
     SparseMatrixPointerType GetRestrictionOperator()
     {
         return mpR;
@@ -339,8 +339,8 @@ public:
 
 
     ///@}
-    
-    
+
+
 protected:
     ///@name Protected static Member Variables
     ///@{
@@ -382,7 +382,7 @@ protected:
 private:
     ///@name Static Member Variables
     ///@{
-    
+
 
     ///@}
     ///@name Member Variables
@@ -393,9 +393,9 @@ private:
     SparseMatrixPointerType mpA;
     SparseMatrixPointerType mpP;
     SparseMatrixPointerType mpR;
-    
+
     IndexType mLevelDepth;
-    
+
     ///@}
     ///@name Private Operators
     ///@{
@@ -404,8 +404,8 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-    
-    
+
+
     void Initialize()
     {
         if(mpR == NULL)
@@ -413,20 +413,20 @@ private:
             SparseMatrixPointerType pNewR = SparseMatrixPointerType(new SparseMatrixType(0, 0));
             mpR.swap(pNewR);
         }
-        
+
         if(mpP == NULL)
         {
             SparseMatrixPointerType pNewP = SparseMatrixPointerType(new SparseMatrixType(0, 0));
             mpP.swap(pNewP);
         }
-        
+
         if(mpA == NULL)
         {
             SparseMatrixPointerType pNewA = SparseMatrixPointerType(new SparseMatrixType(0, 0));
             mpA.swap(pNewA);
         }
     }
-    
+
 
     ///@}
     ///@name Private  Access
@@ -477,7 +477,7 @@ inline std::ostream& operator << (std::ostream& rOStream, const AMGLevel<TSparse
 }
 ///@}
 
-    
+
 } // namespace Kratos.
 
 #endif // KRATOS_AMG_LEVEL_H_INCLUDED  defined

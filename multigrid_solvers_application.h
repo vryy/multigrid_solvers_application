@@ -1,4 +1,4 @@
-//   
+//
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
 //   Date:                $Date: Nov 2, 2014 $
@@ -58,13 +58,13 @@ namespace Kratos
     public:
         ///@name Type Definitions
         ///@{
-        
+
         /// Pointer definition of KratosMultiphaseApplication
         KRATOS_CLASS_POINTER_DEFINITION(KratosMultigridSolversApplication);
 
         ///@}
         ///@name Life Cycle
-        ///@{ 
+        ///@{
 
         /// Default constructor.
         KratosMultigridSolversApplication(){}
@@ -160,7 +160,7 @@ namespace Kratos
 
         ///@}
         ///@name Protected Inquiry
-        ///@{ 
+        ///@{
 
 
         ///@}

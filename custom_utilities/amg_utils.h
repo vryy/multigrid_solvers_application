@@ -109,8 +109,8 @@ class AMGUtils
 public:
 
     KRATOS_CLASS_POINTER_DEFINITION(AMGUtils);
-    
-    
+
+
     /**@name constant Definitions */
     /*@{ */
 
@@ -169,8 +169,8 @@ public:
     //      MATRIX GALLERY
     //////////////////////////////////////////////////////////////////
     // helper function to generate the matrix from Poisson problem
-    // The matrix represents a finite Difference approximation to the 
-    // Poisson problem on a regular n-dimensional grid with unit grid 
+    // The matrix represents a finite Difference approximation to the
+    // Poisson problem on a regular n-dimensional grid with unit grid
     // spacing and Dirichlet boundary conditions.
     // reference: pyamg/laplacian.py/poisson
     //this matrix is m x m matrix of n x n blocks
@@ -234,23 +234,23 @@ public:
         IndexContainerType Ci(nnz, 0);
         ValueContainerType Cv(nnz, 0.00);
 
-        classical_strength_of_connection(static_cast<IndexType>(m), theta, 
+        classical_strength_of_connection(static_cast<IndexType>(m), theta,
                 A.index1_data(), A. index2_data(), A.value_data(), Cp, Ci, Cv);
-        
+
 //        boost::timer::cpu_timer filling_time;
 
 //        Timer::Start("Fill");
-        
+
         //SparseMatrixType C(CreateCoordinateMatrixFromTriplet(Cp, Ci, Cv));
-        
+
         FillCompressedMatrixFromTriplet(C, Cp, Ci, Cv); // this was faster than filling from coordinate matrix
-        
+
 //        Timer::Stop("Fill");
-        
+
 //        boost::timer::cpu_times elapsed_times(filling_time.elapsed());
 //        boost::timer::nanosecond_type elapsed(elapsed_times.system + elapsed_times.user);
 //        std::cout << "Filling Time : " << elapsed << std::endl;
-        
+
     }
 
     static void SymmetricStrengthOfConnection(SparseMatrixType& C, const SparseMatrixType& A, const double theta)
@@ -264,36 +264,36 @@ public:
         IndexContainerType Ci(nnz, 0);
         ValueContainerType Cv(nnz, 0.00);
 
-        symmetric_strength_of_connection(static_cast<IndexType>(m), theta, 
+        symmetric_strength_of_connection(static_cast<IndexType>(m), theta,
                 A.index1_data(), A. index2_data(), A.value_data(), Cp, Ci, Cv);
-        
+
 //        boost::timer::cpu_timer filling_time;
 
 //        Timer::Start("Fill");
-        
+
         //SparseMatrixType C(CreateCoordinateMatrixFromTriplet(Cp, Ci, Cv));
-        
+
         FillCompressedMatrixFromTriplet(C, Cp, Ci, Cv); // this was faster than filling from coordinate matrix
-        
+
 //        Timer::Stop("Fill");
-        
+
 //        boost::timer::cpu_times elapsed_times(filling_time.elapsed());
 //        boost::timer::nanosecond_type elapsed(elapsed_times.system + elapsed_times.user);
 //        std::cout << "Filling Time : " << elapsed << std::endl;
-        
+
     }
 
 
     //////////////////////////////////////////////////////////////////
     //      INTERPOLATION METHOD
     //////////////////////////////////////////////////////////////////
-    static void DirectInterpolation(SparseMatrixType& P, const SparseMatrixType& A, 
+    static void DirectInterpolation(SparseMatrixType& P, const SparseMatrixType& A,
                 const SparseMatrixType& C, const IndexVectorType& splitting)
     {
         SizeType m = TSparseSpaceType::Size1(A);
 
         IndexContainerType Pp(m + 1);
-        
+
 //        KRATOS_WATCH("before pass1");
 //        std::cout << "splitting:" << std::endl;
 //        std::copy(splitting.begin(), splitting.end(), std::ostream_iterator<IndexType>(std::cout, " "));
@@ -318,7 +318,7 @@ public:
 //        KRATOS_WATCH_INT_LIST(Pp);
 //        KRATOS_WATCH_INT_LIST(Pi);
 //        KRATOS_WATCH_INT_LIST(Pv);
-        
+
 //        KRATOS_WATCH(Pp.size());
 //        KRATOS_WATCH(Pi.size());
 //        std::cout << "Pp:" << std::endl;
@@ -327,11 +327,11 @@ public:
 //        std::cout << "Pi:" << std::endl;
 //        std::copy(Pi.begin(), Pi.end(), std::ostream_iterator<IndexType>(std::cout, " "));
 //        std::cout << std::endl;
-        
+
         SizeType n = *std::max_element(Pi.begin(), Pi.end());
 //        KRATOS_WATCH(n+1);
 
-        
+
 //        SparseMatrixType P(m, n+1, nnz);
         if( (TSparseSpaceType::Size1(P) != m) || (TSparseSpaceType::Size2(P) != n+1) )
             TSparseSpaceType::Resize(P, m, n+1);
@@ -339,14 +339,14 @@ public:
 //        KRATOS_WATCH("before fill");
 //        KRATOS_WATCH(TSparseSpaceType::Size1(P));
 //        KRATOS_WATCH(TSparseSpaceType::Size2(P));
-        
+
         FillCompressedMatrixFromTriplet(P, Pp, Pi, Pv); // this was faster than filling from coordinate matrix
-        
+
 //        KRATOS_WATCH("after fill");
 
 //        KRATOS_WATCH(TSparseSpaceType::Size1(P));
 //        KRATOS_WATCH(TSparseSpaceType::Size2(P));
-//        
+//
 //        std::cout << "P.index1_data():" << std::endl;
 //        std::copy(P.index1_data().begin(), P.index1_data().end(), std::ostream_iterator<IndexType>(std::cout, " "));
 //        std::cout << std::endl;
@@ -365,22 +365,22 @@ public:
         SizeType n = TSparseSpaceType::Size2(S);
 //        SizeType nnz = S.value_data().size();
         SizeType nnz = S.filled2();
-        
+
         IndexContainerType Tp(n + 1, 0);
         IndexContainerType Ti(nnz, 0);
-        
+
         TripletTranspose(m, n, S.index1_data(), S.index2_data(), Tp, Ti);
-        
+
 //        KRATOS_WATCH("TripletTranspose completed");
-        
+
 //        KRATOS_WATCH_INT_LIST(S.index1_data());
 //        KRATOS_WATCH_INT_LIST(S.index2_data());
 //        KRATOS_WATCH_INT_LIST(Tp);
 //        KRATOS_WATCH_INT_LIST(Ti);
-        
-        rs_cf_splitting(static_cast<IndexType>(m), S.index1_data(), S.index2_data(), 
+
+        rs_cf_splitting(static_cast<IndexType>(m), S.index1_data(), S.index2_data(),
             Tp, Ti, splitting);
-            
+
 //        KRATOS_WATCH_INT_LIST(splitting);
 
     }
@@ -396,7 +396,7 @@ public:
         preprocess_ruge_stuben_splitting(S, COLORING_NONE, G, weights);
         MIS(splitting, G, weights);
     }
-    
+
     static void PMISc(IndexVectorType& splitting, const SparseMatrixType& S, const std::string& coloring_method)
     {
         SizeType m = TSparseSpaceType::Size1(S);
@@ -405,7 +405,7 @@ public:
         SizeType nnz = S.filled2();
         SparseMatrixType G(m, n, nnz);
         ValueContainerType weights(m);
-                
+
         if(coloring_method.compare("MIS"))
         {
             preprocess_ruge_stuben_splitting(S, COLORING_MIS, G, weights);
@@ -420,11 +420,11 @@ public:
         }
         else
             KRATOS_THROW_ERROR(std::logic_error, "unrecognized coloring method", "");
-                
+
         MIS(splitting, G, weights);
-        
+
     }
-    
+
     static void CLJP(IndexVectorType& splitting, const SparseMatrixType& S)
     {
         SizeType m = TSparseSpaceType::Size1(S);
@@ -438,9 +438,9 @@ public:
         TripletTranspose(m, n, S.index1_data(), S.index2_data(), Tp, Ti);
 
         cljp_naive_splitting(m, S.index1_data(), S.index2_data(), Tp, Ti, splitting, 0);
-        
+
     }
-    
+
     static void CLJPc(IndexVectorType& splitting, const SparseMatrixType& S)
     {
         SizeType m = TSparseSpaceType::Size1(S);
@@ -454,12 +454,12 @@ public:
         TripletTranspose(m, n, S.index1_data(), S.index2_data(), Tp, Ti);
 
         cljp_naive_splitting(m, S.index1_data(), S.index2_data(), Tp, Ti, splitting, 1);
-        
+
     }
-    
-    
-    
-    
+
+
+
+
 
     //////////////////////////////////////////////////////////////////
     //      FAST LINEAR ALGEBRA
@@ -472,23 +472,23 @@ public:
         int n = TSparseSpaceType::Size2(rA);
 //        int nnz = rA.value_data().size();
         int nnz = rA.filled2();
-        
+
         //checking
         if( TSparseSpaceType::Size1(rB) != n || TSparseSpaceType::Size2(rB) != m)
             KRATOS_THROW_ERROR(std::logic_error, "The matrix dimension is not compatible", "");
-        
+
         IndexContainerType Tp(n+1, 0);
         IndexContainerType Ti(nnz, 0);
         ValueContainerType Tx(nnz, 0.00);
-        
+
 //        KRATOS_WATCH("at Transpose: before triplet transpose");
         TripletTranspose(m, n, rA.index1_data(), rA.index2_data(), rA.value_data(), Tp, Ti, Tx);
-        
+
 //        csr_tocsc(m, n, rA.index1_data(), rA.index2_data(), rA.value_data(), Tp, Ti, Tx);
-        
+
 //        KRATOS_WATCH("at Transpose: before fill");
         FillCompressedMatrixFromTriplet(rB, Tp, Ti, Tx);
-        
+
     }
 
     // perform multiplication of 2 sparse matrices by SMMP algorithm (adapted from scipy), rC = rA*rB
@@ -497,39 +497,39 @@ public:
         int m = TSparseSpaceType::Size1(rA);
         int n = TSparseSpaceType::Size2(rA);
         int k = TSparseSpaceType::Size2(rB);
-        
+
         if(n != TSparseSpaceType::Size1(rB))
             KRATOS_THROW_ERROR(std::logic_error, "Matrix dimension is not compatible", "");
-            
+
         IndexContainerType Cp(m+1, 0);
-        
-        csr_matmat_pass1(m, k, rA.index1_data(), rA.index2_data(), 
+
+        csr_matmat_pass1(m, k, rA.index1_data(), rA.index2_data(),
                             rB.index1_data(), rB.index2_data(), Cp);
-        
+
         SizeType nnz = Cp[m]; // this nnz is the symbolic entries. Some symbolic entries may be zero and will be detected in pass 2
-        
+
         IndexContainerType Ci(nnz, 0);
         ValueContainerType Cx(nnz, 0.00);
-        
+
         csr_matmat_pass2(m, k, rA.index1_data(), rA.index2_data(), rA.value_data(),
                             rB.index1_data(), rB.index2_data(), rB.value_data(), Cp, Ci, Cx);
 
         FillCompressedMatrixFromTriplet(rC, Cp, Ci, Cx); // this was faster than filling from coordinate matrix
-        
+
     }
-    
-    
+
+
     //////////////////////////////////////////////////////////////////
     //      HELPERS (public domain)
     //////////////////////////////////////////////////////////////////
-    
+
     static void AddToDiagonal(SparseMatrixType& rA, const double v)
     {
         SizeType n = std::min(TSparseSpaceType::Size1(rA), TSparseSpaceType::Size2(rA));
         for(IndexType i = 0; i < n; i++)
             rA(i, i) += v;
     }
-    
+
     /*@} */
     /**@name Access */
     /*@{ */
@@ -570,9 +570,9 @@ private:
 //    {
 //        SizeType m = Cp.size() - 1;
 //        SizeType nnz = Cv.size();
-//        
+//
 //        LocalSparseMatrixType C(m, m, nnz);
-//        
+//
 //        for(IndexType i = 0; i < m; i++)
 //        {
 //            SizeType local_nnz = Cp[i+1] - Cp[i];
@@ -582,11 +582,11 @@ private:
 //                C.insert_element(i, Ci[idx], Cv[idx]);
 //            }
 //        }
-//        
+//
 //        return C;
 //    }
-    
-    
+
+
     //////////////////////////////////////////////////////////////////
     //      HELPERS
     //////////////////////////////////////////////////////////////////
@@ -596,7 +596,7 @@ private:
     {
         SizeType m = Cp.size() - 1;
 //        SizeType m = TSparseSpaceType::Size1(C);
-        
+
         for(IndexType i = 0; i < m; i++)
         {
             for(IndexType j = Cp[i]; j < Cp[i+1]; j++)
@@ -605,9 +605,9 @@ private:
 //                C.push_back(i, Ci[j], Cv[j]); // note that this only works if the column indices are sorted. It is not the case if the matrix is output from SMMP method
             }
         }
-        
+
         C.complete_index1_data(); // to ensure zero rows are handled correctly
-        
+
     }
 
     //input: Cp, Ci, v (value to fill)
@@ -615,7 +615,7 @@ private:
     static void FillCompressedMatrixFromTriplet(SparseMatrixType& C, IndexContainerType& Cp, IndexContainerType& Ci, double v)
     {
         SizeType m = Cp.size() - 1;
-        
+
         for(IndexType i = 0; i < m; i++)
         {
             SizeType local_nnz = Cp[i+1] - Cp[i];
@@ -626,27 +626,27 @@ private:
 //                C.push_back(i, Ci[idx], v); // note that this only works if the column indices are sorted. It is not the case if the matrix is output from SMMP method
             }
         }
-        
+
         C.complete_index1_data(); // to ensure zero rows are handled correctly
-        
+
     }
-    
+
     // transpose a row pointer and column index to column poiner and row index
     //input Sp, Si
     //output Tp, Ti
-    static void TripletTranspose(const IndexType m, const IndexType n, 
-            const IndexContainerType& Sp, const IndexContainerType& Si, 
+    static void TripletTranspose(const IndexType m, const IndexType n,
+            const IndexContainerType& Sp, const IndexContainerType& Si,
             IndexContainerType& Tp, IndexContainerType& Ti)
     {
         SizeType nnz = Si.size();
-        
+
         std::vector<std::vector<IndexType> > colMap;
-        
+
         colMap.resize(n);
         SizeType estimated_nnz = nnz/n;
         for(IndexType i = 0; i < n; i++)
             colMap[i].reserve(estimated_nnz);
-        
+
         for(IndexType i = 0; i < m; i++)
         {
             SizeType local_nnz = Sp[i+1] - Sp[i];
@@ -656,19 +656,19 @@ private:
                 colMap[Si[idx]].push_back(i);
             }
         }
-        
+
 //        for(IndexType i = 0; i < m; i++)
 //        {
 ////            KRATOS_WATCH_LIST(colMap[i]);
 //            std::copy(colMap[i].begin(), colMap[i].end(), std::ostream_iterator<IndexType>(std::cout, " "));
 //            std::cout << std::endl;
 //        }
-            
+
 //        std::cout << "colMap initialization completed" << std::endl;
-        
+
 //        for(IndexType i = 0; i < m; i++)
 //            std::sort(colMap[i].begin(), colMap[i].end());
-//            
+//
 //        for(IndexType i = 0; i < m; i++)
 //        {
 //            std::copy(colMap[i].begin(), colMap[i].end(), std::ostream_iterator<IndexType>(std::cout, " "));
@@ -676,7 +676,7 @@ private:
 //        }
 
 //        std::cout << "colMap sort completed" << std::endl;
-            
+
         Tp[0] = 0;
         for(IndexType i = 0; i < n; i++)
         {
@@ -686,45 +686,45 @@ private:
                 Ti[Tp[i] + j] = colMap[i][j];
             }
         }
-        
+
 //        std::copy(Tp.begin(), Tp.end(), std::ostream_iterator<IndexType>(std::cout, " "));
 //        std::cout << std::endl;
 //        std::copy(Ti.begin(), Ti.end(), std::ostream_iterator<IndexType>(std::cout, " "));
 //        std::cout << std::endl;
-//        
+//
 //        std::cout << "insert completed" << std::endl;
     }
-    
+
     // transpose a csr sparse matrix
     // input:  Sp, Si, Sx
     // output: Tp, Ti, Tx
-    static void TripletTranspose(const IndexType m, const IndexType n, 
-            const IndexContainerType& Sp, const IndexContainerType& Si, const ValueContainerType& Sx, 
+    static void TripletTranspose(const IndexType m, const IndexType n,
+            const IndexContainerType& Sp, const IndexContainerType& Si, const ValueContainerType& Sx,
             IndexContainerType& Tp, IndexContainerType& Ti, ValueContainerType& Tx)
     {
         SizeType nnz = Si.size();
-        
+
         std::vector<std::vector<IndexType> > colMap;
         std::vector<std::vector<ValueType> > valMap;
-        
+
         colMap.resize(n);
         valMap.resize(n);
         SizeType estimated_nnz = nnz/n;
-        
+
 //        KRATOS_WATCH("at TripletTranspose: before reserve");
-        
+
         for(IndexType i = 0; i < n; i++)
         {
             colMap[i].reserve(estimated_nnz);
             valMap[i].reserve(estimated_nnz);
         }
-        
+
 //        KRATOS_WATCH("at TripletTranspose: before push_back");
 //        KRATOS_WATCH(m);
 //        KRATOS_WATCH(n);
 //        KRATOS_WATCH(Sp.size());
 //        KRATOS_WATCH(Si.size());
-//        
+//
 //        std::cout << "Sp: " << std::endl;
 //        std::copy(Sp.begin(), Sp.end(), std::ostream_iterator<IndexType>(std::cout, " "));
 //        std::cout << std::endl;
@@ -743,9 +743,9 @@ private:
                 valMap[Si[idx]].push_back(Sx[idx]);
             }
         }
-        
+
 //        KRATOS_WATCH("at TripletTranspose: before fill");
-        
+
         Tp[0] = 0;
         for(IndexType i = 0; i < n; i++)
         {
@@ -756,25 +756,25 @@ private:
                 Tx[Tp[i] + j] = valMap[i][j];
             }
         }
-        
+
     }
-    
+
     // fill the row pointer and column index of matrix G = S+S^T
     // input : Sp, Si
     // output: Gp, Gi, nnz (number of entries of the sum)
-    static void TripletSumSandST(const IndexType m, const IndexType n, 
+    static void TripletSumSandST(const IndexType m, const IndexType n,
             const IndexContainerType& Sp, const IndexContainerType& Si,
             IndexContainerType& Gp, IndexContainerType &Gi, SizeType &nnz)
     {
         assert(m==n); //must be square matrix
-        
+
         nnz = Si.size();
-        
+
         std::vector<std::set<IndexType> > colMap;
         typedef std::set<IndexType>::iterator set_iterator;
-        
+
         colMap.resize(n);
-        
+
         for(IndexType i = 0; i < m; i++)
         {
             SizeType local_nnz = Sp[i+1] - Sp[i];
@@ -786,7 +786,7 @@ private:
                 colMap[i].insert(Si[idx]);
             }
         }
-        
+
         Gp[0] = 0;
         nnz = 0;
         for(IndexType i = 0; i < n; i++)
@@ -801,28 +801,28 @@ private:
             }
         }
     }
-    
-    
+
+
     // generate an array of random number in [0,1]
     static ValueContainerType GenerateRandomArray(IndexType n)
     {
         typedef typename boost::random::mt19937                            ENG;    // Mersenne Twister
         typedef typename boost::random::uniform_real_distribution<double> DIST;   // Uniform Distribution
         typedef typename boost::random::variate_generator<ENG,DIST>        GEN;    // Variate generator
-        
+
         ENG  eng;
         DIST dist(0.00, 1.00);
         GEN  gen(eng,dist);
-        
+
         ValueContainerType v(n);
-        
+
         for(IndexType i = 0; i < n; i++)
             v[i] = gen();
-        
+
         return v;
     }
-    
-    
+
+
     //////////////////////////////////////////////////////////////////
     //      HELPER FUNCTIONS FOR SPLITTING
     //////////////////////////////////////////////////////////////////
@@ -830,24 +830,24 @@ private:
     static void preprocess_ruge_stuben_splitting(const SparseMatrixType &S, const IndexType coloring_method, //input
             SparseMatrixType& G, ValueContainerType& weights)                                     //output
     {
-    
+
         SizeType m = TSparseSpaceType::Size1(S);
 //        SizeType nnz = S.value_data().size();
         SizeType nnz = S.filled2();
-        
+
         IndexContainerType Gp(m+1);
         IndexContainerType Gi(2*nnz);
-        
+
         const IndexContainerType& Sp = S.index1_data();
         const IndexContainerType& Si = S.index2_data();
-        
+
         TripletSumSandST(m, m, Sp, Si, Gp, Gi, nnz);
-        
+
 //        G.resize(m, m, false);
         FillCompressedMatrixFromTriplet(G, Gp, Gi, 1.00);
-        
+
 //        weights.resize(m, false);
-        
+
         // sum along the column of S
         for(IndexType i = 0; i < m; i++)
         {
@@ -859,28 +859,28 @@ private:
                 weights[Si[idx]] += 1.00;
             }
         }
-        
-        
+
+
         if(coloring_method == COLORING_NONE)
         {
             // generate random number
 //            std::uniform_real_distribution<double> unif(0.00, 1.00);
 //            std::default_random_engine re;
-//            
+//
 //            for(IndexType i = 0; i < m; i++)
 //                weights[i] += unif(re);
 
             ValueContainerType ra = GenerateRandomArray(m);
             for(IndexType i = 0; i < m; i++)
                 weights[i] += ra[i];
-                
+
         }
-        else if(coloring_method == COLORING_MIS || coloring_method == COLORING_JP 
+        else if(coloring_method == COLORING_MIS || coloring_method == COLORING_JP
                     || coloring_method == COLORING_LDF)
         {
             IntegerContainerType coloring(m);
-            
-            
+
+
             if(coloring_method == COLORING_MIS)
                 vertex_coloring_mis(m, Gp, Gi, coloring);
             else if(coloring_method == COLORING_JP)
@@ -893,13 +893,13 @@ private:
                 ValueContainerType tmp = GenerateRandomArray(m);
                 vertex_coloring_LDF(m, Gp, Gi, coloring, tmp);
             }
-            
-            
+
+
             IndexType num_colors = 1 + *std::max(coloring.begin(), coloring.end());
 
 //            std::uniform_real_distribution<double> unif(0.00, 1.00);
 //            std::default_random_engine re;
-//            
+//
 //            for(IndexType i = 0; i < m; i++)
 //                weights[i] += (unif(re) + coloring[i])/num_colors;
 
@@ -909,20 +909,20 @@ private:
         }
         else
             KRATOS_THROW_ERROR(std::logic_error, "undetected coloring method", "");
-        
+
     }
-    
-    
+
+
     //////////////////////////////////////////////////////////////////
     //      GRAPH METHOD
     //////////////////////////////////////////////////////////////////
-    
+
     static void MIS(IndexVectorType& mis, const SparseMatrixType& G, const ValueContainerType& weights, int maxiter = -1)
     {
         int m = TSparseSpaceType::Size1(G);
-        
+
         std::fill(mis.begin(), mis.end(), -1);
-        
+
         if(maxiter < 0)
         {
             maximal_independent_set_parallel(m, G.index1_data(), G.index2_data(), -1, 1, 0, mis, weights);
@@ -932,8 +932,8 @@ private:
             maximal_independent_set_parallel(m, G.index1_data(), G.index2_data(), -1, 1, 0, mis, weights, maxiter);
         }
     }
-    
-    
+
+
     /*@} */
     /**@name Private  Acces */
     /*@{ */

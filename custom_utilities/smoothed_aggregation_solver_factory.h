@@ -108,7 +108,7 @@ public:
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType> LinearSolverType;
 
     typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> BaseType;
-    
+
     typedef typename LinearSolverType::Pointer LinearSolverPointerType;
 
     typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
@@ -122,33 +122,33 @@ public:
     typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
-    
+
     typedef AMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
-    
+
     typedef typename boost::shared_ptr<LevelType> LevelPointerType;
-    
+
     typedef std::vector<LevelPointerType> LevelContainerType;
 
     typedef typename LevelContainerType::iterator LevelIteratorType;
 
     typedef Kratos::ParameterList<std::string> ParameterListType;
-    
+
     typedef AMGUtils<TSparseSpaceType> AMGUtilsType;
-    
+
     typedef typename AMGUtilsType::IndexVectorType IndexVectorType;
-    
+
     typedef typename AMGUtilsType::ValueContainerType ValueContainerType;
-    
+
     typedef typename AMGUtilsType::IndexContainerType IndexContainerType;
-    
+
     typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
 
     typedef boost::numeric::ublas::unbounded_array<VectorType> VectorContainerType;
-    
+
     typedef std::size_t  SizeType;
-    
+
     typedef unsigned int  IndexType;
-    
+
     typedef int  IntegerType;
 
     ///@}
@@ -159,8 +159,8 @@ public:
     SmoothedAggregationSolverFactory(ParameterListType& amg_parameter_list) : BaseType(amg_parameter_list)
     {
     }
-    
-    
+
+
     /// Copy constructor.
     SmoothedAggregationSolverFactory(const SmoothedAggregationSolverFactory& Other) : BaseType(Other)
     {
@@ -185,23 +185,23 @@ public:
     ///@}
     ///@name Operations
     ///@{
-    
+
     virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA)
     {
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "#######################" << std::endl;
         std::cout << "At generate_smoothed_aggregation" << std::endl;
         #endif
-        
+
         SizeType m = TSparseSpaceType::Size1(rA);
-        
+
         // general parameters
         ParameterListType& amg_parameter_list = BaseType::mamg_parameter_list;
-        
+
         IndexType max_levels = amg_parameter_list.get("max_levels", 10);
         IndexType max_coarse = amg_parameter_list.get("max_coarse", 500);
         std::string& symmetry = amg_parameter_list.get("symmetry", "hermitian");
-        
+
         // right near-nullspace candidates
         ParameterListType& B_list = amg_parameter_list.sublist("B");
         IndexType B_length = B_list.get("length", 0);
@@ -227,7 +227,7 @@ public:
                 B[i] = b;
             }
         }
-        
+
         // left near-nullspace candidates
         ParameterListType& BH_list = amg_parameter_list.sublist("BH");
         IndexType BH_length = BH_list.get("length", 0);
@@ -253,7 +253,7 @@ public:
                 BH[i] = bh;
             }
         }
-        
+
         // strength of connection
         ParameterListType& strength_params = amg_parameter_list.sublist("strength");
 
@@ -279,19 +279,19 @@ public:
         KRATOS_WATCH(smooth_name);
         KRATOS_WATCH(Bimprove_name);
         std::cout << "end of smoothed_aggregation parameters" << std::endl;
-        
+
         SizeType last_size = TSparseSpaceType::Size1(rA);
-        
+
 //        KRATOS_WATCH("at generate_ruge_stuben");
 //        KRATOS_WATCH(&rA);
-        
+
         // set up level 0
         solver.CreateLevel();
         LevelType& first_level = solver.GetLastLevel();
         SparseMatrixPointerType pA = first_level.GetCoarsenMatrix();
         TSparseSpaceType::Resize(*pA, last_size, last_size);
         TSparseSpaceType::Copy(rA, *pA);
-        
+
         int cnt = 0;
         while(solver.GetNumberOfLevels() < max_levels && last_size > max_coarse)
         {
@@ -303,7 +303,7 @@ public:
             LevelType& current_level = solver.GetLastLevel();
 
             SparseMatrixPointerType A = current_level.GetCoarsenMatrix();
-            
+
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << "...retrieved initial matrix for level " << cnt << std::endl;
             KRATOS_WATCH(A->size1())
@@ -345,9 +345,9 @@ public:
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
                 std::cout << "...calculating distance strength of connection";
                 #endif
-                
+
                 AMGUtilsType::DistanceStrengthOfConnection(C, *A);
-                
+
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
                 std::cout << " completed" << std::endl;
                 #endif
@@ -361,10 +361,10 @@ public:
             }
             else
                 KRATOS_THROW_ERROR(std::logic_error, "strength_name is undefined or not supported:", strength_name)
-            
+
             //TODO
-            
-            
+
+
             ++cnt;
         }
 
@@ -373,7 +373,7 @@ public:
         std::cout << "#######################" << std::endl;
         #endif
     }
-    
+
     ///@}
     ///@name Access
     ///@{
@@ -441,7 +441,7 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-    
+
     ///@}
     ///@name Private  Access
     ///@{
@@ -473,6 +473,6 @@ private:
 
 #undef DEBUG_MULTILEVEL_SOLVER_FACTORY
 
-#endif // KRATOS_MULTIGRID_SOLVERS_APP_SMOOTHED_AGGREGATION_SOLVER_FACTORY_H_INCLUDED  defined 
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_SMOOTHED_AGGREGATION_SOLVER_FACTORY_H_INCLUDED  defined
 
 

@@ -102,7 +102,7 @@ class ParameterList : public Kratos::VectorMap<TKeyType, KratosParameterListAcce
     typedef Kratos::VectorMap<TKeyType, KratosParameterListAcceptedType> BaseType;
 
     typedef typename BaseType::iterator iterator;
-    
+
     typedef typename BaseType::const_iterator const_iterator;
 
     typedef typename BaseType::pair_iterator pair_iterator;
@@ -157,10 +157,10 @@ public:
     inline TDataType& get(const TKeyType& rKey, const TDataType& rInitialData)
     {
         iterator i = BaseType::find(rKey);
-        
+
         if(i == BaseType::end())
             set(rKey, rInitialData);
-            
+
         return boost::get<TDataType&>(BaseType::operator[](rKey));
     }
 
@@ -168,11 +168,11 @@ public:
     inline std::string& get(const TOtherKeyType& rKey, const char* rInitialData)
     {
         iterator i = BaseType::find(rKey);
-        
+
         if(i == BaseType::end())
             set(rKey, std::string(rInitialData));
 
-        return boost::get<std::string&>(BaseType::operator[](rKey));        
+        return boost::get<std::string&>(BaseType::operator[](rKey));
     }
 
     inline int type(const TKeyType& rKey)
@@ -187,14 +187,14 @@ public:
         {
             KRATOS_THROW_ERROR(std::logic_error, "Existing key has been associated with value", "");
         }
-    
+
         typename SubListType::iterator ii = mSubList.find(rKey);
         if(ii == mSubList.end())
         {
             ParameterList pl;
             mSubList[rKey] = pl;
         }
-        
+
         return mSubList[rKey];
     }
 
@@ -259,7 +259,7 @@ inline std::istream& operator >> (std::istream& is, Kratos::ParameterList<TKeyTy
 
 
 template<class TKeyType>
-inline std::ostream& operator << (std::ostream& os, const Kratos::ParameterList<TKeyType>& rThis) 
+inline std::ostream& operator << (std::ostream& os, const Kratos::ParameterList<TKeyType>& rThis)
 {
     rThis.PrintInfo(os);
     os << std::endl;
