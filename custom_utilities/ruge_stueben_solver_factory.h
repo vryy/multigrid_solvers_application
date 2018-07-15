@@ -388,13 +388,29 @@ public:
             #endif
 
             last_size = AfterCoarsenSize;
+
+            bool terminate = false;
             if (last_size <= max_coarse)
             {
+                terminate = true;
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
                 std::cout << " level " << last_level.LevelDepth() << " coarse size = " << last_size
                           << " <= max_coarse = " << max_coarse << ". The process terminated." << std::endl;
                 #endif
+            }
 
+            if (last_size > max_coarse && solver.GetNumberOfLevels() >= max_levels)
+            {
+                terminate = true;
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " level " << last_level.LevelDepth() << " coarse size = " << last_size
+                          << " > max_coarse = " << max_coarse << ". But the maximum number of levels is reached."
+                          << " The process terminated but the coarsest size is " << last_size << "." << std::endl;
+                #endif
+            }
+
+            if (terminate)
+            {
                 typename MatrixBasedMGProjectorType::Pointer pPrologator
                     = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
                 last_level.SetProlongationOperator(pPrologator);

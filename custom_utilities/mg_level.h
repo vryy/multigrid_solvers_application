@@ -263,7 +263,7 @@ public:
     ///@name Inquiry
     ///@{
 
-    /// Get the size of the coarse matrix
+    /// Get the size of the lower level matrix
     virtual SizeType GetCoarseSize() const
     {
         return mpRestrictor->GetProjectedSize();
@@ -282,7 +282,8 @@ public:
         ss << "  PostSmoother: " << mpPostSmoother->Info() << std::endl;
         ss << "  Restrictor: " << mpRestrictor->Info() << std::endl;
         ss << "  Prolongator: " << mpProlongator->Info() << std::endl;
-        ss << "  Coarse matrix size: " << this->GetCoarseSize() << ", nonzeros = " << (*mpA).filled2();
+        ss << "  Level matrix size: " << TSparseSpaceType::Size1(*mpA) << ", nonzeros = " << (*mpA).filled2() << std::endl;
+        ss << "  Coarse matrix size: " << this->GetCoarseSize();
         return ss.str();
     }
 
