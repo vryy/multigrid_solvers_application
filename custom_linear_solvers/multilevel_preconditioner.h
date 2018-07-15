@@ -333,7 +333,7 @@ private:
         if(mml_solver->GetNumberOfLevels() == 1)
         {
 
-            SparseMatrixPointerType A = mml_solver->GetLevel(0).GetCoarsenMatrix();
+            SparseMatrixPointerType A = mml_solver->GetLevel(0).GetCoarseMatrix();
 
             mml_solver->mpCoarseSolver->Solve(*A, rX, rB);
 

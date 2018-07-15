@@ -65,7 +65,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "linear_solvers/linear_solver.h"
-#include "custom_utilities/amg_level.h"
+#include "custom_utilities/mg_level.h"
 #include "custom_utilities/amg_utils.h"
 #include "custom_utilities/parameter_list.h"
 #include "custom_utilities/multilevel_solver_factory.h"
@@ -123,9 +123,9 @@ public:
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
 
-    typedef AMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
-    typedef typename boost::shared_ptr<LevelType> LevelPointerType;
+    typedef typename ĹevelType::Pointer LevelPointerType;
 
     typedef std::vector<LevelPointerType> LevelContainerType;
 

@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 2013 Jan 11 15:06:00 $
-//   Revision:            $Revision: 1.1 $
+//   Date:                $Date: 15/7/2018 $
+//   Revision:            $Revision: 1.0 $
 //
 //
 
 
-#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED )
-#define  KRATOS_MULTIGRID_SOLVERS_APP_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MATRIX_BASED_MG_PROJECTOR_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_MATRIX_BASED_MG_PROJECTOR_H_INCLUDED
 
 
 
@@ -54,19 +54,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <cstddef>
 
 
 // External includes
-//#include "external_includes/pyamg/relaxation.h"
-//#include "external_includes/pyamg/ruge_stuben.h"
 
 
 // Project includes
 #include "includes/define.h"
-#include "linear_solvers/linear_solver.h"
-#include "custom_utilities/parameter_list.h"
-#include "custom_linear_solvers/multilevel_solver.h"
+#include "custom_utilities/mg_projector.h"
+
 
 namespace Kratos
 {
@@ -90,72 +86,87 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-template<class TSparseSpaceType, class TDenseSpaceType>
-class MultilevelSolverFactory
+/**
+ * Class for prolongator and restrictor that uses matrix multiplication to apply the projection.
+ * This can be used for both geometric multigrid and algebraic multigrid.
+ */
+template<class TSpaceType>
+class MatrixBasedMGProjector : public MGProjector<TSpaceType>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MultilevelSolverFactory
-    KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolverFactory);
+    /// Pointer definition of MatrixBasedMGProjector
+    KRATOS_CLASS_POINTER_DEFINITION(MatrixBasedMGProjector);
 
-    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
+    typedef MGProjector<TSpaceType> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::MatrixType MatrixType;
 
-    typedef ParameterList<std::string> ParameterListType;
+    typedef typename BaseType::MatrixPointerType MatrixPointerType;
+
+    typedef typename BaseType::VectorType VectorType;
+
+    typedef typename BaseType::VectorPointerType VectorPointerType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    MultilevelSolverFactory(ParameterListType& amg_parameter_list)
-    : mamg_parameter_list(amg_parameter_list)
-    {}
-
-
-    /// Copy constructor.
-    MultilevelSolverFactory(const MultilevelSolverFactory& rOther)
-    : mamg_parameter_list(rOther.mamg_parameter_list)
-    {}
+    MatrixBasedMGProjector()
+    {
+        this->Initialize();
+    }
 
     /// Destructor.
-    virtual ~MultilevelSolverFactory() {}
+    virtual ~MatrixBasedMGProjector()
+    {}
 
+    /// Copy constructor
+    MatrixBasedMGProjector(const MatrixBasedMGProjector& rOther)
+    : BaseType(), mpOperator(rOther.mpOperator)
+    {}
 
     ///@}
     ///@name Operators
     ///@{
 
-    /// Assignment operator.
-    MultilevelSolverFactory& operator=(const MultilevelSolverFactory& rOther)
+    /// Assignment operator. It's also important like the Copy constructor
+    MatrixBasedMGProjector& operator= (const MatrixBasedMGProjector& rOther)
     {
-        mamg_parameter_list = rOther.mamg_parameter_list;
+        this.mpOperator = rOther.mpOperator;
         return *this;
     }
-
 
     ///@}
     ///@name Operations
     ///@{
 
-    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
+    virtual void Apply(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+        if(mpOperator == NULL)
+        {
+            std::stringstream ss;
+            ss << "The matrix has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
+        TSpaceType::Mult(*mpOperator, rX, rY);
     }
 
     ///@}
     ///@name Access
     ///@{
 
-
+    MatrixPointerType GetOperator() const
+    {
+        return mpOperator;
+    }
 
     ///@}
     ///@name Inquiry
     ///@{
-
 
 
     ///@}
@@ -165,9 +176,9 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        std::stringstream buffer;
-        buffer << "Multilevel solver factory";
-        return  buffer.str();
+        std::stringstream ss;
+        ss << "MatrixBasedMGProjector";
+        return ss.str();
     }
 
     /// Print information about this object.
@@ -179,7 +190,6 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
-        rOStream << mamg_parameter_list;
     }
 
 
@@ -190,6 +200,7 @@ public:
 
     ///@}
 
+
 protected:
     ///@name Protected static Member Variables
     ///@{
@@ -199,7 +210,6 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-    ParameterListType mamg_parameter_list;
 
     ///@}
     ///@name Protected Operators
@@ -228,37 +238,54 @@ protected:
 
     ///@}
 
+
 private:
     ///@name Static Member Variables
     ///@{
+
 
     ///@}
     ///@name Member Variables
     ///@{
 
+    MatrixPointerType mpOperator;
+
     ///@}
     ///@name Private Operators
     ///@{
+
 
     ///@}
     ///@name Private Operations
     ///@{
 
+    void Initialize()
+    {
+        if(mpOperator == NULL)
+        {
+            MatrixPointerType pNewP = MatrixPointerType(new MatrixType(0, 0));
+            mpOperator.swap(pNewP);
+        }
+    }
+
     ///@}
     ///@name Private  Access
     ///@{
+
 
     ///@}
     ///@name Private Inquiry
     ///@{
 
+
     ///@}
     ///@name Un accessible methods
     ///@{
 
+
     ///@}
 
-}; // Class MultilevelSolverFactory
+};
 
 ///@}
 
@@ -272,15 +299,15 @@ private:
 
 
 /// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSpaceType>
+inline std::istream& operator >> (std::istream& IStream, MatrixBasedMGProjector<TSpaceType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSpaceType>
+inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGProjector<TSpaceType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -291,8 +318,7 @@ inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolver
 ///@}
 
 
-}  // namespace Kratos.
+} // namespace Kratos.
 
-#endif // KRATOS_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED  defined
-
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_MATRIX_BASED_MG_PROJECTOR_H_INCLUDED  defined
 

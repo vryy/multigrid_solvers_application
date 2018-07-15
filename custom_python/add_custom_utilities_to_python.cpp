@@ -54,8 +54,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "spaces/ublas_space.h"
-#include "custom_utilities/amg_level.h"
-#include "custom_utilities/gmg_level.h"
+#include "custom_utilities/mg_level.h"
 #include "custom_utilities/amg_utils.h"
 #include "custom_utilities/gmg_utils.h"
 #include "custom_utilities/multilevel_solver_factory.h"
@@ -86,10 +85,6 @@ typedef typename AMGUtilsType::IndexVectorType IndexVectorType;
 typedef AMGUtilsType::SizeType SizeType;
 
 typedef MGLevel<SparseSpaceType, LocalSpaceType> MGLevelType;
-
-typedef AMGLevel<SparseSpaceType, LocalSpaceType> AMGLevelType;
-
-typedef GMGLevel<SparseSpaceType, LocalSpaceType> GMGLevelType;
 
 typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 
@@ -200,40 +195,24 @@ void MultigridSolversApp_AddUtilitiesToPython()
     ;
 
     class_<GMGUtilsType, GMGUtilsType::Pointer, boost::noncopyable>("GMGUtils", init<>())
-    .def("ComputeCoarsenMatrix", &GMGUtilsType::ComputeCoarsenMatrix)
+    .def("ComputeCoarseMatrix", &GMGUtilsType::ComputeCoarseMatrix)
     ;
 
-//    //****************************************************************************************************
-//    // level definition
-//    //****************************************************************************************************
+   //****************************************************************************************************
+   // level definition
+   //****************************************************************************************************
 
     class_<MGLevelType, MGLevelType::Pointer, boost::noncopyable>
-    ( "MGLevel", init<>())
+    ( "MGLevel", init<const typename MGLevelType::IndexType&>())
     .def(self_ns::str(self))
-    .def(init<LinearSolverType::Pointer, LinearSolverType::Pointer>())
+    .def("SetPreSmoother", &MGLevelType::SetPreSmoother)
+    .def("SetPostSmoother", &MGLevelType::SetPostSmoother)
+    .def("SetRestrictionOperator", &MGLevelType::SetRestrictionOperator)
+    .def("SetProlongationOperator", &MGLevelType::SetProlongationOperator)
     .def("ApplyPreSmoother", &MGLevelType::ApplyPreSmoother)
     .def("ApplyPostSmoother", &MGLevelType::ApplyPostSmoother)
     .def("ApplyRestriction", &MGLevelType::ApplyRestriction)
     .def("ApplyProlongation", &MGLevelType::ApplyProlongation)
-    .def("SetPreSmoother", &MGLevelType::SetPreSmoother)
-    .def("SetPostSmoother", &MGLevelType::SetPostSmoother)
-    ;
-
-    class_<AMGLevelType, AMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
-    ( "AMGLevel", init<>())
-    .def(self_ns::str(self))
-    .def(init<LinearSolverType::Pointer, LinearSolverType::Pointer>())
-    .def("SetRestrictionOperator", &AMGLevelType::SetRestrictionOperator)
-    .def("SetProlongationOperator", &AMGLevelType::SetProlongationOperator)
-    .def("SetCoarsenMatrix", &AMGLevelType::SetCoarsenMatrix)
-//    .def("ComputeCoarsenMatrix", &AMGLevelType::ComputeCoarsenMatrix)
-    .def("GetCoarsenMatrix", &AMGLevelType::GetCoarsenMatrix)
-    ;
-
-    class_<GMGLevelType, GMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
-    ( "GMGLevel", init<ModelPart::Pointer>())
-    .def(init<ModelPart::Pointer, LinearSolverType::Pointer, LinearSolverType::Pointer >())
-    .def(self_ns::str(self))
     ;
 }
 

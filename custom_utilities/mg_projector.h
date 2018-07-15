@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 14/07/2018 $
-//   Revision:            $Revision: 1.1 $
+//   Date:                $Date: 15/7/2018 $
+//   Revision:            $Revision: 1.0 $
 //
 //
 
 
-#if !defined(KRATOS_GMG_LEVEL_H_INCLUDED )
-#define  KRATOS_GMG_LEVEL_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MG_PROJECTOR_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_MG_PROJECTOR_H_INCLUDED
 
 
 
@@ -62,7 +62,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "custom_utilities/mg_level.h"
+
 
 namespace Kratos
 {
@@ -86,51 +86,41 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-template<class TSparseSpaceType, class TDenseSpaceType>
-class GMGLevel : public MGLevel<TSparseSpaceType, TDenseSpaceType>
+/**
+ * Abstract class for prolongator and restrictor
+ */
+template<class TSpaceType>
+class MGProjector
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of GMGLevel
-    KRATOS_CLASS_POINTER_DEFINITION(GMGLevel);
+    /// Pointer definition of MGProjector
+    KRATOS_CLASS_POINTER_DEFINITION(MGProjector);
 
-    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> BaseType;
+    typedef typename TSpaceType::MatrixType MatrixType;
 
-    typedef typename BaseType::SparseMatrixType SparseMatrixType;
+    typedef typename TSpaceType::MatrixPointerType MatrixPointerType;
 
-    typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
+    typedef typename TSpaceType::VectorType VectorType;
 
-    typedef typename BaseType::VectorType VectorType;
-
-    typedef typename BaseType::LinearSolverPointerType LinearSolverPointerType;
-
-    typedef typename BaseType::SizeType SizeType;
+    typedef typename TSpaceType::VectorPointerType VectorPointerType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    GMGLevel(ModelPart::Pointer pModelPart) : BaseType(), mpModelPart(pModelPart)
-    {
-        this->Initialize();
-    }
-
-    GMGLevel(ModelPart::Pointer pModelPart, LinearSolverPointerType pPreSmoother, LinearSolverPointerType pPostSmoother)
-    : BaseType(pPreSmoother, pPostSmoother), mpModelPart(pModelPart)
-    {
-        this->Initialize();
-    }
-
-    /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
-    GMGLevel(const GMGLevel& rOther)
-    : BaseType(rOther), mpA(rOther.mpA), mpModelPart(rOther.mpModelPart)
+    MGProjector()
     {}
 
     /// Destructor.
-    virtual ~GMGLevel()
+    virtual ~MGProjector()
+    {}
+
+    /// Copy constructor
+    MGProjector(const MGProjector& rOther)
     {}
 
 
@@ -139,11 +129,8 @@ public:
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    GMGLevel& operator= (const GMGLevel& rOther)
+    MGProjector& operator= (const MGProjector& rOther)
     {
-        BaseType::operator=(rOther);
-        mpA = rOther.mpA;
-        mpModelPart = rOther.mpModelPart;
         return *this;
     }
 
@@ -151,18 +138,9 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void ApplyRestriction(VectorType& rX, VectorType& rY) const
+    virtual void Apply(VectorType& rX, VectorType& rY) const
     {
-        std::stringstream ss;
-        ss << "The restriction operator has not been set for " << Info();
-        KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
-    }
-
-    virtual void ApplyProlongation(VectorType& rX, VectorType& rY) const
-    {
-        std::stringstream ss;
-        ss << "The prolongation operator has not been set for " << Info();
-        KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
     }
 
     ///@}
@@ -174,20 +152,6 @@ public:
     ///@name Inquiry
     ///@{
 
-    SparseMatrixPointerType GetCoarsenMatrix() const
-    {
-        return mpA;
-    }
-
-    ModelPart::Pointer GetModelPart() const
-    {
-        return mpModelPart;
-    }
-
-    virtual SizeType GetCoarseSize() const
-    {
-        return TSparseSpaceType::Size1(*mpA);
-    }
 
     ///@}
     ///@name Input and output
@@ -197,7 +161,7 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "GMG " << BaseType::Info();
+        ss << "MGProjector";
         return ss.str();
     }
 
@@ -268,8 +232,6 @@ private:
     ///@name Member Variables
     ///@{
 
-    SparseMatrixPointerType mpA;
-    ModelPart::Pointer mpModelPart;
 
     ///@}
     ///@name Private Operators
@@ -279,24 +241,6 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-
-
-    void Initialize()
-    {
-        if(mpA == NULL)
-        {
-            SparseMatrixPointerType pNewA = SparseMatrixPointerType(new SparseMatrixType(0, 0));
-            mpA.swap(pNewA);
-        }
-
-        if(mpModelPart == NULL)
-        {
-            std::stringstream ss;
-            ss << "model_part gmg level " << BaseType::LevelDepth();
-            ModelPart::Pointer pNewModelPart = ModelPart::Pointer(new ModelPart(ss.str()));
-            mpModelPart.swap(pNewModelPart);
-        }
-    }
 
 
     ///@}
@@ -330,15 +274,15 @@ private:
 
 
 /// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, GMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSpaceType>
+inline std::istream& operator >> (std::istream& IStream, MGProjector<TSpaceType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const GMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSpaceType>
+inline std::ostream& operator << (std::ostream& rOStream, const MGProjector<TSpaceType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -351,5 +295,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const GMGLevel<TSparse
 
 } // namespace Kratos.
 
-#endif // KRATOS_AMG_LEVEL_H_INCLUDED  defined
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_PROJECTOR_H_INCLUDED  defined
 

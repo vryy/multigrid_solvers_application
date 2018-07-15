@@ -62,7 +62,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "includes/define.h"
 #include "utilities/timer.h"
 #include "solving_strategies/builder_and_solvers/builder_and_solver.h"
-#include "custom_utilities/gmg_level.h"
+#include "custom_utilities/mg_level.h"
 
 
 namespace Kratos
@@ -140,7 +140,7 @@ public:
 
 //    typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
 
-    typedef GMGLevel<TSparseSpaceType, TDenseSpaceType> GMGLevelType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType> LinearSolverType;
 
@@ -169,14 +169,15 @@ public:
     /*@{ */
 
 
-    void ComputeCoarsenMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
+    /// Compute the coarse matrix on the multigrid level of GMG. The model_part is required to compute the coarse matrix, which is sparse.
+    void ComputeCoarseMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
         typename SchemeType::Pointer pScheme,
-        typename GMGLevelType::Pointer pGMGLevel) const
+        ModelPart::Pointer pModelPart,
+        typename LevelType::Pointer pLevel) const
     {
-        SparseMatrixPointerType pA = pGMGLevel->GetCoarsenMatrix();
-        ModelPart::Pointer pModelPart = pGMGLevel->GetModelPart();
+        SparseMatrixPointerType pA = pLevel->GetCoarseMatrix();
 
-        VectorType dummy(pA->size1());
+        VectorType dummy;
         pBuilderAndSolver->Build(pScheme, *pModelPart, *pA, dummy);
     }
 

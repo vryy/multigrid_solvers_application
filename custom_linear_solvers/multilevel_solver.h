@@ -65,7 +65,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "includes/define.h"
 #include "linear_solvers/linear_solver.h"
 #include "utilities/openmp_utils.h"
-#include "custom_utilities/amg_level.h"
+#include "custom_utilities/mg_level.h"
 
 
 namespace Kratos
@@ -127,7 +127,7 @@ public:
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
 
-    typedef AMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
     typedef typename BaseType::Pointer LinearSolverPointerType;
 
@@ -321,7 +321,7 @@ public:
             {
 //                mpCoarseSolver->Solve(rA, rX, rB);
 
-                SparseMatrixPointerType A = GetLevel(0).GetCoarsenMatrix();
+                SparseMatrixPointerType A = GetLevel(0).GetCoarseMatrix();
 
                 mpCoarseSolver->Solve(*A, rX, rB);
 
@@ -431,15 +431,23 @@ public:
     ///@name Access
     ///@{
 
+    /// Add the new level to the multigrid hierarchy. Use CreateLevel() for more reliable and cleaner code.
     //this function is kept to be compatible with python; use CreateLevel to avoid copying the memory
-    void AddLevel(LevelType& level)
+    void AddLevel(typename LevelType::Pointer plevel)
     {
 //        KRATOS_WATCH(&level);
-        if(GetNumberOfLevels() < mMaxLevels)
+        if(this->GetNumberOfLevels() < mMaxLevels)
         {
-            level.SetLevelDepth(mLevels.size());
-            mLevels.push_back(level); //make a copy of level and push_back
-//            KRATOS_WATCH(&mLevels.back());
+            if(plevel->LevelDepth() == this->GetNumberOfLevels())
+            {
+                mLevels.push_back(plevel);
+            }
+            else
+            {
+                std::stringstream buffer;
+                buffer << "The input level has an incompatible level depth" << std::endl;
+                KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
+            }
         }
         else
         {
@@ -447,23 +455,31 @@ public:
             buffer << "The maximum number of levels is " << mMaxLevels << std::endl;
             KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
         }
-
-//        KRATOS_WATCH(level);
-//        KRATOS_WATCH(level.GetCoarsenMatrix());
-//        KRATOS_WATCH(*(level.GetCoarsenMatrix()));
-//
-//        KRATOS_WATCH(mLevels[0]);
-//        KRATOS_WATCH(mLevels[0].GetCoarsenMatrix());
-//        KRATOS_WATCH(*(mLevels[0].GetCoarsenMatrix()));
     }
 
+    /// Set a level at a specific depth
+    void SetLevel(typename LevelType::Pointer plevel)
+    {
+//        KRATOS_WATCH(&level);
+        if(plevel->LevelDepth() < this->GetNumberOfLevels())
+        {
+            mLevels[plevel->LevelDepth()] = plevel;
+        }
+        else
+        {
+            std::stringstream buffer;
+            buffer << "The input level has an exceeded level depth" << std::endl;
+            KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
+        }
+    }
+
+    /// Create a new level in the multigrid hierarchy. The level starts with level depth 0.
     void CreateLevel()
     {
-        if(GetNumberOfLevels() < mMaxLevels)
+        if(this->GetNumberOfLevels() < mMaxLevels)
         {
-            LevelType level;
-            level.SetLevelDepth(mLevels.size());
-            mLevels.push_back(level); //make a copy of level and push_back
+            typename LevelType::Pointer plevel = typename LevelType::Pointer(new LevelType(mLevels.size()));
+            mLevels.push_back(plevel);
         }
         else
         {
@@ -475,12 +491,22 @@ public:
 
     LevelType& GetLevel(IndexType idx)
     {
-        return mLevels[idx];
+        return *(mLevels[idx]);
+    }
+
+    const LevelType& GetLevel(IndexType idx) const
+    {
+        return *(mLevels[idx]);
     }
 
     LevelType& GetLastLevel()
     {
-        return mLevels.back();
+        return *(mLevels.back());
+    }
+
+    const LevelType& GetLastLevel() const
+    {
+        return *(mLevels.back());
     }
 
     void SetCoarseSolver(LinearSolverPointerType pCoarseSolver)
@@ -643,7 +669,7 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
-    std::vector<LevelType> mLevels;
+    std::vector<typename LevelType::Pointer> mLevels;
     LinearSolverPointerType mpCoarseSolver;
     std::string mCycle;
 
@@ -671,7 +697,7 @@ private:
 
     void RecursiveSolve(const IndexType lvl, VectorType& rX, VectorType& rB, const std::string Cycle)
     {
-        SparseMatrixPointerType rA = GetLevel(lvl).GetCoarsenMatrix();
+        SparseMatrixPointerType rA = GetLevel(lvl).GetCoarseMatrix();
 
         // Pre smoothing
         GetLevel(lvl).ApplyPreSmoother(*rA, rX, rB);
@@ -697,7 +723,7 @@ private:
         // solve
         if(lvl == GetNumberOfLevels() - 2)
         {
-            SparseMatrixPointerType cA = GetLevel(lvl+1).GetCoarsenMatrix();
+            SparseMatrixPointerType cA = GetLevel(lvl+1).GetCoarseMatrix();
             mpCoarseSolver->Solve(*cA, cX, cB);
         }
         else

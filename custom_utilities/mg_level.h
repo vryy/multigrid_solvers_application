@@ -63,6 +63,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "linear_solvers/linear_solver.h"
+#include "custom_utilities/mg_projector.h"
 
 
 namespace Kratos
@@ -116,6 +117,10 @@ public:
 
     typedef typename LinearSolverType::Pointer LinearSolverPointerType;
 
+    typedef MGProjector<TSparseSpaceType> ProjectorType;
+
+    typedef typename ProjectorType::Pointer ProjectorPointerType;
+
     typedef std::size_t  SizeType;
 
     typedef unsigned int  IndexType;
@@ -125,24 +130,25 @@ public:
     ///@{
 
     /// Default constructor.
-    MGLevel() : mLevelDepth(0)
-    {}
-
-    MGLevel(LinearSolverPointerType pPreSmoother, LinearSolverPointerType pPostSmoother)
-    : mLevelDepth(0)
-    , mpPreSmoother(pPreSmoother)
-    , mpPostSmoother(pPostSmoother)
-    {}
+    MGLevel(const IndexType& lvl) : mLevelDepth(lvl)
+    {
+        this->Initialize();
+        KRATOS_WATCH(mpA)
+    }
 
     /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
-    MGLevel(const MGLevel& Other)
-    : mLevelDepth(Other.mLevelDepth)
-    , mpPreSmoother(Other.mpPreSmoother)
-    , mpPostSmoother(Other.mpPostSmoother)
+    MGLevel(const MGLevel& rOther)
+    : mLevelDepth(rOther.mLevelDepth)
+    , mpPreSmoother(rOther.mpPreSmoother)
+    , mpPostSmoother(rOther.mpPostSmoother)
+    , mpRestrictor(rOther.mpRestrictor)
+    , mpProlongator(rOther.mpProlongator)
+    // , mpA(rOther.mpA)
     {}
 
     /// Destructor.
-    virtual ~MGLevel() {}
+    virtual ~MGLevel()
+    {}
 
 
     ///@}
@@ -152,9 +158,12 @@ public:
     /// Assignment operator. It's also important like the Copy constructor
     MGLevel& operator= (const MGLevel& rOther)
     {
+        mLevelDepth = rOther.mLevelDepth;
         mpPreSmoother = rOther.mpPreSmoother;
         mpPostSmoother = rOther.mpPostSmoother;
-        mLevelDepth = rOther.mLevelDepth;
+        mpRestrictor = rOther.mpRestrictor;
+        mpProlongator = rOther.mpProlongator;
+        // mpA = rOther.mpA;
         return *this;
     }
 
@@ -164,22 +173,46 @@ public:
 
     virtual void ApplyPreSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
     {
+        if(mpPreSmoother == NULL)
+        {
+            std::stringstream ss;
+            ss << "The pre-smoother has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
         mpPreSmoother->Solve(rA, rX, rB);
     }
 
     virtual void ApplyPostSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
     {
+        if(mpPostSmoother == NULL)
+        {
+            std::stringstream ss;
+            ss << "The post-smoother has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
         mpPostSmoother->Solve(rA, rX, rB);
     }
 
     virtual void ApplyRestriction(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        if(mpRestrictor == NULL)
+        {
+            std::stringstream ss;
+            ss << "The restriction operator has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
+        mpRestrictor->Apply(rX, rY);
     }
 
     virtual void ApplyProlongation(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        if(mpProlongator == NULL)
+        {
+            std::stringstream ss;
+            ss << "The prolongation operator has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
+        mpProlongator->Apply(rX, rY);
     }
 
     ///@}
@@ -196,6 +229,16 @@ public:
         mpPostSmoother = pPostSmoother;
     }
 
+    void SetRestrictionOperator(ProjectorPointerType pProjector)
+    {
+        mpRestrictor = pProjector;
+    }
+
+    void SetProlongationOperator(ProjectorPointerType pProjector)
+    {
+        mpProlongator = pProjector;
+    }
+
     IndexType LevelDepth() const
     {
         return mLevelDepth;
@@ -206,13 +249,25 @@ public:
         mLevelDepth = lvl;
     }
 
+    // this is kept to make compatible with python; should not use it to avoid copying memory
+    void SetCoarseMatrix(SparseMatrixType& A)
+    {
+        mpA = boost::make_shared<SparseMatrixType>(A);
+    }
+
+    SparseMatrixPointerType GetCoarseMatrix() const
+    {
+        return mpA;
+    }
+
     ///@}
     ///@name Inquiry
     ///@{
 
+    /// Get the size of the coarse matrix
     virtual SizeType GetCoarseSize() const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        return TSparseSpaceType::Size1(*mpA);
     }
 
     ///@}
@@ -223,9 +278,12 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "Multigrid Level depth: " << mLevelDepth << std::endl;
-        ss << "  PreSmoother: " << (*mpPreSmoother).Info() << std::endl;
-        ss << "  PostSmoother: " << (*mpPostSmoother).Info();
+        ss << "Multigrid Level depth: " << LevelDepth() << std::endl;
+        ss << "  PreSmoother: " << mpPreSmoother->Info() << std::endl;
+        ss << "  PostSmoother: " << mpPostSmoother->Info() << std::endl;
+        ss << "  Restrictor: " << mpRestrictor->Info() << std::endl;
+        ss << "  Prolongator: " << mpProlongator->Info() << std::endl;
+        ss << "  Coarse matrix size: " << this->GetCoarseSize();
         return ss.str();
     }
 
@@ -299,7 +357,12 @@ private:
     LinearSolverPointerType mpPreSmoother;
     LinearSolverPointerType mpPostSmoother;
 
+    ProjectorPointerType mpProlongator;
+    ProjectorPointerType mpRestrictor;
+
     IndexType mLevelDepth;
+
+    SparseMatrixPointerType mpA;
 
     ///@}
     ///@name Private Operators
@@ -310,6 +373,14 @@ private:
     ///@name Private Operations
     ///@{
 
+    void Initialize()
+    {
+        if(mpA == NULL)
+        {
+            SparseMatrixPointerType pNewA = SparseMatrixPointerType(new SparseMatrixType(0, 0));
+            mpA.swap(pNewA);
+        }
+    }
 
     ///@}
     ///@name Private  Access

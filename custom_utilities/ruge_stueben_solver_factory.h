@@ -65,7 +65,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "linear_solvers/linear_solver.h"
-#include "custom_utilities/amg_level.h"
+#include "custom_utilities/mg_level.h"
+#include "custom_utilities/matrix_based_mg_projector.h"
 #include "custom_utilities/amg_utils.h"
 #include "custom_utilities/parameter_list.h"
 #include "custom_utilities/multilevel_solver_factory.h"
@@ -123,13 +124,17 @@ public:
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
 
-    typedef AMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
     typedef typename boost::shared_ptr<LevelType> LevelPointerType;
 
     typedef std::vector<LevelPointerType> LevelContainerType;
 
     typedef typename LevelContainerType::iterator LevelIteratorType;
+
+    typedef MGProjector<TSparseSpaceType> MGProjectorType;
+
+    typedef MatrixBasedMGProjector<TSparseSpaceType> MatrixBasedMGProjectorType;
 
     typedef Kratos::ParameterList<std::string> ParameterListType;
 
@@ -219,10 +224,11 @@ public:
         // set up level 0
         solver.CreateLevel();
         LevelType& first_level = solver.GetLastLevel();
-        SparseMatrixPointerType pA = first_level.GetCoarsenMatrix();
+        SparseMatrixPointerType pA = first_level.GetCoarseMatrix();
         TSparseSpaceType::Resize(*pA, last_size, last_size);
         TSparseSpaceType::Copy(rA, *pA);
 
+        // create other levels until the maximum coarse size is reached
         while(solver.GetNumberOfLevels() < max_levels && last_size > max_coarse)
         {
             LevelType& current_level = solver.GetLastLevel();
@@ -232,7 +238,7 @@ public:
             std::cout << "> generating level " << current_level.LevelDepth() << std::endl;
             #endif
 
-            SparseMatrixPointerType A = current_level.GetCoarsenMatrix();
+            SparseMatrixPointerType A = current_level.GetCoarseMatrix();
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << "   retrieved initial matrix for level " << current_level.LevelDepth() << std::endl;
@@ -323,8 +329,11 @@ public:
             std::cout << "   computing prolongation operator by direct interpolation";
             #endif
 
-            SparseMatrixPointerType P = current_level.GetProlongationOperator();
+            typename MatrixBasedMGProjectorType::Pointer pPrologator
+                = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+            SparseMatrixPointerType P = pPrologator->GetOperator();
             AMGUtilsType::DirectInterpolation(*P, *A, C, splitting); // P will be resized here
+            current_level.SetProlongationOperator(pPrologator);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " completed" << std::endl;
@@ -337,7 +346,9 @@ public:
 
             SizeType AfterCoarsenSize  = TSparseSpaceType::Size2(*P);
             SizeType BeforeCoarsenSize = TSparseSpaceType::Size1(*P);
-            SparseMatrixPointerType R = current_level.GetRestrictionOperator();
+            typename MatrixBasedMGProjectorType::Pointer pRestrictor
+                = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+            SparseMatrixPointerType R = pRestrictor->GetOperator();
             TSparseSpaceType::Resize(*R, AfterCoarsenSize, BeforeCoarsenSize);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
@@ -346,6 +357,8 @@ public:
             #endif
 
             AMGUtilsType::Transpose(*P, *R);
+
+            current_level.SetRestrictionOperator(pRestrictor);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " completed" << std::endl;
@@ -366,7 +379,7 @@ public:
             LevelType& last_level = solver.GetLastLevel();
             SparseMatrixType tmp(BeforeCoarsenSize, AfterCoarsenSize);
             AMGUtilsType::Mult(*A, *P, tmp);
-            SparseMatrixPointerType Ac = last_level.GetCoarsenMatrix();
+            SparseMatrixPointerType Ac = last_level.GetCoarseMatrix();
             TSparseSpaceType::Resize(*Ac, AfterCoarsenSize, AfterCoarsenSize);
             AMGUtilsType::Mult(*R, tmp, *Ac);
 

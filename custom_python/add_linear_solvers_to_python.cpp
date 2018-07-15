@@ -25,7 +25,7 @@
 #include "custom_linear_solvers/jacobi_iterative_solver.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_utilities/ruge_stueben_solver_factory.h"
-#include "custom_utilities/smoothed_aggregation_solver_factory.h"
+// #include "custom_utilities/smoothed_aggregation_solver_factory.h"
 
 
 namespace Kratos
