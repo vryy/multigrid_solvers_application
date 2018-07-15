@@ -31,6 +31,36 @@
 namespace Kratos
 {
 
+template<class TParameterListType>
+void SetDoubleValue(TParameterListType& dummy, const typename TParameterListType::KeyType& name, double value)
+{
+    dummy.set(name, value);
+}
+
+template<class TParameterListType>
+void SetIntValue(TParameterListType& dummy, const typename TParameterListType::KeyType& name, int value)
+{
+    dummy.set(name, value);
+}
+
+template<class TParameterListType>
+void SetStringValue(TParameterListType& dummy, const typename TParameterListType::KeyType& name, const std::string value)
+{
+    dummy.set(name, value);
+}
+
+template<class TParameterListType>
+void SetBoolValue(TParameterListType& dummy, const typename TParameterListType::KeyType& name, bool value)
+{
+    dummy.set(name, value);
+}
+
+template<class TParameterListType>
+TParameterListType& SubList(TParameterListType& dummy, const typename TParameterListType::KeyType& name)
+{
+    return dummy.sublist(name);
+}
+
 namespace Python
 {
 
@@ -50,7 +80,23 @@ namespace Python
         typedef MultilevelSolver<SparseSpaceType, LocalSpaceType> MultilevelSolverType;
         typedef MultilevelPreconditioner<SparseSpaceType, LocalSpaceType> MultilevelPreconditionerType;
 
+        typedef MultilevelSolverFactory<SparseSpaceType, LocalSpaceType> MultilevelSolverFactoryType;
+        typedef MultilevelSolverFactoryType::ParameterListType ParameterListType;
+        typedef RugeStuebenSolverFactory<SparseSpaceType, LocalSpaceType> RugeStuebenSolverFactoryType;
+//        typedef SmoothedAggregationSolverFactory<SparseSpaceType, LocalSpaceType> SmoothedAggregationSolverFactoryType;
+
         using namespace boost::python;
+
+        //***************************************************************************
+        //parameter list
+        //***************************************************************************
+        class_<ParameterListType, ParameterListType::Pointer, boost::noncopyable>("MGParameterList", init<>())
+        .def("SetDoubleValue", SetDoubleValue<ParameterListType>)
+        .def("SetIntValue", SetIntValue<ParameterListType>)
+        .def("SetStringValue", SetStringValue<ParameterListType>)
+        .def("SetBoolValue", SetBoolValue<ParameterListType>)
+        .def("SubList", SubList<ParameterListType>, return_internal_reference<>())
+        ;
 
         //***************************************************************************
         //linear solvers
@@ -91,21 +137,18 @@ namespace Python
         .def("SetFactory", &MultilevelSolverType::SetFactory)
         ;
 
-        typedef MultilevelSolverFactory<SparseSpaceType, LocalSpaceType> MultilevelSolverFactoryType;
         class_<MultilevelSolverFactoryType, MultilevelSolverFactoryType::Pointer, boost::noncopyable >
-        ( "MultilevelSolverFactory", init<MultilevelSolverFactoryType::ParameterListType& >())
+        ( "MultilevelSolverFactory", init<ParameterListType& >())
         .def(self_ns::str(self))
         .def("GenerateMultilevelSolver", &MultilevelSolverFactoryType::GenerateMultilevelSolver)
         ;
 
-        typedef RugeStuebenSolverFactory<SparseSpaceType, LocalSpaceType> RugeStuebenSolverFactoryType;
         class_<RugeStuebenSolverFactoryType, RugeStuebenSolverFactoryType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
-        ( "RugeStuebenSolverFactory", init<MultilevelSolverFactoryType::ParameterListType& >())
+        ( "RugeStuebenSolverFactory", init<ParameterListType& >())
         ;
 
-//        typedef SmoothedAggregationSolverFactory<SparseSpaceType, LocalSpaceType> SmoothedAggregationSolverFactoryType;
 //        class_<SmoothedAggregationSolverFactoryType, SmoothedAggregationSolverFactoryType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
-//        ( "SmoothedAggregationSolverFactory", init<MultilevelSolverFactoryType::ParameterListType& >())
+//        ( "SmoothedAggregationSolverFactory", init<ParameterListType& >())
 //        ;
 
         //****************************************************************************************************

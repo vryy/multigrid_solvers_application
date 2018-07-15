@@ -54,8 +54,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "spaces/ublas_space.h"
-#include "custom_utilities/amg_utils.h"
 #include "custom_utilities/amg_level.h"
+#include "custom_utilities/gmg_level.h"
+#include "custom_utilities/amg_utils.h"
+#include "custom_utilities/gmg_utils.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_python/add_custom_utilities_to_python.h"
 
@@ -71,6 +73,8 @@ typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
 typedef AMGUtils<SparseSpaceType> AMGUtilsType;
 
+typedef GMGUtils<SparseSpaceType, LocalSpaceType> GMGUtilsType;
+
 typedef typename AMGUtilsType::SparseMatrixType SparseMatrixType;
 
 typedef typename AMGUtilsType::SparseMatrixPointerType SparseMatrixPointerType;
@@ -81,14 +85,18 @@ typedef typename AMGUtilsType::IndexVectorType IndexVectorType;
 
 typedef AMGUtilsType::SizeType SizeType;
 
+typedef MGLevel<SparseSpaceType, LocalSpaceType> MGLevelType;
+
 typedef AMGLevel<SparseSpaceType, LocalSpaceType> AMGLevelType;
+
+typedef GMGLevel<SparseSpaceType, LocalSpaceType> GMGLevelType;
 
 typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 
-//SparseMatrixPointerType Poisson(AMGUtilsType& dummy, const SizeType m, const SizeType n)
-//{
-//    return dummy.Poisson(m, n);
-//}
+SparseMatrixPointerType Poisson(AMGUtilsType& dummy, const SizeType m, const SizeType n)
+{
+    return dummy.Poisson(m, n);
+}
 
 SparseMatrixPointerType ClassicalStrengthOfConnection(AMGUtilsType& dummy, const SparseMatrixType& A, const double theta)
 {
@@ -178,7 +186,7 @@ void MultigridSolversApp_AddUtilitiesToPython()
 
     class_<AMGUtilsType, AMGUtilsType::Pointer, boost::noncopyable>("AMGUtils", init<>())
 //    .def("deref", &AMGUtilsType::deref)
-//    .def("Poisson", Poisson)
+    .def("Poisson", Poisson)
     .def("ClassicalStrengthOfConnection", ClassicalStrengthOfConnection)
     .def("SymmetricStrengthOfConnection", SymmetricStrengthOfConnection)
     .def("RS", RS)
@@ -191,23 +199,41 @@ void MultigridSolversApp_AddUtilitiesToPython()
     .def("Mult", Mult)
     ;
 
+    class_<GMGUtilsType, GMGUtilsType::Pointer, boost::noncopyable>("GMGUtils", init<>())
+    .def("ComputeCoarsenMatrix", &GMGUtilsType::ComputeCoarsenMatrix)
+    ;
+
 //    //****************************************************************************************************
-//    //multilevel factory and amglevel
+//    // level definition
 //    //****************************************************************************************************
 
-    class_<AMGLevelType, AMGLevelType::Pointer, boost::noncopyable >( "AMGLevel", init<LinearSolverType::Pointer, LinearSolverType::Pointer >())
+    class_<MGLevelType, MGLevelType::Pointer, boost::noncopyable>
+    ( "MGLevel", init<>())
     .def(self_ns::str(self))
-    .def("ApplyPreSmoother", &AMGLevelType::ApplyPreSmoother)
-    .def("ApplyPostSmoother", &AMGLevelType::ApplyPostSmoother)
-    .def("ApplyRestriction", &AMGLevelType::ApplyRestriction)
-    .def("ApplyProlongation", &AMGLevelType::ApplyProlongation)
-    .def("SetPreSmoother", &AMGLevelType::SetPreSmoother)
-    .def("SetPostSmoother", &AMGLevelType::SetPostSmoother)
+    .def(init<LinearSolverType::Pointer, LinearSolverType::Pointer>())
+    .def("ApplyPreSmoother", &MGLevelType::ApplyPreSmoother)
+    .def("ApplyPostSmoother", &MGLevelType::ApplyPostSmoother)
+    .def("ApplyRestriction", &MGLevelType::ApplyRestriction)
+    .def("ApplyProlongation", &MGLevelType::ApplyProlongation)
+    .def("SetPreSmoother", &MGLevelType::SetPreSmoother)
+    .def("SetPostSmoother", &MGLevelType::SetPostSmoother)
+    ;
+
+    class_<AMGLevelType, AMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
+    ( "AMGLevel", init<>())
+    .def(self_ns::str(self))
+    .def(init<LinearSolverType::Pointer, LinearSolverType::Pointer>())
     .def("SetRestrictionOperator", &AMGLevelType::SetRestrictionOperator)
     .def("SetProlongationOperator", &AMGLevelType::SetProlongationOperator)
     .def("SetCoarsenMatrix", &AMGLevelType::SetCoarsenMatrix)
 //    .def("ComputeCoarsenMatrix", &AMGLevelType::ComputeCoarsenMatrix)
     .def("GetCoarsenMatrix", &AMGLevelType::GetCoarsenMatrix)
+    ;
+
+    class_<GMGLevelType, GMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
+    ( "GMGLevel", init<ModelPart::Pointer>())
+    .def(init<ModelPart::Pointer, LinearSolverType::Pointer, LinearSolverType::Pointer >())
+    .def(self_ns::str(self))
     ;
 }
 

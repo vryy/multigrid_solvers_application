@@ -63,8 +63,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "linear_solvers/reorderer.h"
 #include "linear_solvers/linear_solver.h"
+#include "utilities/openmp_utils.h"
 #include "custom_utilities/amg_level.h"
 
 
@@ -273,6 +273,8 @@ public:
     */
     virtual bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
     {
+        double start = OpenMPUtils::GetCurrentTime();
+
         if(this->IsNotConsistent(rA, rX, rB))
             return false;
 
@@ -292,10 +294,16 @@ public:
             std::cout << Info();
         }
 
+        double construct_level_time = OpenMPUtils::GetCurrentTime() - start;
+        std::cout << "Time to generate the multigrid hierarchy: " << construct_level_time << std::endl;
+        start = OpenMPUtils::GetCurrentTime();
+
         mBNorm = TSparseSpaceType::TwoNorm(rB);
-        KRATOS_WATCH(mBNorm);
-        KRATOS_WATCH(mTolerance);
+        std::cout << "Start solving, ||B|| = " << mBNorm << ", Tolerance = " << mTolerance << std::endl;
 //        KRATOS_WATCH(&rA);
+
+        if (mpCoarseSolver == NULL)
+            KRATOS_THROW_ERROR(std::logic_error, "The coarse solver is not set", "")
 
 //        KRATOS_WATCH(*mpCoarseSolver);
 //        KRATOS_WATCH(GetNumberOfLevels());
@@ -334,9 +342,18 @@ public:
 
             mIterationsNumber++;
 
-            std::cout << "iteration number = " << mIterationsNumber << ", residual = " << mResidualNorm/mBNorm << std::endl;
+            std::cout << " iteration " << mIterationsNumber
+                      << ", residual: rel = " << mResidualNorm/mBNorm
+                      << ", abs = " << mResidualNorm
+                      << std::endl;
         }
         while(IterationNeeded());
+
+        double solve_time = OpenMPUtils::GetCurrentTime() - start;
+
+        std::cout << "#### CONSTRUCT TIME: " << construct_level_time << " ####" << std::endl;
+        std::cout << "#### SOLVE TIME: " << solve_time << " ####" << std::endl;
+        std::cout << "#### SOLVER TIME: " << construct_level_time + solve_time << " ####" << std::endl;
 
         return IsConverged();
     }
@@ -523,6 +540,7 @@ public:
     virtual std::string Info() const
     {
         std::stringstream buffer;
+        buffer << "<<<<<<<" << std::endl;
         buffer << "Multilevel solver with " << mCycle << " cycle(s)";
         buffer << ", number of level(s) = " << mLevels.size() << std::endl;
         for(SizeType i = 0; i < mLevels.size(); i++)
@@ -532,6 +550,7 @@ public:
             buffer << mLevels[i];
             buffer << std::endl;
         }
+        buffer << ">>>>>>>>" << std::endl;
         return  buffer.str();
     }
 
@@ -550,6 +569,7 @@ public:
 //            (*level).PrintData(rOStream);
 //        }
 
+        rOStream << " Summary:" << std::endl;
         if (mBNorm == 0.00)
             if (mResidualNorm != 0.00)
                 rOStream << "    Residual ratio : infinite" << std::endl;
@@ -567,7 +587,7 @@ public:
         rOStream << "    Number of iterations : " << mIterationsNumber << std::endl;
         rOStream << "    Maximum number of iterations : " << mMaxIterationsNumber;
         if (mMaxIterationsNumber == mIterationsNumber)
-            rOStream << std::endl << "!!!!!!!!!!!! MULTILEVEL SOLVER NON CONVERGED !!!!!!!!!!!!" << mMaxIterationsNumber;
+            rOStream << std::endl << "!!!!!!!!!!!! MULTILEVEL SOLVER NOT CONVERGED WITHIN " << mMaxIterationsNumber << " ITERATIONS!!!!!!!!!!!!";
     }
 
     ///@}
@@ -666,7 +686,7 @@ private:
 
         TSparseSpaceType::InplaceMult(r, -1.00); // r = b - A*x
 
-        const SizeType csize = GetLevel(lvl).GetCoarsenSize();
+        const SizeType csize = GetLevel(lvl).GetCoarseSize();
 //        KRATOS_WATCH(csize);
 
         VectorType cB(csize, 0.00);
@@ -765,7 +785,6 @@ inline std::ostream& operator << (std::ostream& rOStream,
                                   const MultilevelSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>& rThis)
 {
     rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
     rThis.PrintData(rOStream);
 
     return rOStream;

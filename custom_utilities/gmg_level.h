@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 2013 Jan 11 15:06:00 $
+//   Date:                $Date: 14/07/2018 $
 //   Revision:            $Revision: 1.1 $
 //
 //
 
 
-#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED )
-#define  KRATOS_MULTIGRID_SOLVERS_APP_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED
+#if !defined(KRATOS_GMG_LEVEL_H_INCLUDED )
+#define  KRATOS_GMG_LEVEL_H_INCLUDED
 
 
 
@@ -58,17 +58,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 // External includes
-//#include "external_includes/pyamg/relaxation.h"
-//#include "external_includes/pyamg/ruge_stuben.h"
 
 
 // Project includes
 #include "includes/define.h"
-#include "linear_solvers/linear_solver.h"
-#include "custom_utilities/amg_level.h"
-#include "custom_utilities/amg_utils.h"
-#include "custom_utilities/parameter_list.h"
-#include "custom_linear_solvers/multilevel_solver.h"
+#include "custom_utilities/mg_level.h"
 
 namespace Kratos
 {
@@ -93,59 +87,82 @@ namespace Kratos
 ///@{
 
 template<class TSparseSpaceType, class TDenseSpaceType>
-class MultilevelSolverFactory
+class GMGLevel : public MGLevel<TSparseSpaceType, TDenseSpaceType>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MultilevelSolverFactory
-    KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolverFactory);
+    /// Pointer definition of GMGLevel
+    KRATOS_CLASS_POINTER_DEFINITION(GMGLevel);
 
-    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef ParameterList<std::string> ParameterListType;
+    typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
+
+    typedef typename BaseType::VectorType VectorType;
+
+    typedef typename BaseType::LinearSolverPointerType LinearSolverPointerType;
+
+    typedef typename BaseType::SizeType SizeType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    MultilevelSolverFactory(ParameterListType& amg_parameter_list)
-    : mamg_parameter_list(amg_parameter_list)
-    {}
+    GMGLevel(ModelPart::Pointer pModelPart) : BaseType(), mpModelPart(pModelPart)
+    {
+        this->Initialize();
+    }
 
+    GMGLevel(ModelPart::Pointer pModelPart, LinearSolverPointerType pPreSmoother, LinearSolverPointerType pPostSmoother)
+    : BaseType(pPreSmoother, pPostSmoother), mpModelPart(pModelPart)
+    {
+        this->Initialize();
+    }
 
-    /// Copy constructor.
-    MultilevelSolverFactory(const MultilevelSolverFactory& rOther)
-    : mamg_parameter_list(rOther.mamg_parameter_list)
+    /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
+    GMGLevel(const GMGLevel& rOther)
+    : BaseType(rOther), mpA(rOther.mpA), mpModelPart(rOther.mpModelPart)
     {}
 
     /// Destructor.
-    virtual ~MultilevelSolverFactory() {}
+    virtual ~GMGLevel()
+    {}
 
 
     ///@}
     ///@name Operators
     ///@{
 
-    /// Assignment operator.
-    MultilevelSolverFactory& operator=(const MultilevelSolverFactory& rOther)
+    /// Assignment operator. It's also important like the Copy constructor
+    GMGLevel& operator= (const GMGLevel& rOther)
     {
-        mamg_parameter_list = rOther.mamg_parameter_list;
+        BaseType::operator=(rOther);
+        mpA = rOther.mpA;
+        mpModelPart = rOther.mpModelPart;
         return *this;
     }
-
 
     ///@}
     ///@name Operations
     ///@{
 
-    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
+    virtual void ApplyRestriction(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+        std::stringstream ss;
+        ss << "The restriction operator has not been set for " << Info();
+        KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+    }
+
+    virtual void ApplyProlongation(VectorType& rX, VectorType& rY) const
+    {
+        std::stringstream ss;
+        ss << "The prolongation operator has not been set for " << Info();
+        KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
     }
 
     ///@}
@@ -153,12 +170,24 @@ public:
     ///@{
 
 
-
     ///@}
     ///@name Inquiry
     ///@{
 
+    SparseMatrixPointerType GetCoarsenMatrix() const
+    {
+        return mpA;
+    }
 
+    ModelPart::Pointer GetModelPart() const
+    {
+        return mpModelPart;
+    }
+
+    virtual SizeType GetCoarseSize() const
+    {
+        return TSparseSpaceType::Size1(*mpA);
+    }
 
     ///@}
     ///@name Input and output
@@ -167,9 +196,9 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        std::stringstream buffer;
-        buffer << "Multilevel solver factory";
-        return  buffer.str();
+        std::stringstream ss;
+        ss << "GMG " << BaseType::Info();
+        return ss.str();
     }
 
     /// Print information about this object.
@@ -181,7 +210,6 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
-        rOStream << mamg_parameter_list;
     }
 
 
@@ -192,6 +220,7 @@ public:
 
     ///@}
 
+
 protected:
     ///@name Protected static Member Variables
     ///@{
@@ -201,7 +230,6 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-    ParameterListType mamg_parameter_list;
 
     ///@}
     ///@name Protected Operators
@@ -230,37 +258,65 @@ protected:
 
     ///@}
 
+
 private:
     ///@name Static Member Variables
     ///@{
+
 
     ///@}
     ///@name Member Variables
     ///@{
 
+    SparseMatrixPointerType mpA;
+    ModelPart::Pointer mpModelPart;
+
     ///@}
     ///@name Private Operators
     ///@{
+
 
     ///@}
     ///@name Private Operations
     ///@{
 
+
+    void Initialize()
+    {
+        if(mpA == NULL)
+        {
+            SparseMatrixPointerType pNewA = SparseMatrixPointerType(new SparseMatrixType(0, 0));
+            mpA.swap(pNewA);
+        }
+
+        if(mpModelPart == NULL)
+        {
+            std::stringstream ss;
+            ss << "model_part gmg level " << BaseType::LevelDepth();
+            ModelPart::Pointer pNewModelPart = ModelPart::Pointer(new ModelPart(ss.str()));
+            mpModelPart.swap(pNewModelPart);
+        }
+    }
+
+
     ///@}
     ///@name Private  Access
     ///@{
+
 
     ///@}
     ///@name Private Inquiry
     ///@{
 
+
     ///@}
     ///@name Un accessible methods
     ///@{
 
+
     ///@}
 
-}; // Class MultilevelSolverFactory
+};
 
 ///@}
 
@@ -275,14 +331,14 @@ private:
 
 /// input stream function
 template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+inline std::istream& operator >> (std::istream& IStream, GMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
 template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+inline std::ostream& operator << (std::ostream& rOStream, const GMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -293,8 +349,7 @@ inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolver
 ///@}
 
 
-}  // namespace Kratos.
+} // namespace Kratos.
 
-#endif // KRATOS_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED  defined
-
+#endif // KRATOS_AMG_LEVEL_H_INCLUDED  defined
 

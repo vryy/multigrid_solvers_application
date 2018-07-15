@@ -97,6 +97,8 @@ class ParameterList : public Kratos::VectorMap<TKeyType, KratosParameterListAcce
         int operator()(Matrix& m) const { return 9;}
     };
 
+public:
+
     KRATOS_CLASS_POINTER_DEFINITION(ParameterList);
 
     typedef Kratos::VectorMap<TKeyType, KratosParameterListAcceptedType> BaseType;
@@ -114,8 +116,6 @@ class ParameterList : public Kratos::VectorMap<TKeyType, KratosParameterListAcce
     typedef typename BaseType::data_type DataType; //KratosParameterListAcceptedType
 
     typedef Kratos::VectorMap<KeyType, Kratos::ParameterList<TKeyType> > SubListType;
-
-public:
 
     inline ParameterList() : BaseType(), mSubList()
     {}

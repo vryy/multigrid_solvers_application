@@ -62,9 +62,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "linear_solvers/linear_solver.h"
-#include "linear_solvers/reorderer.h"
-#include "includes/ublas_interface.h"
+#include "custom_utilities/mg_level.h"
 
 namespace Kratos
 {
@@ -89,7 +87,7 @@ namespace Kratos
 ///@{
 
 template<class TSparseSpaceType, class TDenseSpaceType>
-class AMGLevel
+class AMGLevel : public MGLevel<TSparseSpaceType, TDenseSpaceType>
 {
 public:
     ///@name Type Definitions
@@ -98,53 +96,42 @@ public:
     /// Pointer definition of AMGLevel
     KRATOS_CLASS_POINTER_DEFINITION(AMGLevel);
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::VectorType VectorType;
+    typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
 
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+    typedef typename BaseType::VectorType VectorType;
 
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    typedef typename BaseType::LinearSolverPointerType LinearSolverPointerType;
 
-    typedef Reorderer<TSparseSpaceType, TDenseSpaceType> ReordererType;
-
-    typedef typename LinearSolver<TSparseSpaceType, TDenseSpaceType, ReordererType>::Pointer LinearSolverPointerType;
-
-    typedef std::size_t  SizeType;
-
-    typedef unsigned int  IndexType;
+    typedef typename BaseType::SizeType SizeType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    AMGLevel() : mLevelDepth(0)
+    AMGLevel() : BaseType()
     {
-        Initialize();
+        this->Initialize();
     }
 
-    AMGLevel(LinearSolverPointerType pPreSmootherSolver, LinearSolverPointerType pPostSmootherSolver) : mLevelDepth(0)
+    AMGLevel(LinearSolverPointerType pPreSmoother, LinearSolverPointerType pPostSmoother)
+    : BaseType(pPreSmoother, pPostSmoother)
     {
-        mpPreSmootherSolver = pPreSmootherSolver;
-        mpPostSmootherSolver = pPostSmootherSolver;
-        Initialize();
+        this->Initialize();
     }
 
     /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
-    AMGLevel(const AMGLevel& Other) : mpPreSmootherSolver(Other.mpPreSmootherSolver),
-                                      mpPostSmootherSolver(Other.mpPostSmootherSolver),
-                                      mLevelDepth(Other.mLevelDepth),
-                                      mpR(Other.mpR),
-                                      mpA(Other.mpA),
-                                      mpP(Other.mpP)
-    {
-    }
+    AMGLevel(const AMGLevel& rOther)
+    : BaseType(rOther), mpR(rOther.mpR), mpA(rOther.mpA), mpP(rOther.mpP)
+    {}
 
     /// Destructor.
-    virtual ~AMGLevel() {}
+    virtual ~AMGLevel()
+    {}
 
 
     ///@}
@@ -152,14 +139,12 @@ public:
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    AMGLevel& operator= (const AMGLevel& Other)
+    AMGLevel& operator= (const AMGLevel& rOther)
     {
-        mpPreSmootherSolver = Other.mpPreSmootherSolver;
-        mpPostSmootherSolver = Other.mpPostSmootherSolver;
-        mLevelDepth = Other.mLevelDepth;
-        mpR = Other.mpR;
-        mpA = Other.mpA;
-        mpP = Other.mpP;
+        BaseType::operator=(rOther);
+        mpR = rOther.mpR;
+        mpA = rOther.mpA;
+        mpP = rOther.mpP;
         return *this;
     }
 
@@ -167,17 +152,7 @@ public:
     ///@name Operations
     ///@{
 
-    void ApplyPreSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
-    {
-        mpPreSmootherSolver->Solve(rA, rX, rB);
-    }
-
-    void ApplyPostSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
-    {
-        mpPostSmootherSolver->Solve(rA, rX, rB);
-    }
-
-    void ApplyRestriction(VectorType& rX, VectorType& rY)
+    virtual void ApplyRestriction(VectorType& rX, VectorType& rY) const
     {
         if(mpR == NULL)
         {
@@ -188,7 +163,7 @@ public:
         TSparseSpaceType::Mult(*mpR, rX, rY);
     }
 
-    void ApplyProlongation(VectorType& rX, VectorType& rY)
+    virtual void ApplyProlongation(VectorType& rX, VectorType& rY) const
     {
         if(mpP == NULL)
         {
@@ -203,56 +178,6 @@ public:
     ///@name Access
     ///@{
 
-    void SetPreSmoother(LinearSolverPointerType pPreSmootherSolver)
-    {
-        mpPreSmootherSolver = pPreSmootherSolver;
-    }
-
-    void SetPostSmoother(LinearSolverPointerType pPostSmootherSolver)
-    {
-        mpPostSmootherSolver = pPostSmootherSolver;
-    }
-
-//    void SetRestrictionOperator(SparseMatrixType& R)
-//    {
-//        mpR = boost::make_shared<SparseMatrixType>(R);
-//    }
-//
-//    void SetProlongationOperator(SparseMatrixType& P)
-//    {
-//        mpP = boost::make_shared<SparseMatrixType>(P);
-//    }
-//
-//    void SetCoarsenMatrix(SparseMatrixType& A)
-//    {
-//        KRATOS_WATCH("at amg_level");
-//        KRATOS_WATCH(&A);
-//        mpA = boost::make_shared<SparseMatrixType>(A);
-//        KRATOS_WATCH(&(*mpA));
-//    }
-
-//    void ComputeCoarsenMatrix(SparseMatrixPointerType& R, SparseMatrixPointerType& A, SparseMatrixPointerType& P)
-//    {
-////        KRATOS_WATCH("ComputeCoarsenMatrix");
-////        using namespace boost::numeric::ublas;
-////        SparseMatrixPointerType C;
-////        noalias(*C) = prod(*R, SparseMatrixType(prod(*A, *P)));
-////        SparseMatrixType T = prod(*A, *P);
-////        SparseMatrixType C = prod(*R, T);
-
-//        SparseMatrixType C = prod(*R, SparseMatrixType(prod(*A, *P)));
-////        KRATOS_WATCH(C);
-////        mpA->swap(C);
-////        mpA = SparseMatrixPointerType(C);
-////        SparseMatrixPointerType pC(C);
-////        mpA.swap(pC);
-//        mpA = boost::make_shared<SparseMatrixType>(C);
-//    }
-
-    void SetLevelDepth(IndexType lvl)
-    {
-        mLevelDepth = lvl;
-    }
 
     ///@}
     ///@name Inquiry
@@ -276,22 +201,40 @@ public:
         mpA = boost::make_shared<SparseMatrixType>(A);
     }
 
-    SparseMatrixPointerType GetRestrictionOperator()
+    SparseMatrixPointerType GetRestrictionOperator() const
     {
         return mpR;
     }
 
-    SparseMatrixPointerType GetProlongationOperator()
+    SparseMatrixPointerType GetProlongationOperator() const
     {
         return mpP;
     }
 
-    SparseMatrixPointerType GetCoarsenMatrix()
+    SparseMatrixPointerType GetCoarsenMatrix() const
     {
         return mpA;
     }
 
-    SizeType GetCoarsenSize()
+    //    void ComputeCoarsenMatrix(SparseMatrixPointerType& R, SparseMatrixPointerType& A, SparseMatrixPointerType& P)
+//    {
+////        KRATOS_WATCH("ComputeCoarsenMatrix");
+////        using namespace boost::numeric::ublas;
+////        SparseMatrixPointerType C;
+////        noalias(*C) = prod(*R, SparseMatrixType(prod(*A, *P)));
+////        SparseMatrixType T = prod(*A, *P);
+////        SparseMatrixType C = prod(*R, T);
+
+//        SparseMatrixType C = prod(*R, SparseMatrixType(prod(*A, *P)));
+////        KRATOS_WATCH(C);
+////        mpA->swap(C);
+////        mpA = SparseMatrixPointerType(C);
+////        SparseMatrixPointerType pC(C);
+////        mpA.swap(pC);
+//        mpA = boost::make_shared<SparseMatrixType>(C);
+//    }
+
+    virtual SizeType GetCoarseSize() const
     {
         return TSparseSpaceType::Size1(*mpR);
     }
@@ -304,9 +247,7 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "AMG Level depth " << mLevelDepth << std::endl;
-        ss << "PreSmoother: " << (*mpPreSmootherSolver).Info() << std::endl;
-        ss << "PostSmoother: " << (*mpPostSmootherSolver).Info();
+        ss << "AMG " << BaseType::Info();
         return ss.str();
     }
 
@@ -326,10 +267,10 @@ public:
 //        rOStream << "mpR = " << mpR << ", mpA = " << mpA << ", mpP = " << mpP << std::endl;
 //        rOStream << "*mpR = " << &(*mpR) << ", *mpA = " << &(*mpA) << ", *mpP = " << &(*mpP) << std::endl;
 
-        rOStream << "mpR = (" << TSparseSpaceType::Size1(*mpR) << "," << TSparseSpaceType::Size2(*mpR) << "), ";
-        rOStream << "mpA = (" << TSparseSpaceType::Size1(*mpA) << "," << TSparseSpaceType::Size2(*mpA) << "), ";
-        rOStream << "mpP = (" << TSparseSpaceType::Size1(*mpP) << "," << TSparseSpaceType::Size2(*mpP) << "), ";
-        rOStream << "nonzeros = " << (*mpA).filled2();
+        rOStream << " mpR (" << TSparseSpaceType::Size1(*mpR) << "," << TSparseSpaceType::Size2(*mpR) << "),";
+        rOStream << " mpA (" << TSparseSpaceType::Size1(*mpA) << "," << TSparseSpaceType::Size2(*mpA) << "),";
+        rOStream << " mpP (" << TSparseSpaceType::Size1(*mpP) << "," << TSparseSpaceType::Size2(*mpP) << "),";
+        rOStream << " nonzeros = " << (*mpA).filled2();
     }
 
 
@@ -387,14 +328,10 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
-    LinearSolverPointerType mpPreSmootherSolver;
-    LinearSolverPointerType mpPostSmootherSolver;
 
     SparseMatrixPointerType mpA;
     SparseMatrixPointerType mpP;
     SparseMatrixPointerType mpR;
-
-    IndexType mLevelDepth;
 
     ///@}
     ///@name Private Operators

@@ -135,7 +135,7 @@ public:
     {
     }
 
-    JacobiIterativeSolver(const IndexType NewMaxIterationsNumber, const double Omega)
+    JacobiIterativeSolver(const IndexType& NewMaxIterationsNumber, const double& Omega)
         : mMaxIterationsNumber(NewMaxIterationsNumber), mOmega(Omega)
     {
     }

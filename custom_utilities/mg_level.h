@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 2013 Jan 11 15:06:00 $
+//   Date:                $Date: 2013 Jan 9 10:53:00 $
 //   Revision:            $Revision: 1.1 $
 //
 //
 
 
-#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED )
-#define  KRATOS_MULTIGRID_SOLVERS_APP_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_LEVEL_H_INCLUDED )
+#define  KRATOS_MULTIGRID_LEVEL_H_INCLUDED
 
 
 
@@ -58,17 +58,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 // External includes
-//#include "external_includes/pyamg/relaxation.h"
-//#include "external_includes/pyamg/ruge_stuben.h"
 
 
 // Project includes
 #include "includes/define.h"
 #include "linear_solvers/linear_solver.h"
-#include "custom_utilities/amg_level.h"
-#include "custom_utilities/amg_utils.h"
-#include "custom_utilities/parameter_list.h"
-#include "custom_linear_solvers/multilevel_solver.h"
+
 
 namespace Kratos
 {
@@ -92,73 +87,133 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
+/**
+ * Abstract class for a level in mutigrid hierarchy
+ */
 template<class TSparseSpaceType, class TDenseSpaceType>
-class MultilevelSolverFactory
+class MGLevel
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MultilevelSolverFactory
-    KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolverFactory);
-
-    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
+    /// Pointer definition of MGLevel
+    KRATOS_CLASS_POINTER_DEFINITION(MGLevel);
 
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
-    typedef ParameterList<std::string> ParameterListType;
+    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
+
+    typedef typename TSparseSpaceType::VectorType VectorType;
+
+    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+
+    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+
+    typedef Reorderer<TSparseSpaceType, TDenseSpaceType> ReordererType;
+
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ReordererType> LinearSolverType;
+
+    typedef typename LinearSolverType::Pointer LinearSolverPointerType;
+
+    typedef std::size_t  SizeType;
+
+    typedef unsigned int  IndexType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    MultilevelSolverFactory(ParameterListType& amg_parameter_list)
-    : mamg_parameter_list(amg_parameter_list)
+    MGLevel() : mLevelDepth(0)
     {}
 
+    MGLevel(LinearSolverPointerType pPreSmoother, LinearSolverPointerType pPostSmoother)
+    : mLevelDepth(0)
+    , mpPreSmoother(pPreSmoother)
+    , mpPostSmoother(pPostSmoother)
+    {}
 
-    /// Copy constructor.
-    MultilevelSolverFactory(const MultilevelSolverFactory& rOther)
-    : mamg_parameter_list(rOther.mamg_parameter_list)
+    /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
+    MGLevel(const MGLevel& Other)
+    : mLevelDepth(Other.mLevelDepth)
+    , mpPreSmoother(Other.mpPreSmoother)
+    , mpPostSmoother(Other.mpPostSmoother)
     {}
 
     /// Destructor.
-    virtual ~MultilevelSolverFactory() {}
+    virtual ~MGLevel() {}
 
 
     ///@}
     ///@name Operators
     ///@{
 
-    /// Assignment operator.
-    MultilevelSolverFactory& operator=(const MultilevelSolverFactory& rOther)
+    /// Assignment operator. It's also important like the Copy constructor
+    MGLevel& operator= (const MGLevel& rOther)
     {
-        mamg_parameter_list = rOther.mamg_parameter_list;
+        mpPreSmoother = rOther.mpPreSmoother;
+        mpPostSmoother = rOther.mpPostSmoother;
+        mLevelDepth = rOther.mLevelDepth;
         return *this;
     }
-
 
     ///@}
     ///@name Operations
     ///@{
 
-    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
+    virtual void ApplyPreSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+        mpPreSmoother->Solve(rA, rX, rB);
+    }
+
+    virtual void ApplyPostSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
+    {
+        mpPostSmoother->Solve(rA, rX, rB);
+    }
+
+    virtual void ApplyRestriction(VectorType& rX, VectorType& rY) const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+    }
+
+    virtual void ApplyProlongation(VectorType& rX, VectorType& rY) const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
     }
 
     ///@}
     ///@name Access
     ///@{
 
+    void SetPreSmoother(LinearSolverPointerType pPreSmoother)
+    {
+        mpPreSmoother = pPreSmoother;
+    }
 
+    void SetPostSmoother(LinearSolverPointerType pPostSmoother)
+    {
+        mpPostSmoother = pPostSmoother;
+    }
+
+    IndexType LevelDepth() const
+    {
+        return mLevelDepth;
+    }
+
+    void SetLevelDepth(const IndexType& lvl)
+    {
+        mLevelDepth = lvl;
+    }
 
     ///@}
     ///@name Inquiry
     ///@{
 
-
+    virtual SizeType GetCoarseSize() const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+    }
 
     ///@}
     ///@name Input and output
@@ -167,9 +222,11 @@ public:
     /// Turn back information as a string.
     virtual std::string Info() const
     {
-        std::stringstream buffer;
-        buffer << "Multilevel solver factory";
-        return  buffer.str();
+        std::stringstream ss;
+        ss << "Multigrid Level depth: " << mLevelDepth << std::endl;
+        ss << "  PreSmoother: " << (*mpPreSmoother).Info() << std::endl;
+        ss << "  PostSmoother: " << (*mpPostSmoother).Info();
+        return ss.str();
     }
 
     /// Print information about this object.
@@ -181,7 +238,6 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
-        rOStream << mamg_parameter_list;
     }
 
 
@@ -192,6 +248,7 @@ public:
 
     ///@}
 
+
 protected:
     ///@name Protected static Member Variables
     ///@{
@@ -201,7 +258,6 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-    ParameterListType mamg_parameter_list;
 
     ///@}
     ///@name Protected Operators
@@ -230,37 +286,49 @@ protected:
 
     ///@}
 
+
 private:
     ///@name Static Member Variables
     ///@{
+
 
     ///@}
     ///@name Member Variables
     ///@{
 
+    LinearSolverPointerType mpPreSmoother;
+    LinearSolverPointerType mpPostSmoother;
+
+    IndexType mLevelDepth;
+
     ///@}
     ///@name Private Operators
     ///@{
+
 
     ///@}
     ///@name Private Operations
     ///@{
 
+
     ///@}
     ///@name Private  Access
     ///@{
+
 
     ///@}
     ///@name Private Inquiry
     ///@{
 
+
     ///@}
     ///@name Un accessible methods
     ///@{
 
+
     ///@}
 
-}; // Class MultilevelSolverFactory
+};
 
 ///@}
 
@@ -275,14 +343,14 @@ private:
 
 /// input stream function
 template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+inline std::istream& operator >> (std::istream& IStream, MGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
 template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+inline std::ostream& operator << (std::ostream& rOStream, const MGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -293,8 +361,7 @@ inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolver
 ///@}
 
 
-}  // namespace Kratos.
+} // namespace Kratos.
 
-#endif // KRATOS_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED  defined
-
+#endif // KRATOS_MULTIGRID_LEVEL_H_INCLUDED  defined
 

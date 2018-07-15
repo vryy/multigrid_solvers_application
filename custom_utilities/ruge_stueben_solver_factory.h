@@ -186,15 +186,15 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA)
+    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
     {
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-        std::cout << "#######################" << std::endl;
-        std::cout << "At generate_ruge_stuben" << std::endl;
+        std::cout << "##################################" << std::endl;
+        std::cout << "### Executing RugeStuebenSolverFactory::" << __FUNCTION__ << std::endl;
         #endif
 
         // general parameters
-        ParameterListType& amg_parameter_list = BaseType::mamg_parameter_list;
+        ParameterListType amg_parameter_list = BaseType::mamg_parameter_list;
 
         IndexType max_levels = amg_parameter_list.get<int>("max_levels", 10);
         IndexType max_coarse = amg_parameter_list.get<int>("max_coarse", 500);
@@ -207,11 +207,11 @@ public:
         std::string CF = amg_parameter_list.get("CF", "RS");
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-        std::cout << "...ruge_stuben parameters:" << std::endl;
-        KRATOS_WATCH(max_levels)
-        KRATOS_WATCH(max_coarse)
-        KRATOS_WATCH(strength_name)
-        KRATOS_WATCH(CF)
+        std::cout << "ruge_stuben parameters:" << std::endl;
+        std::cout << "   "; KRATOS_WATCH(max_levels)
+        std::cout << "   "; KRATOS_WATCH(max_coarse)
+        std::cout << "   "; KRATOS_WATCH(strength_name)
+        std::cout << "   "; KRATOS_WATCH(CF)
         #endif
 
         SizeType last_size = TSparseSpaceType::Size1(rA);
@@ -223,23 +223,22 @@ public:
         TSparseSpaceType::Resize(*pA, last_size, last_size);
         TSparseSpaceType::Copy(rA, *pA);
 
-        int cnt = 0;
         while(solver.GetNumberOfLevels() < max_levels && last_size > max_coarse)
         {
-            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << "#######" << std::endl;
-            std::cout << "...generating level " << cnt << std::endl;
-            #endif
-
             LevelType& current_level = solver.GetLastLevel();
+
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "---------------" << std::endl;
+            std::cout << "> generating level " << current_level.LevelDepth() << std::endl;
+            #endif
 
             SparseMatrixPointerType A = current_level.GetCoarsenMatrix();
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << "...retrieved initial matrix for level " << cnt << std::endl;
-            KRATOS_WATCH(A->size1())
-            KRATOS_WATCH(A->size2())
-            KRATOS_WATCH(last_size)
+            std::cout << "   retrieved initial matrix for level " << current_level.LevelDepth() << std::endl;
+            std::cout << "    "; KRATOS_WATCH(A->size1())
+            std::cout << "    "; KRATOS_WATCH(A->size2())
+            std::cout << "    "; KRATOS_WATCH(last_size)
             #endif
 
             // compute strength of connection
@@ -247,107 +246,81 @@ public:
             if(strength_name == std::string("classical"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...calculating classical strength of connection";
+                std::cout << "   calculating classical strength of connection";
                 #endif
 
                 double theta = strength_param.get("theta", 0.25);
                 AMGUtilsType::ClassicalStrengthOfConnection(C, *A, theta);
-
-                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << " completed" << std::endl;
-                #endif
             }
             else if(strength_name == std::string("symmetric"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...calculating symmetric strength of connection";
+                std::cout << "   calculating symmetric strength of connection";
                 #endif
 
                 double theta = strength_param.get("theta", 1.0);
                 AMGUtilsType::SymmetricStrengthOfConnection(C, *A, theta);
-
-                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << " completed" << std::endl;
-                #endif
             }
             else if(strength_name == std::string("None"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...use coarse matrix as strength of connection" << std::endl;
+                std::cout << "   use coarse matrix as strength of connection" << std::endl;
                 #endif
                 TSparseSpaceType::Copy(*A, C);
             }
             else
                 KRATOS_THROW_ERROR(std::logic_error, "strength_name is undefined or not supported:", strength_name)
 
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << " completed" << std::endl;
+            #endif
+
             // compute splitting
             IndexVectorType splitting(last_size, 0);
-
             if(CF == std::string("RS"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...calculating RS splitting";
+                std::cout << "   computing RS splitting";
                 #endif
-
                 AMGUtilsType::RS(splitting, C);
-
-                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << " completed" << std::endl;
-                #endif
             }
             else if(CF == std::string("PMIS"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...calculating PMIS splitting";
+                std::cout << "   computing PMIS splitting";
                 #endif
-
                 AMGUtilsType::PMIS(splitting, C);
-
-                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << " completed" << std::endl;
-                #endif
             }
             else if(CF == std::string("PMISc"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...calculating PMISc splitting";
+                std::cout << "   computing PMISc splitting";
                 #endif
-
                 std::string& coloring_method = strength_param.get("coloring_method", "JP");
                 AMGUtilsType::PMISc(splitting, C, coloring_method);
-
-                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << " completed" << std::endl;
-                #endif
             }
             else if(CF == std::string("CLJP"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...calculating CLJP splitting";
+                std::cout << "   computing CLJP splitting";
                 #endif
-
                 AMGUtilsType::CLJP(splitting, C);
-
-                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << " completed" << std::endl;
-                #endif
             }
             else if(CF == std::string("CLJPc"))
             {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << "...calculating CLJPc splitting" << std::endl;
+                std::cout << "   computing CLJPc splitting" << std::endl;
                 #endif
-
                 AMGUtilsType::CLJPc(splitting, C);
-
-                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-                std::cout << " completed" << std::endl;
-                #endif
             }
+
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << " completed" << std::endl;
+            #endif
 
             // generate prolongation operator
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << "...compute prolongation operator";
+            std::cout << "   computing prolongation operator by direct interpolation";
             #endif
 
             SparseMatrixPointerType P = current_level.GetProlongationOperator();
@@ -359,7 +332,7 @@ public:
 
             // generate restriction operator
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << "...compute restriction operator";
+            std::cout << "   computing restriction operator by transposing the prolongation operator";
             #endif
 
             SizeType AfterCoarsenSize  = TSparseSpaceType::Size2(*P);
@@ -378,11 +351,15 @@ public:
             std::cout << " completed" << std::endl;
             #endif
 
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "  generate level " << current_level.LevelDepth() << " completed" << std::endl;
+            #endif
+
 //            current_level->PrintData(std::cout);
 
             // generate coarsen matrix for next level
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << "...compute next level coarse matrix";
+            std::cout << "  compute coarse matrix";
             #endif
 
             solver.CreateLevel();
@@ -394,23 +371,20 @@ public:
             AMGUtilsType::Mult(*R, tmp, *Ac);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << " completed" << std::endl;
+            std::cout << " for level " << last_level.LevelDepth() << " completed" << std::endl;
             #endif
 
             last_size = AfterCoarsenSize;
-
-            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << "...generated level " << cnt << " completed" << std::endl;
-            #endif
-
-            ++cnt;
+            if (last_size <= max_coarse)
+                #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+                std::cout << " level " << last_level.LevelDepth() << " coarse size = " << last_size
+                          << " <= max_coarse = " << max_coarse << ". The process terminated." << std::endl;
+                #endif
         }
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-        std::cout << "generate_ruge_stuben completed" << std::endl;
+        std::cout << "Executing RugeStuebenSolverFactory::" << __FUNCTION__ << " completed" << std::endl;
         std::cout << "#######################" << std::endl;
-//        KRATOS_WATCH(first_level);
-//        KRATOS_WATCH(solver);
         #endif
     }
 
