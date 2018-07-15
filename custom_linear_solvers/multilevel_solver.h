@@ -695,12 +695,14 @@ private:
     ///@name Private Operations
     ///@{
 
-    void RecursiveSolve(const IndexType lvl, VectorType& rX, VectorType& rB, const std::string Cycle)
+    void RecursiveSolve(const IndexType& lvl, VectorType& rX, VectorType& rB, const std::string& Cycle)
     {
+        int err;
+
         SparseMatrixPointerType rA = GetLevel(lvl).GetCoarseMatrix();
 
         // Pre smoothing
-        GetLevel(lvl).ApplyPreSmoother(*rA, rX, rB);
+        err = GetLevel(lvl).ApplyPreSmoother(*rA, rX, rB); ErrorCheck(err, "Error with ApplySmoother at", KRATOS_HERE);
 
         // restriction
         const SizeType size = TSparseSpaceType::Size(rX);
@@ -718,13 +720,13 @@ private:
         VectorType cB(csize, 0.00);
         VectorType cX(csize, 0.00);
 
-        GetLevel(lvl).ApplyRestriction(r, cB);
+        err = GetLevel(lvl).ApplyRestriction(r, cB); ErrorCheck(err, "Error with ApplyRestriction at", KRATOS_HERE);
 
         // solve
         if(lvl == GetNumberOfLevels() - 2)
         {
             SparseMatrixPointerType cA = GetLevel(lvl+1).GetCoarseMatrix();
-            mpCoarseSolver->Solve(*cA, cX, cB);
+            err = !(mpCoarseSolver->Solve(*cA, cX, cB)); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
         }
         else
         {
@@ -750,11 +752,11 @@ private:
 
         // prolongation
         VectorType Dx(size, 0.00);
-        GetLevel(lvl).ApplyProlongation(cX, Dx);
+        err = GetLevel(lvl).ApplyProlongation(cX, Dx); ErrorCheck(err, "Error with ApplyProlongation at", KRATOS_HERE);
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
 
         // Post smoothing
-        GetLevel(lvl).ApplyPostSmoother(*rA, rX, rB);
+        err = GetLevel(lvl).ApplyPostSmoother(*rA, rX, rB); ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
     }
 
 
@@ -775,6 +777,12 @@ private:
     virtual bool IsConverged()
     {
         return (mResidualNorm <= mTolerance * mBNorm);
+    }
+
+    void ErrorCheck(const int& flag, const std::string& msg1, const std::string& msg2) const
+    {
+        if(flag != 0)
+            KRATOS_THROW_ERROR(std::logic_error, msg1, msg2);
     }
 
     ///@}

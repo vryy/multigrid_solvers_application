@@ -359,7 +359,6 @@ public:
             AMGUtilsType::Transpose(*P, *R);
 
             current_level.SetRestrictionOperator(pRestrictor);
-            KRATOS_WATCH(*R)
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " completed" << std::endl;
@@ -383,7 +382,6 @@ public:
             SparseMatrixPointerType Ac = last_level.GetCoarseMatrix();
             TSparseSpaceType::Resize(*Ac, AfterCoarsenSize, AfterCoarsenSize);
             AMGUtilsType::Mult(*R, tmp, *Ac);
-            KRATOS_WATCH(*Ac)
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " for level " << last_level.LevelDepth() << " completed" << std::endl;

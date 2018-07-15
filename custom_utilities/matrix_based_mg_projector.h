@@ -110,6 +110,10 @@ public:
 
     typedef typename BaseType::VectorPointerType VectorPointerType;
 
+    typedef typename BaseType::SizeType SizeType;
+
+    typedef typename BaseType::IndexType IndexType;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -144,7 +148,8 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void Apply(VectorType& rX, VectorType& rY) const
+    /// Apply the projection
+    virtual int Apply(VectorType& rX, VectorType& rY) const
     {
         if(mpOperator == NULL)
         {
@@ -152,7 +157,15 @@ public:
             ss << "The matrix has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
+
+        if(TSpaceType::Size(rX) != this->GetBaseSize())
+            return 1;
+
+        if(TSpaceType::Size(rY) != this->GetProjectedSize())
+            return 2;
+
         TSpaceType::Mult(*mpOperator, rX, rY);
+        return 0;
     }
 
     ///@}
@@ -168,6 +181,17 @@ public:
     ///@name Inquiry
     ///@{
 
+    /// Get the size of the base space
+    virtual SizeType GetBaseSize() const
+    {
+        return TSpaceType::Size2(*mpOperator);
+    }
+
+    /// Get the size of the projected space
+    virtual SizeType GetProjectedSize() const
+    {
+        return TSpaceType::Size1(*mpOperator);
+    }
 
     ///@}
     ///@name Input and output

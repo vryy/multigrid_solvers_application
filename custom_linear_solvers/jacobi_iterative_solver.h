@@ -132,23 +132,22 @@ public:
 
     /// Default constructor.
     JacobiIterativeSolver() : mMaxIterationsNumber(1), mOmega(1.0)
-    {
-    }
+    {}
 
     JacobiIterativeSolver(const IndexType& NewMaxIterationsNumber, const double& Omega)
-        : mMaxIterationsNumber(NewMaxIterationsNumber), mOmega(Omega)
-    {
-    }
+    : mMaxIterationsNumber(NewMaxIterationsNumber), mOmega(Omega)
+    {}
 
     /// Copy constructor.
-    JacobiIterativeSolver(const JacobiIterativeSolver& Other) : BaseType(Other),
-        mMaxIterationsNumber(Other.mMaxIterationsNumber),
-        mOmega(Other.mOmega)
-    {
-    }
+    JacobiIterativeSolver(const JacobiIterativeSolver& Other)
+    : BaseType(Other)
+    , mMaxIterationsNumber(Other.mMaxIterationsNumber)
+    , mOmega(Other.mOmega)
+    {}
 
     /// Destructor.
-    virtual ~JacobiIterativeSolver() {}
+    virtual ~JacobiIterativeSolver()
+    {}
 
 
     ///@}

@@ -107,6 +107,10 @@ public:
 
     typedef typename TSpaceType::VectorPointerType VectorPointerType;
 
+    typedef typename TSpaceType::SizeType SizeType;
+
+    typedef typename TSpaceType::IndexType IndexType;
+
     ///@}
     ///@name Life Cycle
     ///@{
@@ -138,9 +142,11 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void Apply(VectorType& rX, VectorType& rY) const
+    /// Apply the projection, rX: input, rY: output
+    virtual int Apply(VectorType& rX, VectorType& rY) const
     {
         KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        return 0;
     }
 
     ///@}
@@ -152,6 +158,17 @@ public:
     ///@name Inquiry
     ///@{
 
+    /// Get the size of the base space
+    virtual SizeType GetBaseSize() const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+    }
+
+    /// Get the size of the projected space
+    virtual SizeType GetProjectedSize() const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+    }
 
     ///@}
     ///@name Input and output

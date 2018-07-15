@@ -121,9 +121,9 @@ public:
 
     typedef typename ProjectorType::Pointer ProjectorPointerType;
 
-    typedef std::size_t  SizeType;
+    typedef typename TSparseSpaceType::SizeType SizeType;
 
-    typedef unsigned int  IndexType;
+    typedef typename TSparseSpaceType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
@@ -170,7 +170,7 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void ApplyPreSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
+    virtual int ApplyPreSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
     {
         if(mpPreSmoother == NULL)
         {
@@ -178,10 +178,10 @@ public:
             ss << "The pre-smoother has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
-        mpPreSmoother->Solve(rA, rX, rB);
+        return !(mpPreSmoother->Solve(rA, rX, rB));
     }
 
-    virtual void ApplyPostSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
+    virtual int ApplyPostSmoother(SparseMatrixType& rA, VectorType& rX, VectorType& rB) const
     {
         if(mpPostSmoother == NULL)
         {
@@ -189,10 +189,10 @@ public:
             ss << "The post-smoother has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
-        mpPostSmoother->Solve(rA, rX, rB);
+        return !(mpPostSmoother->Solve(rA, rX, rB));
     }
 
-    virtual void ApplyRestriction(VectorType& rX, VectorType& rY) const
+    virtual int ApplyRestriction(VectorType& rX, VectorType& rY) const
     {
         if(mpRestrictor == NULL)
         {
@@ -200,10 +200,10 @@ public:
             ss << "The restriction operator has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
-        mpRestrictor->Apply(rX, rY);
+        return mpRestrictor->Apply(rX, rY);
     }
 
-    virtual void ApplyProlongation(VectorType& rX, VectorType& rY) const
+    virtual int ApplyProlongation(VectorType& rX, VectorType& rY) const
     {
         if(mpProlongator == NULL)
         {
@@ -211,7 +211,7 @@ public:
             ss << "The prolongation operator has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
-        mpProlongator->Apply(rX, rY);
+        return mpProlongator->Apply(rX, rY);
     }
 
     ///@}
@@ -266,7 +266,7 @@ public:
     /// Get the size of the coarse matrix
     virtual SizeType GetCoarseSize() const
     {
-        return TSparseSpaceType::Size1(*mpA);
+        return mpRestrictor->GetProjectedSize();
     }
 
     ///@}
