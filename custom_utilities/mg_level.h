@@ -133,7 +133,6 @@ public:
     MGLevel(const IndexType& lvl) : mLevelDepth(lvl)
     {
         this->Initialize();
-        KRATOS_WATCH(mpA)
     }
 
     /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
@@ -283,7 +282,7 @@ public:
         ss << "  PostSmoother: " << mpPostSmoother->Info() << std::endl;
         ss << "  Restrictor: " << mpRestrictor->Info() << std::endl;
         ss << "  Prolongator: " << mpProlongator->Info() << std::endl;
-        ss << "  Coarse matrix size: " << this->GetCoarseSize();
+        ss << "  Coarse matrix size: " << this->GetCoarseSize() << ", nonzeros = " << (*mpA).filled2();
         return ss.str();
     }
 
@@ -296,6 +295,7 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
+        rOStream << "Coarse Matrix: " << *mpA;
     }
 
 

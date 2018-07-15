@@ -317,7 +317,7 @@ public:
 
         do
         {
-            if(GetNumberOfLevels() == 1)
+            if(this->GetNumberOfLevels() == 1)
             {
 //                mpCoarseSolver->Solve(rA, rX, rB);
 
@@ -407,7 +407,7 @@ public:
         // set up presmoother
         SizeType num_pre_smoothers = mPreSmoothers.size();
 
-        for(IndexType i = 0; i < GetNumberOfLevels(); i++)
+        for(IndexType i = 0; i < this->GetNumberOfLevels(); i++)
         {
             if(i < num_pre_smoothers)
                 GetLevel(i).SetPreSmoother(mPreSmoothers[i]);
@@ -418,7 +418,7 @@ public:
         // set up postsmoother
         SizeType num_post_smoothers = mPostSmoothers.size();
 
-        for(IndexType i = 0; i < GetNumberOfLevels(); i++)
+        for(IndexType i = 0; i < this->GetNumberOfLevels(); i++)
         {
             if(i < num_post_smoothers)
                 GetLevel(i).SetPostSmoother(mPostSmoothers[i]);
@@ -534,7 +534,7 @@ public:
         mMaxLevels = MaxLevels;
     }
 
-    IndexType GetMaxLevels()
+    IndexType GetMaxLevels() const
     {
         return mMaxLevels;
     }
@@ -544,7 +544,7 @@ public:
         mMaxCoarseSize = MaxCoarseSize;
     }
 
-    IndexType GetMaxCoarseSize()
+    IndexType GetMaxCoarseSize() const
     {
         return mMaxCoarseSize;
     }
@@ -553,7 +553,7 @@ public:
     ///@name Inquiry
     ///@{
 
-    SizeType GetNumberOfLevels()
+    SizeType GetNumberOfLevels() const
     {
         return mLevels.size();
     }
@@ -573,7 +573,7 @@ public:
         {
 //            buffer << mLevels[i].Info() << std::endl;
 //            mLevels[i].PrintData(buffer);
-            buffer << mLevels[i];
+            buffer << mLevels[i]->Info();
             buffer << std::endl;
         }
         buffer << ">>>>>>>>" << std::endl;

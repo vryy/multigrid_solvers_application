@@ -177,7 +177,9 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "MatrixBasedMGProjector";
+        ss << "MatrixBasedMGProjector, size = ("
+           << TSpaceType::Size1(*mpOperator) << ", "
+           << TSpaceType::Size2(*mpOperator) << ")";
         return ss.str();
     }
 

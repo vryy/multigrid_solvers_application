@@ -359,6 +359,7 @@ public:
             AMGUtilsType::Transpose(*P, *R);
 
             current_level.SetRestrictionOperator(pRestrictor);
+            KRATOS_WATCH(*R)
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " completed" << std::endl;
@@ -382,6 +383,7 @@ public:
             SparseMatrixPointerType Ac = last_level.GetCoarseMatrix();
             TSparseSpaceType::Resize(*Ac, AfterCoarsenSize, AfterCoarsenSize);
             AMGUtilsType::Mult(*R, tmp, *Ac);
+            KRATOS_WATCH(*Ac)
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " for level " << last_level.LevelDepth() << " completed" << std::endl;
@@ -389,10 +391,21 @@ public:
 
             last_size = AfterCoarsenSize;
             if (last_size <= max_coarse)
+            {
                 #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
                 std::cout << " level " << last_level.LevelDepth() << " coarse size = " << last_size
                           << " <= max_coarse = " << max_coarse << ". The process terminated." << std::endl;
                 #endif
+
+                typename MatrixBasedMGProjectorType::Pointer pPrologator
+                    = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+                last_level.SetProlongationOperator(pPrologator);
+
+                typename MatrixBasedMGProjectorType::Pointer pRestrictor
+                    = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+
+                last_level.SetRestrictionOperator(pPrologator);
+            }
         }
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
