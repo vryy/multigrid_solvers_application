@@ -131,9 +131,9 @@ public:
 
     typedef typename BaseType::Pointer LinearSolverPointerType;
 
-    typedef std::size_t SizeType;
+    typedef typename TSparseSpaceType::SizeType SizeType;
 
-    typedef unsigned int IndexType;
+    typedef typename TSparseSpaceType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
@@ -319,11 +319,7 @@ public:
         {
             if(this->GetNumberOfLevels() == 1)
             {
-//                mpCoarseSolver->Solve(rA, rX, rB);
-
-                SparseMatrixPointerType A = GetLevel(0).GetCoarseMatrix();
-
-                mpCoarseSolver->Solve(*A, rX, rB);
+                GetLevel(0).Inverse(mpCoarseSolver, rX, rB);
 
                 return true; // the reason to return here is that if the coarse solver is direct solver, it may not solve accurately to the tolerance required (sounds strange but it happens with multiphase_cube example).
             }
@@ -699,16 +695,14 @@ private:
     {
         int err;
 
-        SparseMatrixPointerType rA = GetLevel(lvl).GetCoarseMatrix();
-
         // Pre smoothing
-        err = GetLevel(lvl).ApplyPreSmoother(*rA, rX, rB); ErrorCheck(err, "Error with ApplySmoother at", KRATOS_HERE);
+        err = GetLevel(lvl).ApplyPreSmoother(rX, rB); ErrorCheck(err, "Error with ApplySmoother at", KRATOS_HERE);
 
         // restriction
         const SizeType size = TSparseSpaceType::Size(rX);
         VectorType r(size, 0.00);
 
-        TSparseSpaceType::Mult(*rA, rX, r); // r = A*x
+        GetLevel(lvl).Apply(rX, r); // r = A*x
 
         TSparseSpaceType::UnaliasedAdd(r, -1.00, rB); // r = A*x - b
 
@@ -725,8 +719,7 @@ private:
         // solve
         if(lvl == GetNumberOfLevels() - 2)
         {
-            SparseMatrixPointerType cA = GetLevel(lvl+1).GetCoarseMatrix();
-            err = !(mpCoarseSolver->Solve(*cA, cX, cB)); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
+            err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cB); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
         }
         else
         {
@@ -756,7 +749,7 @@ private:
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
 
         // Post smoothing
-        err = GetLevel(lvl).ApplyPostSmoother(*rA, rX, rB); ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
+        err = GetLevel(lvl).ApplyPostSmoother(rX, rB); ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
     }
 
 

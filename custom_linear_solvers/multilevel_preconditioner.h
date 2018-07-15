@@ -117,7 +117,9 @@ public:
 
     typedef typename MultilevelSolverType::Pointer MultilevelSolverPointerType;
 
-    typedef std::size_t  SizeType;
+    typedef typename TSparseSpaceType::SizeType SizeType;
+
+    typedef typename TSparseSpaceType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
@@ -329,22 +331,14 @@ private:
 
     void SolveOneStep(VectorType &rX, VectorType& rB)
     {
-
         if(mml_solver->GetNumberOfLevels() == 1)
         {
-
-            SparseMatrixPointerType A = mml_solver->GetLevel(0).GetCoarseMatrix();
-
-            mml_solver->mpCoarseSolver->Solve(*A, rX, rB);
-
+            mml_solver->GetLevel(0).Inverse(mml_solver->mpCoarseSolver, rX, rB);
         }
         else
         {
-
             mml_solver->RecursiveSolve(0, rX, rB, mml_solver->mCycle);
-
         }
-
     }
 
     ///@}

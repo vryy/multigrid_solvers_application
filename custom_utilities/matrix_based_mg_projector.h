@@ -158,11 +158,9 @@ public:
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
 
-        if(TSpaceType::Size(rX) != this->GetBaseSize())
-            return 1;
-
-        if(TSpaceType::Size(rY) != this->GetProjectedSize())
-            return 2;
+        int err = BaseType::ConsistencyCheck(rX, rY);
+        if(err != 0)
+            return err;
 
         TSpaceType::Mult(*mpOperator, rX, rY);
         return 0;

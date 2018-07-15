@@ -221,6 +221,16 @@ protected:
     ///@name Protected Operations
     ///@{
 
+    int ConsistencyCheck(VectorType& rX, VectorType& rY) const
+    {
+        if(TSpaceType::Size(rX) != this->GetBaseSize())
+            return 1;
+
+        if(TSpaceType::Size(rY) != this->GetProjectedSize())
+            return 2;
+
+        return 0;
+    }
 
     ///@}
     ///@name Protected  Access

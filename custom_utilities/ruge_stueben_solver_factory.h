@@ -65,7 +65,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "linear_solvers/linear_solver.h"
-#include "custom_utilities/mg_level.h"
+#include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/matrix_based_mg_projector.h"
 #include "custom_utilities/amg_utils.h"
 #include "custom_utilities/parameter_list.h"
@@ -124,17 +124,15 @@ public:
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
 
-    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
-    typedef typename boost::shared_ptr<LevelType> LevelPointerType;
+    typedef typename LevelType::Pointer LevelPointerType;
 
     typedef std::vector<LevelPointerType> LevelContainerType;
 
     typedef typename LevelContainerType::iterator LevelIteratorType;
 
-    typedef MGProjector<TSparseSpaceType> MGProjectorType;
-
-    typedef MatrixBasedMGProjector<TSparseSpaceType> MatrixBasedMGProjectorType;
+    typedef MatrixBasedMGProjector<TSparseSpaceType> MGProjectorType;
 
     typedef Kratos::ParameterList<std::string> ParameterListType;
 
@@ -150,9 +148,9 @@ public:
 
     typedef boost::numeric::ublas::unbounded_array<VectorType> VectorContainerType;
 
-    typedef std::size_t  SizeType;
+    typedef typename TSparseSpaceType::SizeType SizeType;
 
-    typedef unsigned int  IndexType;
+    typedef typename TSparseSpaceType::IndexType IndexType;
 
     typedef int  IntegerType;
 
@@ -222,8 +220,8 @@ public:
         SizeType last_size = TSparseSpaceType::Size1(rA);
 
         // set up level 0
-        solver.CreateLevel();
-        LevelType& first_level = solver.GetLastLevel();
+        solver.AddLevel(typename LevelType::Pointer(new LevelType(0)));
+        LevelType& first_level = dynamic_cast<LevelType&>(solver.GetLastLevel());
         SparseMatrixPointerType pA = first_level.GetCoarseMatrix();
         TSparseSpaceType::Resize(*pA, last_size, last_size);
         TSparseSpaceType::Copy(rA, *pA);
@@ -231,7 +229,7 @@ public:
         // create other levels until the maximum coarse size is reached
         while(solver.GetNumberOfLevels() < max_levels && last_size > max_coarse)
         {
-            LevelType& current_level = solver.GetLastLevel();
+            LevelType& current_level = dynamic_cast<LevelType&>(solver.GetLastLevel());
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << "---------------" << std::endl;
@@ -329,8 +327,8 @@ public:
             std::cout << "   computing prolongation operator by direct interpolation";
             #endif
 
-            typename MatrixBasedMGProjectorType::Pointer pPrologator
-                = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+            typename MGProjectorType::Pointer pPrologator
+                = typename MGProjectorType::Pointer(new MGProjectorType());
             SparseMatrixPointerType P = pPrologator->GetOperator();
             AMGUtilsType::DirectInterpolation(*P, *A, C, splitting); // P will be resized here
             current_level.SetProlongationOperator(pPrologator);
@@ -346,8 +344,8 @@ public:
 
             SizeType AfterCoarsenSize  = TSparseSpaceType::Size2(*P);
             SizeType BeforeCoarsenSize = TSparseSpaceType::Size1(*P);
-            typename MatrixBasedMGProjectorType::Pointer pRestrictor
-                = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+            typename MGProjectorType::Pointer pRestrictor
+                = typename MGProjectorType::Pointer(new MGProjectorType());
             SparseMatrixPointerType R = pRestrictor->GetOperator();
             TSparseSpaceType::Resize(*R, AfterCoarsenSize, BeforeCoarsenSize);
 
@@ -375,8 +373,8 @@ public:
             std::cout << "  compute coarse matrix";
             #endif
 
-            solver.CreateLevel();
-            LevelType& last_level = solver.GetLastLevel();
+            solver.AddLevel(typename LevelType::Pointer(new LevelType(current_level.LevelDepth()+1)));
+            LevelType& last_level = dynamic_cast<LevelType&>(solver.GetLastLevel());
             SparseMatrixType tmp(BeforeCoarsenSize, AfterCoarsenSize);
             AMGUtilsType::Mult(*A, *P, tmp);
             SparseMatrixPointerType Ac = last_level.GetCoarseMatrix();
@@ -411,12 +409,12 @@ public:
 
             if (terminate)
             {
-                typename MatrixBasedMGProjectorType::Pointer pPrologator
-                    = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+                typename MGProjectorType::Pointer pPrologator
+                    = typename MGProjectorType::Pointer(new MGProjectorType());
                 last_level.SetProlongationOperator(pPrologator);
 
-                typename MatrixBasedMGProjectorType::Pointer pRestrictor
-                    = typename MatrixBasedMGProjectorType::Pointer(new MatrixBasedMGProjectorType());
+                typename MGProjectorType::Pointer pRestrictor
+                    = typename MGProjectorType::Pointer(new MGProjectorType());
 
                 last_level.SetRestrictionOperator(pPrologator);
             }

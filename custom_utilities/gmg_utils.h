@@ -63,6 +63,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utilities/timer.h"
 #include "solving_strategies/builder_and_solvers/builder_and_solver.h"
 #include "custom_utilities/mg_level.h"
+#include "custom_utilities/matrix_based_mg_level.h"
 
 
 namespace Kratos
@@ -118,9 +119,9 @@ public:
 
     typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
 
-    typedef std::size_t SizeType;
+    typedef typename TSparseSpaceType::SizeType SizeType;
 
-    typedef std::size_t IndexType;
+    typedef typename TSparseSpaceType::IndexType IndexType;
 
     typedef double ValueType;
 
@@ -141,6 +142,8 @@ public:
 //    typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
 
     typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+
+    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> MatrixBasedLevelType;
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType> LinearSolverType;
 
@@ -173,7 +176,7 @@ public:
     void ComputeCoarseMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
         typename SchemeType::Pointer pScheme,
         ModelPart::Pointer pModelPart,
-        typename LevelType::Pointer pLevel) const
+        typename MatrixBasedLevelType::Pointer pLevel) const
     {
         SparseMatrixPointerType pA = pLevel->GetCoarseMatrix();
 

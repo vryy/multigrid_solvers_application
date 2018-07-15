@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 2013 Jan 9 10:53:00 $
-//   Revision:            $Revision: 1.1 $
+//   Date:                $Date: 15/7/2018 $
+//   Revision:            $Revision: 1.0 $
 //
 //
 
 
-#if !defined(KRATOS_MULTIGRID_LEVEL_H_INCLUDED )
-#define  KRATOS_MULTIGRID_LEVEL_H_INCLUDED
+#if !defined(KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED )
+#define  KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED
 
 
 
@@ -92,59 +92,46 @@ namespace Kratos
  * Abstract class for a level in mutigrid hierarchy
  */
 template<class TSparseSpaceType, class TDenseSpaceType>
-class MGLevel
+class MatrixBasedMGLevel : public MGLevel<TSparseSpaceType, TDenseSpaceType>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MGLevel
-    KRATOS_CLASS_POINTER_DEFINITION(MGLevel);
+    /// Pointer definition of MatrixBasedMGLevel
+    KRATOS_CLASS_POINTER_DEFINITION(MatrixBasedMGLevel);
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::VectorType VectorType;
+    typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
 
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+    typedef typename BaseType::LinearSolverPointerType LinearSolverPointerType;
 
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    typedef typename BaseType::VectorType VectorType;
 
-    typedef Reorderer<TSparseSpaceType, TDenseSpaceType> ReordererType;
-
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ReordererType> LinearSolverType;
-
-    typedef typename LinearSolverType::Pointer LinearSolverPointerType;
-
-    typedef MGProjector<TSparseSpaceType> ProjectorType;
-
-    typedef typename ProjectorType::Pointer ProjectorPointerType;
-
-    typedef typename TSparseSpaceType::SizeType SizeType;
-
-    typedef typename TSparseSpaceType::IndexType IndexType;
+    typedef typename BaseType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    MGLevel(const IndexType& lvl)
-    : mLevelDepth(lvl)
-    {}
+    MatrixBasedMGLevel(const IndexType& lvl)
+    : BaseType(lvl)
+    {
+        this->Initialize();
+    }
 
     /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
-    MGLevel(const MGLevel& rOther)
-    : mLevelDepth(rOther.mLevelDepth)
-    , mpPreSmoother(rOther.mpPreSmoother)
-    , mpPostSmoother(rOther.mpPostSmoother)
-    , mpRestrictor(rOther.mpRestrictor)
-    , mpProlongator(rOther.mpProlongator)
+    MatrixBasedMGLevel(const MatrixBasedMGLevel& rOther)
+    : BaseType()
+    , mpA(rOther.mpA) // shall we make a deep copy here?
     {}
 
     /// Destructor.
-    virtual ~MGLevel()
+    virtual ~MatrixBasedMGLevel()
     {}
 
 
@@ -153,13 +140,10 @@ public:
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    MGLevel& operator= (const MGLevel& rOther)
+    MatrixBasedMGLevel& operator= (const MatrixBasedMGLevel& rOther)
     {
-        mLevelDepth = rOther.mLevelDepth;
-        mpPreSmoother = rOther.mpPreSmoother;
-        mpPostSmoother = rOther.mpPostSmoother;
-        mpRestrictor = rOther.mpRestrictor;
-        mpProlongator = rOther.mpProlongator;
+        BaseType::operator=(rOther);
+        mpA = rOther.mpA; // shall we make a deep copy here
         return *this;
     }
 
@@ -169,88 +153,68 @@ public:
 
     virtual int ApplyPreSmoother(VectorType& rX, VectorType& rB) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
-        return 1;
+        if(BaseType::PreSmoother() == NULL)
+        {
+            std::stringstream ss;
+            ss << "The pre-smoother has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
+        return !(BaseType::PreSmoother()->Solve(*mpA, rX, rB));
     }
 
     virtual int ApplyPostSmoother(VectorType& rX, VectorType& rB) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
-        return 1;
-    }
-
-    virtual int ApplyRestriction(VectorType& rX, VectorType& rY) const
-    {
-        if(mpRestrictor == NULL)
+        if(BaseType::PostSmoother() == NULL)
         {
             std::stringstream ss;
-            ss << "The restriction operator has not been set for " << Info();
+            ss << "The post-smoother has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
-        return mpRestrictor->Apply(rX, rY);
-    }
-
-    virtual int ApplyProlongation(VectorType& rX, VectorType& rY) const
-    {
-        if(mpProlongator == NULL)
-        {
-            std::stringstream ss;
-            ss << "The prolongation operator has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
-        }
-        return mpProlongator->Apply(rX, rY);
+        return !(BaseType::PostSmoother()->Solve(*mpA, rX, rB));
     }
 
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
-        return 1;
+        if(mpA == NULL)
+        {
+            std::stringstream ss;
+            ss << "The matrix operator has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
+        TSparseSpaceType::Mult(*mpA, rX, rY);
+        return 0;
     }
 
     virtual int Inverse(LinearSolverPointerType pCoarseSolver, VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
-        return 1;
+        if(mpA == NULL)
+        {
+            std::stringstream ss;
+            ss << "The matrix operator has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
+        return !(pCoarseSolver->Solve(*mpA, rX, rY));
     }
 
     ///@}
     ///@name Access
     ///@{
 
-    void SetPreSmoother(LinearSolverPointerType pPreSmoother)
+    // this is kept to make compatible with python; should not use it to avoid copying memory
+    void SetCoarseMatrix(SparseMatrixType& A)
     {
-        mpPreSmoother = pPreSmoother;
+        mpA = boost::make_shared<SparseMatrixType>(A);
     }
 
-    void SetPostSmoother(LinearSolverPointerType pPostSmoother)
+    SparseMatrixPointerType GetCoarseMatrix() const
     {
-        mpPostSmoother = pPostSmoother;
-    }
-
-    void SetRestrictionOperator(ProjectorPointerType pProjector)
-    {
-        mpRestrictor = pProjector;
-    }
-
-    void SetProlongationOperator(ProjectorPointerType pProjector)
-    {
-        mpProlongator = pProjector;
-    }
-
-    IndexType LevelDepth() const
-    {
-        return mLevelDepth;
+        return mpA;
     }
 
     ///@}
     ///@name Inquiry
     ///@{
 
-    /// Get the size of the lower level matrix
-    virtual SizeType GetCoarseSize() const
-    {
-        return mpRestrictor->GetProjectedSize();
-    }
 
     ///@}
     ///@name Input and output
@@ -260,12 +224,8 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "Multigrid Level depth: " << LevelDepth() << std::endl;
-        ss << "  PreSmoother: " << mpPreSmoother->Info() << std::endl;
-        ss << "  PostSmoother: " << mpPostSmoother->Info() << std::endl;
-        ss << "  Restrictor: " << mpRestrictor->Info() << std::endl;
-        ss << "  Prolongator: " << mpProlongator->Info() << std::endl;
-        ss << "  Coarse matrix size: " << this->GetCoarseSize();
+        ss << BaseType::Info();
+        ss << "  Level matrix size: " << TSparseSpaceType::Size1(*mpA) << ", nonzeros = " << (*mpA).filled2() << std::endl;
         return ss.str();
     }
 
@@ -278,6 +238,7 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
+        rOStream << "Coarse Matrix: " << *mpA;
     }
 
 
@@ -308,15 +269,6 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    LinearSolverPointerType PreSmoother() const
-    {
-        return mpPreSmoother;
-    }
-
-    LinearSolverPointerType PostSmoother() const
-    {
-        return mpPostSmoother;
-    }
 
     ///@}
     ///@name Protected  Access
@@ -345,13 +297,7 @@ private:
     ///@name Member Variables
     ///@{
 
-    LinearSolverPointerType mpPreSmoother;
-    LinearSolverPointerType mpPostSmoother;
-
-    ProjectorPointerType mpProlongator;
-    ProjectorPointerType mpRestrictor;
-
-    IndexType mLevelDepth;
+    SparseMatrixPointerType mpA;
 
     ///@}
     ///@name Private Operators
@@ -362,6 +308,14 @@ private:
     ///@name Private Operations
     ///@{
 
+    void Initialize()
+    {
+        if(mpA == NULL)
+        {
+            SparseMatrixPointerType pNewA = SparseMatrixPointerType(new SparseMatrixType(0, 0));
+            mpA.swap(pNewA);
+        }
+    }
 
     ///@}
     ///@name Private  Access
@@ -395,14 +349,14 @@ private:
 
 /// input stream function
 template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+inline std::istream& operator >> (std::istream& IStream, MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
 template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -415,5 +369,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const MGLevel<TSparseS
 
 } // namespace Kratos.
 
-#endif // KRATOS_MULTIGRID_LEVEL_H_INCLUDED  defined
+#endif // KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED  defined
 
