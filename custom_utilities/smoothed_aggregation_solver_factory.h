@@ -113,15 +113,9 @@ public:
 
     typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
-
-    typedef typename TSparseSpaceType::VectorType VectorType;
-
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
-
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
 
     typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
@@ -141,33 +135,30 @@ public:
 
     typedef typename AMGUtilsType::IndexContainerType IndexContainerType;
 
-    typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
+    typedef typename BaseType::SizeType SizeType;
 
-    typedef boost::numeric::ublas::unbounded_array<VectorType> VectorContainerType;
+    typedef typename BaseType::IndexType IndexType;
 
-    typedef std::size_t  SizeType;
-
-    typedef unsigned int  IndexType;
-
-    typedef int  IntegerType;
+    typedef typename BaseType::IntegerType IntegerType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    SmoothedAggregationSolverFactory(ParameterListType& amg_parameter_list) : BaseType(amg_parameter_list)
-    {
-    }
+    SmoothedAggregationSolverFactory(ParameterListType& amg_parameter_list)
+    : BaseType(amg_parameter_list)
+    {}
 
 
     /// Copy constructor.
-    SmoothedAggregationSolverFactory(const SmoothedAggregationSolverFactory& Other) : BaseType(Other)
-    {
-    }
+    SmoothedAggregationSolverFactory(const SmoothedAggregationSolverFactory& Other)
+    : BaseType(Other)
+    {}
 
     /// Destructor.
-    virtual ~SmoothedAggregationSolverFactory() {}
+    virtual ~SmoothedAggregationSolverFactory()
+    {}
 
 
     ///@}
@@ -186,6 +177,10 @@ public:
     ///@name Operations
     ///@{
 
+    virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
+    {
+    }
+
     virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA)
     {
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
@@ -193,10 +188,12 @@ public:
         std::cout << "At generate_smoothed_aggregation" << std::endl;
         #endif
 
+        solver.ResetLevel();
+
         SizeType m = TSparseSpaceType::Size1(rA);
 
         // general parameters
-        ParameterListType& amg_parameter_list = BaseType::mamg_parameter_list;
+        ParameterListType& amg_parameter_list = BaseType::mmg_parameter_list;
 
         IndexType max_levels = amg_parameter_list.get("max_levels", 10);
         IndexType max_coarse = amg_parameter_list.get("max_coarse", 500);

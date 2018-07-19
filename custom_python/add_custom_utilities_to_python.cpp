@@ -55,6 +55,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "includes/define.h"
 #include "spaces/ublas_space.h"
 #include "custom_utilities/mg_level.h"
+#include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/amg_utils.h"
 #include "custom_utilities/gmg_utils.h"
 #include "custom_utilities/multilevel_solver_factory.h"
@@ -85,6 +86,8 @@ typedef typename AMGUtilsType::IndexVectorType IndexVectorType;
 typedef AMGUtilsType::SizeType SizeType;
 
 typedef MGLevel<SparseSpaceType, LocalSpaceType> MGLevelType;
+
+typedef MatrixBasedMGLevel<SparseSpaceType, LocalSpaceType> MatrixBasedMGLevelType;
 
 typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 
@@ -194,9 +197,9 @@ void MultigridSolversApp_AddUtilitiesToPython()
     .def("Mult", Mult)
     ;
 
-    class_<GMGUtilsType, GMGUtilsType::Pointer, boost::noncopyable>("GMGUtils", init<>())
-    .def("ComputeCoarseMatrix", &GMGUtilsType::ComputeCoarseMatrix)
-    ;
+    // class_<GMGUtilsType, GMGUtilsType::Pointer, boost::noncopyable>("GMGUtils", init<>())
+    // .def("ComputeCoarseMatrix", &GMGUtilsType::ComputeCoarseMatrix)
+    // ;
 
    //****************************************************************************************************
    // level definition
@@ -213,6 +216,14 @@ void MultigridSolversApp_AddUtilitiesToPython()
     .def("ApplyPostSmoother", &MGLevelType::ApplyPostSmoother)
     .def("ApplyRestriction", &MGLevelType::ApplyRestriction)
     .def("ApplyProlongation", &MGLevelType::ApplyProlongation)
+    ;
+
+    class_<MatrixBasedMGLevelType, MatrixBasedMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
+    ( "MatrixBasedMGLevel", init<const typename MGLevelType::IndexType&>())
+    .def(self_ns::str(self))
+    .def("GetCoarseMatrix", &MatrixBasedMGLevelType::GetCoarseMatrix)
+    .def("GetCoarseUpdateVector", &MatrixBasedMGLevelType::GetCoarseUpdateVector)
+    .def("GetCoarseVector", &MatrixBasedMGLevelType::GetCoarseVector)
     ;
 }
 

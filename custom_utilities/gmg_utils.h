@@ -64,6 +64,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "solving_strategies/builder_and_solvers/builder_and_solver.h"
 #include "custom_utilities/mg_level.h"
 #include "custom_utilities/matrix_based_mg_level.h"
+#include "custom_utilities/multi_index.h"
 
 
 namespace Kratos
@@ -171,17 +172,42 @@ public:
     /**@name Operations */
     /*@{ */
 
+    // static void Initialize(typename SchemeType::Pointer pScheme, ModelPart::Pointer pModelPart)
+    // {
+    //     if (!pScheme->SchemeIsInitialized())
+    //         pScheme->Initialize(pModelPart);
+    //     if (!pScheme->ElementsAreInitialized())
+    //         pScheme->InitializeElements(pModelPart);
+    //     if (!pScheme->ConditionsAreInitialized())
+    //         pScheme->InitializeConditions(pModelPart);
+    // }
+
+
+    // static void InitializeSolutionStep()
+    // {
+
+    // }
+
 
     /// Compute the coarse matrix on the multigrid level of GMG. The model_part is required to compute the coarse matrix, which is sparse.
-    void ComputeCoarseMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
+    static void ComputeCoarseMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
         typename SchemeType::Pointer pScheme,
         ModelPart::Pointer pModelPart,
-        typename MatrixBasedLevelType::Pointer pLevel) const
+        MatrixBasedLevelType& rLevel)
     {
-        SparseMatrixPointerType pA = pLevel->GetCoarseMatrix();
-
         VectorType dummy;
+        SparseMatrixPointerType pA = rLevel.GetCoarseMatrix();
+        TSparseSpaceType::Resize(dummy, TSparseSpaceType::Size1(*pA));
         pBuilderAndSolver->Build(pScheme, *pModelPart, *pA, dummy);
+    }
+
+    /// Compute the coarse matrix on the multigrid level of GMG. The model_part is required to compute the coarse matrix, which is sparse.
+    static void ComputeCoarseMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
+        typename SchemeType::Pointer pScheme,
+        ModelPart::Pointer pModelPart,
+        typename MatrixBasedLevelType::Pointer pLevel)
+    {
+        ComputeCoarseMatrix(pBuilderAndSolver, pScheme, pModelPart, *pLevel);
     }
 
 

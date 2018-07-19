@@ -114,15 +114,9 @@ public:
 
     typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
-
-    typedef typename TSparseSpaceType::VectorType VectorType;
-
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
-
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
 
     typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
@@ -144,33 +138,29 @@ public:
 
     typedef typename AMGUtilsType::IndexContainerType IndexContainerType;
 
-    typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
+    typedef typename BaseType::SizeType SizeType;
 
-    typedef boost::numeric::ublas::unbounded_array<VectorType> VectorContainerType;
+    typedef typename BaseType::IndexType IndexType;
 
-    typedef typename TSparseSpaceType::SizeType SizeType;
-
-    typedef typename TSparseSpaceType::IndexType IndexType;
-
-    typedef int  IntegerType;
+    typedef typename BaseType::IntegerType IntegerType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    RugeStuebenSolverFactory(ParameterListType& amg_parameter_list) : BaseType(amg_parameter_list)
-    {
-    }
-
+    RugeStuebenSolverFactory(ParameterListType& amg_parameter_list)
+    : BaseType(amg_parameter_list)
+    {}
 
     /// Copy constructor.
-    RugeStuebenSolverFactory(const RugeStuebenSolverFactory& Other) : BaseType(Other)
-    {
-    }
+    RugeStuebenSolverFactory(const RugeStuebenSolverFactory& Other)
+    : BaseType(Other)
+    {}
 
     /// Destructor.
-    virtual ~RugeStuebenSolverFactory() {}
+    virtual ~RugeStuebenSolverFactory()
+    {}
 
 
     ///@}
@@ -189,6 +179,10 @@ public:
     ///@name Operations
     ///@{
 
+    virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
+    {
+    }
+
     virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
     {
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
@@ -197,7 +191,7 @@ public:
         #endif
 
         // general parameters
-        ParameterListType amg_parameter_list = BaseType::mamg_parameter_list;
+        ParameterListType amg_parameter_list = BaseType::mmg_parameter_list;
 
         IndexType max_levels = amg_parameter_list.get<int>("max_levels", 10);
         IndexType max_coarse = amg_parameter_list.get<int>("max_coarse", 500);
@@ -216,6 +210,8 @@ public:
         std::cout << "   "; KRATOS_WATCH(strength_name)
         std::cout << "   "; KRATOS_WATCH(CF)
         #endif
+
+        solver.ResetLevel();
 
         SizeType last_size = TSparseSpaceType::Size1(rA);
 
@@ -382,7 +378,7 @@ public:
             AMGUtilsType::Mult(*R, tmp, *Ac);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << " for level " << last_level.LevelDepth() << " completed" << std::endl;
+            std::cout << " for level " << current_level.LevelDepth() << " completed" << std::endl;
             #endif
 
             last_size = AfterCoarsenSize;

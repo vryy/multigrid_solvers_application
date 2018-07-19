@@ -107,6 +107,8 @@ public:
 
     typedef typename TSparseSpaceType::VectorType VectorType;
 
+    typedef typename TSparseSpaceType::VectorPointerType VectorPointerType;
+
     typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
 
     typedef typename TDenseSpaceType::VectorType DenseVectorType;
@@ -261,11 +263,32 @@ public:
     {
         std::stringstream ss;
         ss << "Multigrid Level depth: " << LevelDepth() << std::endl;
-        ss << "  PreSmoother: " << mpPreSmoother->Info() << std::endl;
-        ss << "  PostSmoother: " << mpPostSmoother->Info() << std::endl;
-        ss << "  Restrictor: " << mpRestrictor->Info() << std::endl;
-        ss << "  Prolongator: " << mpProlongator->Info() << std::endl;
-        ss << "  Coarse matrix size: " << this->GetCoarseSize();
+
+        if (mpPreSmoother != NULL)
+            ss << "  PreSmoother: " << mpPreSmoother->Info() << std::endl;
+        else
+            ss << "  PreSmoother: null" << std::endl;
+
+        if (mpPostSmoother != NULL)
+            ss << "  PostSmoother: " << mpPostSmoother->Info() << std::endl;
+        else
+            ss << "  PostSmoother: null" << std::endl;
+
+        if (mpRestrictor != NULL)
+            ss << "  Restrictor: " << mpRestrictor->Info() << std::endl;
+        else
+            ss << "  Restrictor: null" << std::endl;
+
+        if (mpProlongator != NULL)
+            ss << "  Prolongator: " << mpProlongator->Info() << std::endl;
+        else
+            ss << "  Prolongator: null" << std::endl;
+
+        if (mpRestrictor != NULL)
+            ss << "  Coarse matrix size: " << this->GetCoarseSize();
+        else
+            ss << "  Coarse matrix size: 0";
+
         return ss.str();
     }
 

@@ -280,13 +280,11 @@ public:
 
         if(mpFactory != NULL)
         {
-            mLevels.clear();
             mResidualNorm = 0.00;
             mIterationsNumber = 0;
             mBNorm = 0.00;
 
 //            KRATOS_WATCH(GetNumberOfLevels());
-
             mpFactory->GenerateMultilevelSolver(*this, rA);
 
             this->SetUpSmoothers();
@@ -305,13 +303,6 @@ public:
         if (mpCoarseSolver == NULL)
             KRATOS_THROW_ERROR(std::logic_error, "The coarse solver is not set", "")
 
-//        KRATOS_WATCH(*mpCoarseSolver);
-//        KRATOS_WATCH(GetNumberOfLevels());
-
-//        KRATOS_WATCH(mLevels[0]);
-//        KRATOS_WATCH(mLevels[0].GetCoarsenMatrix());
-//        KRATOS_WATCH(*(mLevels[0].GetCoarsenMatrix()));
-
         const SizeType size = TSparseSpaceType::Size(rX);
         VectorType r(size, 0.00);
 
@@ -325,7 +316,7 @@ public:
             }
             else
             {
-                RecursiveSolve(0, rX, rB, mCycle);
+                this->RecursiveSolve(0, rX, rB, mCycle);
             }
 
             // compute the norm
@@ -336,7 +327,7 @@ public:
 
             mResidualNorm = TSparseSpaceType::TwoNorm(r);
 
-            mIterationsNumber++;
+            ++mIterationsNumber;
 
             std::cout << " iteration " << mIterationsNumber
                       << ", residual: rel = " << mResidualNorm/mBNorm
@@ -427,6 +418,12 @@ public:
     ///@name Access
     ///@{
 
+    /// Clean all the level
+    void ResetLevel()
+    {
+        mLevels.clear();
+    }
+
     /// Add the new level to the multigrid hierarchy. Use CreateLevel() for more reliable and cleaner code.
     //this function is kept to be compatible with python; use CreateLevel to avoid copying the memory
     void AddLevel(typename LevelType::Pointer plevel)
@@ -485,12 +482,22 @@ public:
         }
     }
 
-    LevelType& GetLevel(IndexType idx)
+    typename LevelType::Pointer pGetLevel(const IndexType& idx)
+    {
+        return mLevels[idx];
+    }
+
+    typename LevelType::Pointer pGetLevel(const IndexType& idx) const
+    {
+        return mLevels[idx];
+    }
+
+    LevelType& GetLevel(const IndexType& idx)
     {
         return *(mLevels[idx]);
     }
 
-    const LevelType& GetLevel(IndexType idx) const
+    const LevelType& GetLevel(const IndexType& idx) const
     {
         return *(mLevels[idx]);
     }
@@ -513,6 +520,11 @@ public:
     void SetCycle(const std::string Cycle)
     {
         mCycle = Cycle;
+    }
+
+    std::string Cycle() const
+    {
+        return mCycle;
     }
 
     void SetMaxIterationsNumber(IndexType NewMaxIterationsNumber)
@@ -563,13 +575,13 @@ public:
     {
         std::stringstream buffer;
         buffer << "<<<<<<<" << std::endl;
-        buffer << "Multilevel solver with " << mCycle << " cycle(s)";
-        buffer << ", number of level(s) = " << mLevels.size() << std::endl;
-        for(SizeType i = 0; i < mLevels.size(); i++)
+        buffer << "Multilevel solver with " << this->Cycle() << " cycle";
+        buffer << ", number of level(s) = " << this->GetNumberOfLevels() << std::endl;
+        for(SizeType i = 0; i < this->GetNumberOfLevels(); ++i)
         {
 //            buffer << mLevels[i].Info() << std::endl;
 //            mLevels[i].PrintData(buffer);
-            buffer << mLevels[i]->Info();
+            buffer << this->GetLevel(i).Info();
             buffer << std::endl;
         }
         buffer << ">>>>>>>>" << std::endl;

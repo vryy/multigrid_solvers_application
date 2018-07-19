@@ -68,6 +68,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_utilities/parameter_list.h"
 #include "custom_linear_solvers/multilevel_solver.h"
 
+
 namespace Kratos
 {
 
@@ -104,21 +105,29 @@ public:
 
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
+    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
+
     typedef ParameterList<std::string> ParameterListType;
+
+    typedef typename TSparseSpaceType::SizeType SizeType;
+
+    typedef typename TSparseSpaceType::IndexType IndexType;
+
+    typedef int  IntegerType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    MultilevelSolverFactory(ParameterListType& amg_parameter_list)
-    : mamg_parameter_list(amg_parameter_list)
+    MultilevelSolverFactory(ParameterListType& mg_parameter_list)
+    : mmg_parameter_list(mg_parameter_list)
     {}
 
 
     /// Copy constructor.
     MultilevelSolverFactory(const MultilevelSolverFactory& rOther)
-    : mamg_parameter_list(rOther.mamg_parameter_list)
+    : mmg_parameter_list(rOther.mmg_parameter_list)
     {}
 
     /// Destructor.
@@ -132,7 +141,7 @@ public:
     /// Assignment operator.
     MultilevelSolverFactory& operator=(const MultilevelSolverFactory& rOther)
     {
-        mamg_parameter_list = rOther.mamg_parameter_list;
+        mmg_parameter_list = rOther.mmg_parameter_list;
         return *this;
     }
 
@@ -140,6 +149,11 @@ public:
     ///@}
     ///@name Operations
     ///@{
+
+    virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+    }
 
     virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
     {
@@ -179,7 +193,7 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
-        rOStream << mamg_parameter_list;
+        rOStream << mmg_parameter_list;
     }
 
 
@@ -199,7 +213,7 @@ protected:
     ///@name Protected member Variables
     ///@{
 
-    ParameterListType mamg_parameter_list;
+    ParameterListType mmg_parameter_list;
 
     ///@}
     ///@name Protected Operators

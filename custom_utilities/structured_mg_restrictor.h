@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 15/7/2018 $
+//   Date:                $Date: 16/7/2018 $
 //   Revision:            $Revision: 1.0 $
 //
 //
 
 
-#if !defined(KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED )
-#define  KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MG_RESTRICTOR_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MG_RESTRICTOR_H_INCLUDED
 
 
 
@@ -54,7 +54,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <string>
 #include <iostream>
 #include <sstream>
-#include <cstddef>
 
 
 // External includes
@@ -62,7 +61,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "linear_solvers/linear_solver.h"
 #include "custom_utilities/mg_projector.h"
 
 
@@ -89,29 +87,29 @@ namespace Kratos
 ///@{
 
 /**
- * Abstract class for a level in mutigrid hierarchy
+ * Implementation of prolongation operator for geometric multigrid. The fine model_part must be double of the coarse model_part.
  */
-template<class TSparseSpaceType, class TDenseSpaceType>
-class MatrixBasedMGLevel : public MGLevel<TSparseSpaceType, TDenseSpaceType>
+template<class TSpaceType, std::size_t TDim>
+class StructuredMGRestrictor : public MGProjector<TSpaceType>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MatrixBasedMGLevel
-    KRATOS_CLASS_POINTER_DEFINITION(MatrixBasedMGLevel);
+    /// Pointer definition of StructuredMGRestrictor
+    KRATOS_CLASS_POINTER_DEFINITION(StructuredMGRestrictor);
 
-    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> BaseType;
+    typedef MGProjector<TSpaceType> BaseType;
 
-    typedef typename BaseType::SparseMatrixType SparseMatrixType;
+    typedef typename BaseType::MatrixType MatrixType;
 
-    typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
-
-    typedef typename BaseType::LinearSolverPointerType LinearSolverPointerType;
+    typedef typename BaseType::MatrixPointerType MatrixPointerType;
 
     typedef typename BaseType::VectorType VectorType;
 
     typedef typename BaseType::VectorPointerType VectorPointerType;
+
+    typedef typename BaseType::SizeType SizeType;
 
     typedef typename BaseType::IndexType IndexType;
 
@@ -119,33 +117,35 @@ public:
     ///@name Life Cycle
     ///@{
 
-    /// Default constructor.
-    MatrixBasedMGLevel(const IndexType& lvl)
-    : BaseType(lvl)
-    {
-        this->Initialize();
-    }
+    /// Empty constructor.
+    StructuredMGRestrictor() : BaseType()
+    {}
 
-    /// Copy constructor. Implement copy constructor is important in order to pass the data to the container (i.e. std::vector)
-    MatrixBasedMGLevel(const MatrixBasedMGLevel& rOther)
-    : BaseType()
-    , mpA(rOther.mpA) // shall we make a deep copy here?
+    /// Default constructor.
+    StructuredMGRestrictor(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine)
+    : BaseType(), mp_model_part_coarse(p_model_part_coarse), mp_model_part_fine(p_model_part_fine), m_block_size(1)
     {}
 
     /// Destructor.
-    virtual ~MatrixBasedMGLevel()
+    virtual ~StructuredMGRestrictor()
     {}
 
+    /// Copy constructor
+    StructuredMGRestrictor(const StructuredMGRestrictor& rOther)
+    : BaseType(), mp_model_part_coarse(rOther.mp_model_part_coarse)
+    , mp_model_part_fine(rOther.mp_model_part_fine), m_block_size(rOther.m_block_size)
+    {}
 
     ///@}
     ///@name Operators
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    MatrixBasedMGLevel& operator= (const MatrixBasedMGLevel& rOther)
+    StructuredMGRestrictor& operator= (const StructuredMGRestrictor& rOther)
     {
-        BaseType::operator=(rOther);
-        mpA = rOther.mpA; // shall we make a deep copy here
+        this.mp_model_part_coarse = rOther.mp_model_part_coarse;
+        this.mp_model_part_fine = rOther.mp_model_part_fine;
+        this.m_block_size = rOther.m_block_size;
         return *this;
     }
 
@@ -153,80 +153,68 @@ public:
     ///@name Operations
     ///@{
 
-    virtual int ApplyPreSmoother(VectorType& rX, VectorType& rB) const
+    /// Set the number of d.o.fs per node
+    void SetBlockSize(const int& block_size)
     {
-        if(BaseType::PreSmoother() == NULL)
-        {
-            std::stringstream ss;
-            ss << "The pre-smoother has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
-        }
-        return !(BaseType::PreSmoother()->Solve(*mpA, rX, rB));
+        m_block_size = block_size;
     }
 
-    virtual int ApplyPostSmoother(VectorType& rX, VectorType& rB) const
+    /// Set the number of division on a specific direction of the coarse mesh
+    void SetDivision(const std::size_t& dim, const std::size_t& num_division)
     {
-        if(BaseType::PostSmoother() == NULL)
-        {
-            std::stringstream ss;
-            ss << "The post-smoother has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
-        }
-        return !(BaseType::PostSmoother()->Solve(*mpA, rX, rB));
+        m_coarse_mesh_size[dim] = num_division;
+        m_fine_mesh_size[dim] = num_division*2;
     }
 
+    /// Apply the projection
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
-        if(mpA == NULL)
+        // loop through coarse nodes
+        for(ModelPart::NodeIterator it_node = mp_model_part_coarse->NodesBegin();
+            it_node != mp_model_part_coarse->NodesEnd(); ++it_node)
         {
-            std::stringstream ss;
-            ss << "The matrix operator has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
-        }
-        TSparseSpaceType::Mult(*mpA, rX, rY);
-        return 0;
-    }
+            // get the coarse multi index
+            std::size_t coarse_node_id = it_node->Id();
+            MultiIndex<TDim> coarse_indices = MultiIndex<TDim>::NodeIdToMultiIndex(coarse_node_id, m_coarse_mesh_size);
 
-    virtual int Inverse(LinearSolverPointerType pCoarseSolver, VectorType& rX, VectorType& rY) const
-    {
-        if(mpA == NULL)
-        {
-            std::stringstream ss;
-            ss << "The matrix operator has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            // get the fine multi index
+            MultiIndex<TDim> fine_indices = coarse_indices*2;
+
+            // transfer from fine to coarse
+            std::size_t fine_node_id = MultiIndex<TDim>::MultiIndexToNodeId(fine_indices, m_fine_mesh_size);
+            for (unsigned int ib = 0; ib < m_block_size; ++ib)
+                rY[coarse_node_id*m_block_size+ib] = rX[fine_node_id*m_block_size+ib];
         }
-        return !(pCoarseSolver->Solve(*mpA, rX, rY));
+
+        return 0;
     }
 
     ///@}
     ///@name Access
     ///@{
 
-    // this is kept to make compatible with python; should not use it to avoid copying memory
-    void SetCoarseMatrix(SparseMatrixType& A)
-    {
-        mpA = boost::make_shared<SparseMatrixType>(A);
-    }
-
-    SparseMatrixPointerType GetCoarseMatrix()
-    {
-        return mpA;
-    }
-
-    VectorPointerType GetCoarseUpdateVector()
-    {
-        return mpDx;
-    }
-
-    VectorPointerType GetCoarseVector()
-    {
-        return mpb;
-    }
 
     ///@}
     ///@name Inquiry
     ///@{
 
+    /// Get the size of the base space
+    virtual SizeType GetBaseSize() const
+    {
+        if (mp_model_part_fine != NULL)
+            return mp_model_part_fine->NumberOfNodes() * static_cast<SizeType>(m_block_size);
+        else
+            return 0;
+    }
+
+    /// Get the size of the projected space
+    virtual SizeType GetProjectedSize() const
+    {
+        if (mp_model_part_coarse != NULL)
+            return mp_model_part_coarse->NumberOfNodes() * static_cast<SizeType>(m_block_size);
+        else
+            return 0;
+    }
 
     ///@}
     ///@name Input and output
@@ -236,8 +224,22 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "Matrix-based " << BaseType::Info() << std::endl;
-        ss << "  Fine matrix size: " << TSparseSpaceType::Size1(*mpA) << ", nonzeros = " << mpA->filled2() << std::endl;
+        ss << "StructuredMGRestrictor";
+
+        ss << ", model_part_coarse: ";
+        if (mp_model_part_coarse != NULL)
+            ss << mp_model_part_coarse->Name();
+        else
+            ss << "null";
+
+        ss << ", model_part_fine: ";
+        if (mp_model_part_fine != NULL)
+            ss << mp_model_part_fine->Name();
+        else
+            ss << "null";
+
+        ss << ", block_size: " << m_block_size;
+
         return ss.str();
     }
 
@@ -250,7 +252,6 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
-        // rOStream << "Coarse Matrix: " << *mpA;
     }
 
 
@@ -309,9 +310,11 @@ private:
     ///@name Member Variables
     ///@{
 
-    SparseMatrixPointerType mpA;
-    VectorPointerType mpDx;
-    VectorPointerType mpb;
+    ModelPart::Pointer mp_model_part_coarse;
+    ModelPart::Pointer mp_model_part_fine;
+    int m_block_size;
+    boost::array<std::size_t, TDim> m_coarse_mesh_size;
+    boost::array<std::size_t, TDim> m_fine_mesh_size;
 
     ///@}
     ///@name Private Operators
@@ -322,24 +325,6 @@ private:
     ///@name Private Operations
     ///@{
 
-    void Initialize()
-    {
-        if (mpA == NULL)
-        {
-            SparseMatrixPointerType pNewA = TSparseSpaceType::CreateEmptyMatrixPointer();
-            mpA.swap(pNewA);
-        }
-        if (mpDx == NULL)
-        {
-            VectorPointerType pNewDx = TSparseSpaceType::CreateEmptyVectorPointer();
-            mpDx.swap(pNewDx);
-        }
-        if (mpb == NULL)
-        {
-            VectorPointerType pNewb = TSparseSpaceType::CreateEmptyVectorPointer();
-            mpb.swap(pNewb);
-        }
-    }
 
     ///@}
     ///@name Private  Access
@@ -372,15 +357,15 @@ private:
 
 
 /// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSpaceType, std::size_t TDim>
+inline std::istream& operator >> (std::istream& IStream, StructuredMGRestrictor<TSpaceType, TDim>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSpaceType, std::size_t TDim>
+inline std::ostream& operator << (std::ostream& rOStream, const StructuredMGRestrictor<TSpaceType, TDim>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -393,5 +378,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGLev
 
 } // namespace Kratos.
 
-#endif // KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED  defined
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MG_RESTRICTOR_H_INCLUDED  defined
 

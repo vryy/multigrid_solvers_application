@@ -26,6 +26,7 @@
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_utilities/ruge_stueben_solver_factory.h"
 // #include "custom_utilities/smoothed_aggregation_solver_factory.h"
+#include "custom_utilities/gmg_structured_solver_factory.h"
 
 
 namespace Kratos
@@ -61,6 +62,12 @@ TParameterListType& SubList(TParameterListType& dummy, const typename TParameter
     return dummy.sublist(name);
 }
 
+template<class TMultilevelSolverType>
+typename TMultilevelSolverType::LevelType::Pointer MultilevelSolver_pGetLevel(TMultilevelSolverType& rDummy, int lvl)
+{
+    return rDummy.pGetLevel(lvl);
+}
+
 namespace Python
 {
 
@@ -80,10 +87,14 @@ namespace Python
         typedef MultilevelSolver<SparseSpaceType, LocalSpaceType> MultilevelSolverType;
         typedef MultilevelPreconditioner<SparseSpaceType, LocalSpaceType> MultilevelPreconditionerType;
 
+        typedef typename MultilevelSolverType::LevelType LevelType;
+        typedef typename MultilevelSolverType::IndexType IndexType;
+
         typedef MultilevelSolverFactory<SparseSpaceType, LocalSpaceType> MultilevelSolverFactoryType;
         typedef MultilevelSolverFactoryType::ParameterListType ParameterListType;
         typedef RugeStuebenSolverFactory<SparseSpaceType, LocalSpaceType> RugeStuebenSolverFactoryType;
 //        typedef SmoothedAggregationSolverFactory<SparseSpaceType, LocalSpaceType> SmoothedAggregationSolverFactoryType;
+        typedef GMGStructuredSolverFactory<SparseSpaceType, LocalSpaceType, 2> GMGStructuredSolverFactory2DType;
 
         using namespace boost::python;
 
@@ -126,8 +137,8 @@ namespace Python
         .def("ChangePostSmoother", &MultilevelSolverType::ChangePostSmoother)
         .def("SetUpSmoothers", &MultilevelSolverType::SetUpSmoothers)
         .def("AddLevel", &MultilevelSolverType::AddLevel)
-//        .def("GetLevel", &MultilevelSolverType::GetLevel)
-//        .def("GetNumberOfLevels", &MultilevelSolverType::GetNumberOfLevels)
+        .def("GetLevel", MultilevelSolver_pGetLevel<MultilevelSolverType>)
+        .def("GetNumberOfLevels", &MultilevelSolverType::GetNumberOfLevels)
         .def("SetCycle", &MultilevelSolverType::SetCycle)
         .def("SetCoarseSolver", &MultilevelSolverType::SetCoarseSolver)
         .def("SetTolerance", &MultilevelSolverType::SetTolerance)
@@ -138,18 +149,28 @@ namespace Python
         ;
 
         class_<MultilevelSolverFactoryType, MultilevelSolverFactoryType::Pointer, boost::noncopyable >
-        ( "MultilevelSolverFactory", init<ParameterListType& >())
+        ( "MultilevelSolverFactory", init<ParameterListType&>())
         .def(self_ns::str(self))
+        .def("InitializeMultilevelSolver", &MultilevelSolverFactoryType::InitializeMultilevelSolver)
         .def("GenerateMultilevelSolver", &MultilevelSolverFactoryType::GenerateMultilevelSolver)
         ;
 
         class_<RugeStuebenSolverFactoryType, RugeStuebenSolverFactoryType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
-        ( "RugeStuebenSolverFactory", init<ParameterListType& >())
+        ( "RugeStuebenSolverFactory", init<ParameterListType&>())
+        .def(self_ns::str(self))
         ;
 
 //        class_<SmoothedAggregationSolverFactoryType, SmoothedAggregationSolverFactoryType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
 //        ( "SmoothedAggregationSolverFactory", init<ParameterListType& >())
 //        ;
+
+        class_<GMGStructuredSolverFactory2DType, GMGStructuredSolverFactory2DType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
+        ( "GMGStructuredSolverFactory2D", init<ParameterListType&>())
+        .def("SetBuilderAndSolver", &GMGStructuredSolverFactory2DType::SetBuilderAndSolver)
+        .def("SetScheme", &GMGStructuredSolverFactory2DType::SetScheme)
+        .def("SetModelPart", &GMGStructuredSolverFactory2DType::SetModelPart)
+        .def(self_ns::str(self))
+        ;
 
         //****************************************************************************************************
         //preconditioners
