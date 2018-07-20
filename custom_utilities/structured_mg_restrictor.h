@@ -63,6 +63,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "includes/define.h"
 #include "custom_utilities/mg_projector.h"
 
+// #define CHECK_SIZE
 
 namespace Kratos
 {
@@ -88,6 +89,7 @@ namespace Kratos
 
 /**
  * Implementation of prolongation operator for geometric multigrid. The fine model_part must be double of the coarse model_part.
+ * The restrictor assumes that the Dirichlet BC is not removed from the linear system matrix.
  */
 template<class TSpaceType, std::size_t TDim>
 class StructuredMGRestrictor : public MGProjector<TSpaceType>
@@ -143,6 +145,7 @@ public:
     /// Assignment operator. It's also important like the Copy constructor
     StructuredMGRestrictor& operator= (const StructuredMGRestrictor& rOther)
     {
+        BaseType::operator=(rOther);
         this.mp_model_part_coarse = rOther.mp_model_part_coarse;
         this.mp_model_part_fine = rOther.mp_model_part_fine;
         this.m_block_size = rOther.m_block_size;
@@ -169,21 +172,78 @@ public:
     /// Apply the projection
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
-        // loop through coarse nodes
-        for(ModelPart::NodeIterator it_node = mp_model_part_coarse->NodesBegin();
-            it_node != mp_model_part_coarse->NodesEnd(); ++it_node)
+        #ifdef CHECK_SIZE
+        KRATOS_WATCH(rX.size())
+        KRATOS_WATCH(rY.size())
+        #endif
+
+        TSpaceType::SetToZero(rY);
+
+        // loop through fine nodes
+        for(ModelPart::NodeIterator it_node = mp_model_part_fine->NodesBegin();
+            it_node != mp_model_part_fine->NodesEnd(); ++it_node)
         {
-            // get the coarse multi index
-            std::size_t coarse_node_id = it_node->Id();
-            MultiIndex<TDim> coarse_indices = MultiIndex<TDim>::NodeIdToMultiIndex(coarse_node_id, m_coarse_mesh_size);
-
             // get the fine multi index
-            MultiIndex<TDim> fine_indices = coarse_indices*2;
+            std::size_t fine_node_id = it_node->Id();
+            #ifdef CHECK_SIZE
+            KRATOS_WATCH(fine_node_id)
+            KRATOS_WATCH(m_fine_mesh_size[0])
+            KRATOS_WATCH(m_fine_mesh_size[1])
+            if (fine_node_id*m_block_size > this->GetProjectedSize())
+                KRATOS_THROW_ERROR(std::logic_error, "fine node id exceeds the vector size", __FUNCTION__)
+            #endif
+            MultiIndex<TDim> fine_indices = MultiIndex<TDim>::NodeIdToMultiIndex(fine_node_id, m_fine_mesh_size);
+            #ifdef CHECK_SIZE
+            KRATOS_WATCH(fine_indices)
+            #endif
 
-            // transfer from fine to coarse
-            std::size_t fine_node_id = MultiIndex<TDim>::MultiIndexToNodeId(fine_indices, m_fine_mesh_size);
-            for (unsigned int ib = 0; ib < m_block_size; ++ib)
-                rY[coarse_node_id*m_block_size+ib] = rX[fine_node_id*m_block_size+ib];
+            std::size_t row, col;
+
+            // get the coarse multi index
+            if (fine_indices.IsOnCoarse())
+            {
+                // the fine multiindex coincident with a coarse multiindex
+                MultiIndex<TDim> coarse_indices = fine_indices/2;
+
+                // transfer from coarse to fine
+                std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(coarse_indices, m_coarse_mesh_size);
+                #ifdef CHECK_SIZE
+                std::cout << "1> coarse_node_id: " << coarse_node_id << std::endl;
+                if (coarse_node_id*m_block_size > this->GetBaseSize())
+                    KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
+                #endif
+                for (unsigned int ib = 0; ib < m_block_size; ++ib)
+                {
+                    row = (fine_node_id-1)*m_block_size + ib;
+                    col = (coarse_node_id-1)*m_block_size + ib;
+                    rY[col] += rX[row];
+                }
+            }
+            else
+            {
+                // find the neighbors
+                std::vector<MultiIndex<TDim> > neighbors_indices = fine_indices.FindCoarseNeighbours();
+
+                double fact = 1.0 / neighbors_indices.size();
+                for (std::size_t i = 0; i < neighbors_indices.size(); ++i)
+                {
+                    std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(neighbors_indices[i], m_coarse_mesh_size);
+                    #ifdef CHECK_SIZE
+                    std::cout << "2> "; KRATOS_WATCH(neighbors_indices[i])
+                    std::cout << "2> "; KRATOS_WATCH(coarse_node_id)
+                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[0])
+                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[1])
+                    if (coarse_node_id*m_block_size > this->GetBaseSize())
+                        KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
+                    #endif
+                    for (unsigned int ib = 0; ib < m_block_size; ++ib)
+                    {
+                        row = (fine_node_id-1)*m_block_size + ib;
+                        col = (coarse_node_id-1)*m_block_size + ib;
+                        rY[col] += fact*rX[row];
+                    }
+                }
+            }
         }
 
         return 0;
@@ -377,6 +437,8 @@ inline std::ostream& operator << (std::ostream& rOStream, const StructuredMGRest
 
 
 } // namespace Kratos.
+
+#undef CHECK_SIZE
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MG_RESTRICTOR_H_INCLUDED  defined
 

@@ -199,6 +199,7 @@ public:
         SparseMatrixPointerType pA = rLevel.GetCoarseMatrix();
         TSparseSpaceType::Resize(dummy, TSparseSpaceType::Size1(*pA));
         pBuilderAndSolver->Build(pScheme, *pModelPart, *pA, dummy);
+        pBuilderAndSolver->ApplyDirichletConditions(pScheme, *pModelPart, *pA, dummy, dummy);
     }
 
     /// Compute the coarse matrix on the multigrid level of GMG. The model_part is required to compute the coarse matrix, which is sparse.

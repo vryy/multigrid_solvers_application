@@ -195,7 +195,8 @@ public:
             ss << "The matrix operator has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
-        return !(pCoarseSolver->Solve(*mpA, rX, rY));
+        bool stat = pCoarseSolver->Solve(*mpA, rX, rY);
+        return !stat;
     }
 
     ///@}

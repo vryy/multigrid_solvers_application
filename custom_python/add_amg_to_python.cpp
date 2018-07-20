@@ -54,12 +54,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "spaces/ublas_space.h"
-#include "custom_utilities/mg_level.h"
-#include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/amg_utils.h"
-#include "custom_utilities/gmg_utils.h"
-#include "custom_utilities/multilevel_solver_factory.h"
-#include "custom_python/add_custom_utilities_to_python.h"
+#include "custom_python/add_amg_to_python.h"
 
 namespace Kratos
 {
@@ -73,23 +69,15 @@ typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
 typedef AMGUtils<SparseSpaceType> AMGUtilsType;
 
-typedef GMGUtils<SparseSpaceType, LocalSpaceType> GMGUtilsType;
-
 typedef typename AMGUtilsType::SparseMatrixType SparseMatrixType;
 
 typedef typename AMGUtilsType::SparseMatrixPointerType SparseMatrixPointerType;
 
 typedef typename AMGUtilsType::IndexVectorType IndexVectorType;
 
+typedef typename SparseSpaceType::SizeType SizeType;
+
 //typedef typename AMGUtilsType::IndexVectorPointerType IndexVectorPointerType;
-
-typedef AMGUtilsType::SizeType SizeType;
-
-typedef MGLevel<SparseSpaceType, LocalSpaceType> MGLevelType;
-
-typedef MatrixBasedMGLevel<SparseSpaceType, LocalSpaceType> MatrixBasedMGLevelType;
-
-typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 
 SparseMatrixPointerType Poisson(AMGUtilsType& dummy, const SizeType m, const SizeType n)
 {
@@ -178,7 +166,7 @@ SparseMatrixPointerType Mult(AMGUtilsType& dummy, SparseMatrixType& rA, SparseMa
     return C;
 }
 
-void MultigridSolversApp_AddUtilitiesToPython()
+void MultigridSolversApp_AddAMGToPython()
 {
     using namespace boost::python;
 
@@ -195,35 +183,6 @@ void MultigridSolversApp_AddUtilitiesToPython()
     .def("DirectInterpolation", DirectInterpolation)
     .def("Transpose", Transpose)
     .def("Mult", Mult)
-    ;
-
-    // class_<GMGUtilsType, GMGUtilsType::Pointer, boost::noncopyable>("GMGUtils", init<>())
-    // .def("ComputeCoarseMatrix", &GMGUtilsType::ComputeCoarseMatrix)
-    // ;
-
-   //****************************************************************************************************
-   // level definition
-   //****************************************************************************************************
-
-    class_<MGLevelType, MGLevelType::Pointer, boost::noncopyable>
-    ( "MGLevel", init<const typename MGLevelType::IndexType&>())
-    .def(self_ns::str(self))
-    .def("SetPreSmoother", &MGLevelType::SetPreSmoother)
-    .def("SetPostSmoother", &MGLevelType::SetPostSmoother)
-    .def("SetRestrictionOperator", &MGLevelType::SetRestrictionOperator)
-    .def("SetProlongationOperator", &MGLevelType::SetProlongationOperator)
-    .def("ApplyPreSmoother", &MGLevelType::ApplyPreSmoother)
-    .def("ApplyPostSmoother", &MGLevelType::ApplyPostSmoother)
-    .def("ApplyRestriction", &MGLevelType::ApplyRestriction)
-    .def("ApplyProlongation", &MGLevelType::ApplyProlongation)
-    ;
-
-    class_<MatrixBasedMGLevelType, MatrixBasedMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
-    ( "MatrixBasedMGLevel", init<const typename MGLevelType::IndexType&>())
-    .def(self_ns::str(self))
-    .def("GetCoarseMatrix", &MatrixBasedMGLevelType::GetCoarseMatrix)
-    .def("GetCoarseUpdateVector", &MatrixBasedMGLevelType::GetCoarseUpdateVector)
-    .def("GetCoarseVector", &MatrixBasedMGLevelType::GetCoarseVector)
     ;
 }
 

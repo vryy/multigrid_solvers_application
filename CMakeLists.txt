@@ -11,7 +11,9 @@ include_directories( ${CMAKE_SOURCE_DIR}/kratos )
 set( KRATOS_MULTIGRID_SOLVERS_APPLICATION_SOURCES
     # main application compilation unit
     ${CMAKE_CURRENT_SOURCE_DIR}/multigrid_solvers_application.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_custom_utilities_to_python.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_level_to_python.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_amg_to_python.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_gmg_to_python.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_linear_solvers_to_python.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/multigrid_solvers_python_application.cpp
 )

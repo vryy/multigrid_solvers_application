@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 16/7/2018 $
+//   Date:                $Date: 20/7/2018 $
 //   Revision:            $Revision: 1.0 $
 //
 //
 
 
-#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MG_PROLONGATOR_H_INCLUDED )
-#define  KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MG_PROLONGATOR_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MATRIX_BASED_MG_PROLONGATOR_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MATRIX_BASED_MG_PROLONGATOR_H_INCLUDED
 
 
 
@@ -61,7 +61,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "custom_utilities/mg_projector.h"
+#include "custom_utilities/matrix_based_mg_projector.h"
 
 // #define CHECK_SIZE
 
@@ -92,16 +92,16 @@ namespace Kratos
  * The prolongator assumes that the Dirichlet BC is not removed from the linear system matrix.
  */
 template<class TSpaceType, std::size_t TDim>
-class StructuredMGProlongator : public MGProjector<TSpaceType>
+class StructuredMatrixBasedMGProlongator : public MatrixBasedMGProjector<TSpaceType>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of StructuredMGProlongator
-    KRATOS_CLASS_POINTER_DEFINITION(StructuredMGProlongator);
+    /// Pointer definition of StructuredMatrixBasedMGProlongator
+    KRATOS_CLASS_POINTER_DEFINITION(StructuredMatrixBasedMGProlongator);
 
-    typedef MGProjector<TSpaceType> BaseType;
+    typedef MatrixBasedMGProjector<TSpaceType> BaseType;
 
     typedef typename BaseType::MatrixType MatrixType;
 
@@ -120,20 +120,20 @@ public:
     ///@{
 
     /// Empty constructor.
-    StructuredMGProlongator() : BaseType()
+    StructuredMatrixBasedMGProlongator() : BaseType()
     {}
 
     /// Default constructor.
-    StructuredMGProlongator(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine)
+    StructuredMatrixBasedMGProlongator(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine)
     : BaseType(), mp_model_part_coarse(p_model_part_coarse), mp_model_part_fine(p_model_part_fine), m_block_size(1)
     {}
 
     /// Destructor.
-    virtual ~StructuredMGProlongator()
+    virtual ~StructuredMatrixBasedMGProlongator()
     {}
 
     /// Copy constructor
-    StructuredMGProlongator(const StructuredMGProlongator& rOther)
+    StructuredMatrixBasedMGProlongator(const StructuredMatrixBasedMGProlongator& rOther)
     : BaseType(), mp_model_part_coarse(rOther.mp_model_part_coarse)
     , mp_model_part_fine(rOther.mp_model_part_fine), m_block_size(rOther.m_block_size)
     {}
@@ -143,7 +143,7 @@ public:
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    StructuredMGProlongator& operator= (const StructuredMGProlongator& rOther)
+    StructuredMatrixBasedMGProlongator& operator= (const StructuredMatrixBasedMGProlongator& rOther)
     {
         BaseType::operator=(rOther);
         this.mp_model_part_coarse = rOther.mp_model_part_coarse;
@@ -169,84 +169,18 @@ public:
         m_coarse_mesh_size[dim] = num_division/2;
     }
 
-    /// Apply the projection
-    virtual int Apply(VectorType& rX, VectorType& rY) const
+    /// Construct the underlying operator
+    /// This shall be called after all the Set...() are called
+    virtual void Initialize()
     {
-        #ifdef CHECK_SIZE
-        KRATOS_WATCH(rX.size())
-        KRATOS_WATCH(rY.size())
-        #endif
-
-        TSpaceType::SetToZero(rY);
-
-        // loop through fine nodes
-        for(ModelPart::NodeIterator it_node = mp_model_part_fine->NodesBegin();
-            it_node != mp_model_part_fine->NodesEnd(); ++it_node)
-        {
-            // get the fine multi index
-            std::size_t fine_node_id = it_node->Id();
-            #ifdef CHECK_SIZE
-            KRATOS_WATCH(fine_node_id)
-            KRATOS_WATCH(m_fine_mesh_size[0])
-            KRATOS_WATCH(m_fine_mesh_size[1])
-            if (fine_node_id*m_block_size > this->GetProjectedSize())
-                KRATOS_THROW_ERROR(std::logic_error, "fine node id exceeds the vector size", __FUNCTION__)
-            #endif
-            MultiIndex<TDim> fine_indices = MultiIndex<TDim>::NodeIdToMultiIndex(fine_node_id, m_fine_mesh_size);
-            #ifdef CHECK_SIZE
-            KRATOS_WATCH(fine_indices)
-            #endif
-
-            std::size_t row, col;
-
-            // get the coarse multi index
-            if (fine_indices.IsOnCoarse())
-            {
-                // the fine multiindex coincident with a coarse multiindex
-                MultiIndex<TDim> coarse_indices = fine_indices/2;
-
-                // transfer from coarse to fine
-                std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(coarse_indices, m_coarse_mesh_size);
-                #ifdef CHECK_SIZE
-                std::cout << "1> coarse_node_id: " << coarse_node_id << std::endl;
-                if (coarse_node_id*m_block_size > this->GetBaseSize())
-                    KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
-                #endif
-                for (unsigned int ib = 0; ib < m_block_size; ++ib)
-                {
-                    row = (fine_node_id-1)*m_block_size + ib;
-                    col = (coarse_node_id-1)*m_block_size + ib;
-                    rY[row] += rX[col];
-                }
-            }
-            else
-            {
-                // find the neighbors
-                std::vector<MultiIndex<TDim> > neighbors_indices = fine_indices.FindCoarseNeighbours();
-
-                double fact = 1.0 / neighbors_indices.size();
-                for (std::size_t i = 0; i < neighbors_indices.size(); ++i)
-                {
-                    std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(neighbors_indices[i], m_coarse_mesh_size);
-                    #ifdef CHECK_SIZE
-                    std::cout << "2> "; KRATOS_WATCH(neighbors_indices[i])
-                    std::cout << "2> "; KRATOS_WATCH(coarse_node_id)
-                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[0])
-                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[1])
-                    if (coarse_node_id*m_block_size > this->GetBaseSize())
-                        KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
-                    #endif
-                    for (unsigned int ib = 0; ib < m_block_size; ++ib)
-                    {
-                        row = (fine_node_id-1)*m_block_size + ib;
-                        col = (coarse_node_id-1)*m_block_size + ib;
-                        rY[row] += fact*rX[col];
-                    }
-                }
-            }
-        }
-
-        return 0;
+        MatrixPointerType pOperator = BaseType::GetOperator();
+        if (TSpaceType::Size1(*pOperator) != this->GetProjectedSize()
+         || TSpaceType::Size2(*pOperator) != this->GetBaseSize())
+            TSpaceType::Resize(*pOperator, this->GetProjectedSize(), this->GetBaseSize());
+        if (mp_model_part_fine == NULL || mp_model_part_coarse == NULL)
+            TSpaceType::SetToZero(*pOperator);
+        else
+            this->ConstructMatrix(*pOperator);
     }
 
     ///@}
@@ -284,7 +218,7 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "StructuredMGProlongator";
+        ss << "StructuredMatrixBasedMGProlongator";
 
         ss << ", model_part_coarse: ";
         if (mp_model_part_coarse != NULL)
@@ -385,6 +319,76 @@ private:
     ///@name Private Operations
     ///@{
 
+    /// Construct the prolongation matrix
+    void ConstructMatrix(MatrixType& rOperator) const
+    {
+        // loop through fine nodes
+        for(ModelPart::NodeIterator it_node = mp_model_part_fine->NodesBegin();
+            it_node != mp_model_part_fine->NodesEnd(); ++it_node)
+        {
+            // get the fine multi index
+            std::size_t fine_node_id = it_node->Id();
+            #ifdef CHECK_SIZE
+            KRATOS_WATCH(fine_node_id)
+            KRATOS_WATCH(m_fine_mesh_size[0])
+            KRATOS_WATCH(m_fine_mesh_size[1])
+            if (fine_node_id*m_block_size > this->GetProjectedSize())
+                KRATOS_THROW_ERROR(std::logic_error, "fine node id exceeds the vector size", __FUNCTION__)
+            #endif
+            MultiIndex<TDim> fine_indices = MultiIndex<TDim>::NodeIdToMultiIndex(fine_node_id, m_fine_mesh_size);
+            #ifdef CHECK_SIZE
+            KRATOS_WATCH(fine_indices)
+            #endif
+
+            std::size_t row, col;
+
+            // get the coarse multi index
+            if (fine_indices.IsOnCoarse())
+            {
+                // the fine multiindex coincident with a coarse multiindex
+                MultiIndex<TDim> coarse_indices = fine_indices/2;
+
+                // transfer from coarse to fine
+                std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(coarse_indices, m_coarse_mesh_size);
+                #ifdef CHECK_SIZE
+                std::cout << "1> coarse_node_id: " << coarse_node_id << std::endl;
+                if (coarse_node_id*m_block_size > this->GetBaseSize())
+                    KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
+                #endif
+                for (unsigned int ib = 0; ib < m_block_size; ++ib)
+                {
+                    row = (fine_node_id-1)*m_block_size + ib;
+                    col = (coarse_node_id-1)*m_block_size + ib;
+                    rOperator(row, col) = 1.0;
+                }
+            }
+            else
+            {
+                // find the neighbors
+                std::vector<MultiIndex<TDim> > neighbors_indices = fine_indices.FindCoarseNeighbours();
+
+                double fact = 1.0 / neighbors_indices.size();
+                for (std::size_t i = 0; i < neighbors_indices.size(); ++i)
+                {
+                    std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(neighbors_indices[i], m_coarse_mesh_size);
+                    #ifdef CHECK_SIZE
+                    std::cout << "2> "; KRATOS_WATCH(neighbors_indices[i])
+                    std::cout << "2> "; KRATOS_WATCH(coarse_node_id)
+                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[0])
+                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[1])
+                    if (coarse_node_id*m_block_size > this->GetBaseSize())
+                        KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
+                    #endif
+                    for (unsigned int ib = 0; ib < m_block_size; ++ib)
+                    {
+                        row = (fine_node_id-1)*m_block_size + ib;
+                        col = (coarse_node_id-1)*m_block_size + ib;
+                        rOperator(row, col) = fact;
+                    }
+                }
+            }
+        }
+    }
 
     ///@}
     ///@name Private  Access
@@ -418,14 +422,14 @@ private:
 
 /// input stream function
 template<class TSpaceType, std::size_t TDim>
-inline std::istream& operator >> (std::istream& IStream, StructuredMGProlongator<TSpaceType, TDim>& rThis)
+inline std::istream& operator >> (std::istream& IStream, StructuredMatrixBasedMGProlongator<TSpaceType, TDim>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
 template<class TSpaceType, std::size_t TDim>
-inline std::ostream& operator << (std::ostream& rOStream, const StructuredMGProlongator<TSpaceType, TDim>& rThis)
+inline std::ostream& operator << (std::ostream& rOStream, const StructuredMatrixBasedMGProlongator<TSpaceType, TDim>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -439,5 +443,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const StructuredMGProl
 
 #undef CHECK_SIZE
 
-#endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MG_PROLONGATOR_H_INCLUDED  defined
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MATRIX_BASED_MG_PROLONGATOR_H_INCLUDED  defined
 

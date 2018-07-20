@@ -143,6 +143,10 @@ public:
     ///@name Operations
     ///@{
 
+    /// Initialize the operator
+    virtual void Initialize()
+    {}
+
     /// Apply the projection, rX: input, rY: output
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {

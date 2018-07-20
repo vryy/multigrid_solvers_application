@@ -682,12 +682,14 @@ private:
     std::string mCycle;
 
     double mResidualNorm;
-    IndexType mIterationsNumber;
+    SizeType mIterationsNumber;
     double mBNorm;
     double mTolerance;
-    IndexType mMaxIterationsNumber;
-    IndexType mMaxLevels;
-    IndexType mMaxCoarseSize;
+    SizeType mMaxIterationsNumber;
+    SizeType mMaxLevels;
+    SizeType mMaxCoarseSize;
+    SizeType mNumPreSmooth;
+    SizeType mNumPostSmooth;
 
     FactoryPointerType mpFactory;
 
@@ -723,31 +725,34 @@ private:
         const SizeType csize = GetLevel(lvl).GetCoarseSize();
 //        KRATOS_WATCH(csize);
 
-        VectorType cB(csize, 0.00);
+        VectorType cR(csize, 0.00);
         VectorType cX(csize, 0.00);
 
-        err = GetLevel(lvl).ApplyRestriction(r, cB); ErrorCheck(err, "Error with ApplyRestriction at", KRATOS_HERE);
+        // KRATOS_WATCH(r)
+        err = GetLevel(lvl).ApplyRestriction(r, cR); ErrorCheck(err, "Error with ApplyRestriction at", KRATOS_HERE);
+        // KRATOS_WATCH(cR)
 
         // solve
-        if(lvl == GetNumberOfLevels() - 2)
+        if(lvl == this->GetNumberOfLevels() - 2)
         {
-            err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cB); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
+            err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cR); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
+            // KRATOS_WATCH(cX)
         }
         else
         {
             if(Cycle.compare("V") == 0)
             {
-                RecursiveSolve(lvl + 1, cX, cB, "V");
+                RecursiveSolve(lvl + 1, cX, cR, "V");
             }
             else if(Cycle.compare("W") == 0)
             {
-                RecursiveSolve(lvl + 1, cX, cB, Cycle);
-                RecursiveSolve(lvl + 1, cX, cB, Cycle);
+                RecursiveSolve(lvl + 1, cX, cR, Cycle);
+                RecursiveSolve(lvl + 1, cX, cR, Cycle);
             }
             else if(Cycle.compare("F") == 0)
             {
-                RecursiveSolve(lvl + 1, cX, cB, Cycle);
-                RecursiveSolve(lvl + 1, cX, cB, "V");
+                RecursiveSolve(lvl + 1, cX, cR, Cycle);
+                RecursiveSolve(lvl + 1, cX, cR, "V");
             }
             else
             {
@@ -758,6 +763,7 @@ private:
         // prolongation
         VectorType Dx(size, 0.00);
         err = GetLevel(lvl).ApplyProlongation(cX, Dx); ErrorCheck(err, "Error with ApplyProlongation at", KRATOS_HERE);
+        // KRATOS_WATCH(Dx)
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
 
         // Post smoothing

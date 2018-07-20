@@ -68,7 +68,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_utilities/parameter_list.h"
 #include "custom_linear_solvers/multilevel_solver.h"
 #include "custom_utilities/structured_mg_prolongator.h"
+#include "custom_utilities/structured_matrix_based_mg_prolongator.h"
 #include "custom_utilities/structured_mg_restrictor.h"
+#include "custom_utilities/structured_matrix_based_mg_restrictor.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_utilities/gmg_utils.h"
 
@@ -250,6 +252,8 @@ public:
     {
         typedef StructuredMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
         typedef StructuredMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
+        // typedef StructuredMatrixBasedMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
+        // typedef StructuredMatrixBasedMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "##################################" << std::endl;
@@ -316,6 +320,7 @@ public:
             pPrologator->SetDivision(1, coarse_div_2 << (nlevels-1-lvl));
             if (TDim == 3)
                 pPrologator->SetDivision(2, coarse_div_3 << (nlevels-1-lvl));
+            pPrologator->Initialize();
 
             current_level.SetProlongationOperator(pPrologator);
 
@@ -334,10 +339,11 @@ public:
             else
                 pRestrictor = typename MGRestrictorType::Pointer(new MGRestrictorType());
             pRestrictor->SetBlockSize(block_size);
-            pRestrictor->SetDivision(0, coarse_div_1 << (nlevels-1-lvl));
-            pRestrictor->SetDivision(1, coarse_div_2 << (nlevels-1-lvl));
+            pRestrictor->SetDivision(0, coarse_div_1 << (nlevels-2-lvl));
+            pRestrictor->SetDivision(1, coarse_div_2 << (nlevels-2-lvl));
             if (TDim == 3)
-                pRestrictor->SetDivision(2, coarse_div_3 << (nlevels-1-lvl));
+                pRestrictor->SetDivision(2, coarse_div_3 << (nlevels-2-lvl));
+            pRestrictor->Initialize();
 
             current_level.SetRestrictionOperator(pRestrictor);
 

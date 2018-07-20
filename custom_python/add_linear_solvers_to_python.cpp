@@ -148,6 +148,19 @@ namespace Python
         .def("SetFactory", &MultilevelSolverType::SetFactory)
         ;
 
+        //****************************************************************************************************
+        //preconditioners
+        //****************************************************************************************************
+
+        class_<MultilevelPreconditionerType, MultilevelPreconditionerType::Pointer, bases<PreconditionerType> >("MultilevelPreconditioner", init<MultilevelSolverType::Pointer>())
+        .def(self_ns::str(self))
+        .def("SetMultilevelSolver",&MultilevelPreconditionerType::SetMultilevelSolver)
+        ;
+
+        //***************************************************************************
+        //factories
+        //***************************************************************************
+
         class_<MultilevelSolverFactoryType, MultilevelSolverFactoryType::Pointer, boost::noncopyable >
         ( "MultilevelSolverFactory", init<ParameterListType&>())
         .def(self_ns::str(self))
@@ -170,15 +183,6 @@ namespace Python
         .def("SetScheme", &GMGStructuredSolverFactory2DType::SetScheme)
         .def("SetModelPart", &GMGStructuredSolverFactory2DType::SetModelPart)
         .def(self_ns::str(self))
-        ;
-
-        //****************************************************************************************************
-        //preconditioners
-        //****************************************************************************************************
-
-        class_<MultilevelPreconditionerType, MultilevelPreconditionerType::Pointer, bases<PreconditionerType> >("MultilevelPreconditioner", init<MultilevelSolverType::Pointer>())
-        .def(self_ns::str(self))
-        .def("SetMultilevelSolver",&MultilevelPreconditionerType::SetMultilevelSolver)
         ;
 
     }

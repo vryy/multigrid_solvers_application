@@ -18,7 +18,9 @@
 // Project includes
 #include "includes/define.h"
 #include "multigrid_solvers_application.h"
-#include "custom_python/add_custom_utilities_to_python.h"
+#include "custom_python/add_level_to_python.h"
+#include "custom_python/add_amg_to_python.h"
+#include "custom_python/add_gmg_to_python.h"
 #include "custom_python/add_linear_solvers_to_python.h"
 
 namespace Kratos
@@ -35,9 +37,11 @@ namespace Python
                bases<KratosApplication>, boost::noncopyable>
                ("KratosMultigridSolversApplication");
 
-        MultigridSolversApp_AddUtilitiesToPython();
-
+        MultigridSolversApp_AddLevelToPython();
+        MultigridSolversApp_AddAMGToPython();
+        MultigridSolversApp_AddGMGToPython();
         MultigridSolversApp_AddLinearSolversToPython();
+
     }
 
 } // namespace Python.
