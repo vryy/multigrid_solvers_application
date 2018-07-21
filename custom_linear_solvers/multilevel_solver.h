@@ -148,9 +148,10 @@ public:
         mTolerance(1e-9),
         mMaxIterationsNumber(300),
         mMaxLevels(10),
+        mNumPreSmooth(1),
+        mNumPostSmooth(1),
         mMaxCoarseSize(500)
-    {
-    }
+    {}
 
     MultilevelSolver(LinearSolverPointerType pCoarseSolver) :
         mpCoarseSolver(pCoarseSolver),
@@ -161,9 +162,10 @@ public:
         mTolerance(1e-9),
         mMaxIterationsNumber(300),
         mMaxLevels(10),
+        mNumPreSmooth(1),
+        mNumPostSmooth(1),
         mMaxCoarseSize(500)
-    {
-    }
+    {}
 
     MultilevelSolver(LinearSolverPointerType pCoarseSolver, const std::string Cycle) :
         mpCoarseSolver(pCoarseSolver),
@@ -174,9 +176,10 @@ public:
         mTolerance(1e-9),
         mMaxIterationsNumber(300),
         mMaxLevels(10),
+        mNumPreSmooth(1),
+        mNumPostSmooth(1),
         mMaxCoarseSize(500)
-    {
-    }
+    {}
 
     MultilevelSolver(double NewTolerance, IndexType NewMaxIterationsNumber,
             LinearSolverPointerType pCoarseSolver, const std::string Cycle) :
@@ -188,9 +191,10 @@ public:
         mTolerance(NewTolerance),
         mMaxIterationsNumber(NewMaxIterationsNumber),
         mMaxLevels(10),
+        mNumPreSmooth(1),
+        mNumPostSmooth(1),
         mMaxCoarseSize(500)
-    {
-    }
+    {}
 
     /// Copy constructor.
     MultilevelSolver(const MultilevelSolver& Other) : BaseType(Other)
@@ -202,6 +206,8 @@ public:
         mMaxIterationsNumber = Other.mMaxIterationsNumber;
         mMaxLevels = Other.mMaxLevels;
         mMaxCoarseSize = Other.mMaxCoarseSize;
+        mNumPreSmooth = Other.mNumPreSmooth;
+        mNumPostSmooth = Other.mNumPostSmooth;
         mResidualNorm = 0.00;
         mIterationsNumber = 0;
         mBNorm = 0.00;
@@ -226,6 +232,8 @@ public:
         mMaxIterationsNumber = Other.mMaxIterationsNumber;
         mMaxLevels = Other.mMaxLevels;
         mMaxCoarseSize = Other.mMaxCoarseSize;
+        mNumPreSmooth = Other.mNumPreSmooth;
+        mNumPostSmooth = Other.mNumPostSmooth;
         mResidualNorm = 0.00;
         mIterationsNumber = 0;
         mBNorm = 0.00;
@@ -259,9 +267,7 @@ public:
     @param rB. Right hand side vector.
     */
     virtual void InitializeSolutionStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
-    {
-    }
-
+    {}
 
     /** Normal solve method.
     Solves the linear system Ax=b and puts the result on SystemVector& rX.
@@ -710,6 +716,7 @@ private:
         int err;
 
         // Pre smoothing
+        // TODO do more presmooth
         err = GetLevel(lvl).ApplyPreSmoother(rX, rB); ErrorCheck(err, "Error with ApplySmoother at", KRATOS_HERE);
 
         // restriction
@@ -767,6 +774,7 @@ private:
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
 
         // Post smoothing
+        //TODO do more postsmooth
         err = GetLevel(lvl).ApplyPostSmoother(rX, rB); ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
     }
 

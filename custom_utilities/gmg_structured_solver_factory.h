@@ -268,6 +268,9 @@ public:
         IndexType coarse_div_1 = gmg_parameter_list.get("coarse_div_1", 10);
         IndexType coarse_div_2 = gmg_parameter_list.get("coarse_div_2", 10);
         IndexType coarse_div_3 = gmg_parameter_list.get("coarse_div_3", 10);
+        bool compute_coarse_matrix = gmg_parameter_list.get("compute_coarse_matrix", true);
+        // REMARKS: only use compute_coarse_matrix if do not want to compute the coarse matrix outside. But it's not recommended.
+        KRATOS_WATCH(compute_coarse_matrix)
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "gmg parameters:" << std::endl;
@@ -293,7 +296,7 @@ public:
             std::cout << "   compute coarse matrix";
             #endif
 
-            if (lvl > 0)
+            if (compute_coarse_matrix && (lvl > 0))
             {
                 // set up level lvl. Level 0 coarse matrix is assumed to be rA
                 // assemble the coarse matrix
@@ -310,19 +313,19 @@ public:
             std::cout << "   generating prolongation operator";
             #endif
 
-            typename MGProlongatorType::Pointer pPrologator;
+            typename MGProlongatorType::Pointer pProlongator;
             if (lvl < nlevels-1)
-                pPrologator = typename MGProlongatorType::Pointer(new MGProlongatorType(this->GetModelPart(lvl+1), this->GetModelPart(lvl)));
+                pProlongator = typename MGProlongatorType::Pointer(new MGProlongatorType(this->GetModelPart(lvl+1), this->GetModelPart(lvl)));
             else
-                pPrologator = typename MGProlongatorType::Pointer(new MGProlongatorType());
-            pPrologator->SetBlockSize(block_size);
-            pPrologator->SetDivision(0, coarse_div_1 << (nlevels-1-lvl));
-            pPrologator->SetDivision(1, coarse_div_2 << (nlevels-1-lvl));
+                pProlongator = typename MGProlongatorType::Pointer(new MGProlongatorType());
+            pProlongator->SetBlockSize(block_size);
+            pProlongator->SetDivision(0, coarse_div_1 << (nlevels-1-lvl));
+            pProlongator->SetDivision(1, coarse_div_2 << (nlevels-1-lvl));
             if (TDim == 3)
-                pPrologator->SetDivision(2, coarse_div_3 << (nlevels-1-lvl));
-            pPrologator->Initialize();
+                pProlongator->SetDivision(2, coarse_div_3 << (nlevels-1-lvl));
+            pProlongator->Initialize();
 
-            current_level.SetProlongationOperator(pPrologator);
+            current_level.SetProlongationOperator(pProlongator);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " completed" << std::endl;
