@@ -67,10 +67,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/parameter_list.h"
 #include "custom_linear_solvers/multilevel_solver.h"
-#include "custom_utilities/structured_mg_prolongator.h"
-#include "custom_utilities/structured_matrix_based_mg_prolongator.h"
-#include "custom_utilities/structured_mg_restrictor.h"
-#include "custom_utilities/structured_matrix_based_mg_restrictor.h"
+#include "custom_utilities/structured_mesh_based_mg_projector.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_utilities/gmg_utils.h"
 
@@ -123,13 +120,11 @@ public:
 
     typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
+    typedef StructuredMeshBasedMGProjector<TSparseSpaceType> StructuredMeshBasedMGProjectorType;
+
     typedef typename LevelType::Pointer LevelPointerType;
 
     typedef GMGUtils<TSparseSpaceType, TDenseSpaceType> GMGUtilsType;
-
-    typedef typename GMGUtilsType::BuilderAndSolverType BuilderAndSolverType;
-
-    typedef typename GMGUtilsType::SchemeType SchemeType;
 
     typedef typename BaseType::SizeType SizeType;
 
@@ -194,6 +189,16 @@ public:
             KRATOS_THROW_ERROR(std::logic_error, "Error setting model_part for non-existing level", lvl)
     }
 
+    void SetRestrictionOperator(typename StructuredMeshBasedMGProjector<TSparseSpaceType>::Pointer pProjector)
+    {
+        mpRestrictionType = pProjector;
+    }
+
+    void SetProlongationOperator(typename StructuredMeshBasedMGProjector<TSparseSpaceType>::Pointer pProjector)
+    {
+        mpProlongationType = pProjector;
+    }
+
     virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
     {
         // create the levels
@@ -207,11 +212,6 @@ public:
         }
 
         // initialize the levels
-        // typedef StructuredMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
-        // typedef StructuredMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
-        typedef StructuredMatrixBasedMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
-        typedef StructuredMatrixBasedMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
-
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "##################################" << std::endl;
         std::cout << "### Executing GMGStructuredSolverFactory::" << __FUNCTION__ << std::endl;
@@ -219,9 +219,10 @@ public:
 
         // general parameters
         IndexType block_size = gmg_parameter_list.get("block_size", 1);
-        IndexType coarse_div_1 = gmg_parameter_list.get("coarse_div_1", 10);
-        IndexType coarse_div_2 = gmg_parameter_list.get("coarse_div_2", 10);
-        IndexType coarse_div_3 = gmg_parameter_list.get("coarse_div_3", 10);
+        IndexType coarse_div[3];
+        coarse_div[0] = gmg_parameter_list.get("coarse_div_1", 10);
+        coarse_div[1] = gmg_parameter_list.get("coarse_div_2", 10);
+        coarse_div[2] = gmg_parameter_list.get("coarse_div_3", 10);
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "gmg parameters:" << std::endl;
@@ -249,14 +250,18 @@ public:
 
             typename MGProlongatorType::Pointer pProlongator;
             if (lvl < nlevels-1)
-                pProlongator = typename MGProlongatorType::Pointer(new MGProlongatorType(this->GetModelPart(lvl+1), this->GetModelPart(lvl)));
+                pProlongator = mpProlongationType->Create(this->GetModelPart(lvl+1), this->GetModelPart(lvl), block_size);
             else
-                pProlongator = typename MGProlongatorType::Pointer(new MGProlongatorType());
-            pProlongator->SetBlockSize(block_size);
-            pProlongator->SetDivision(0, coarse_div_1 << (nlevels-1-lvl));
-            pProlongator->SetDivision(1, coarse_div_2 << (nlevels-1-lvl));
-            if (TDim == 3)
-                pProlongator->SetDivision(2, coarse_div_3 << (nlevels-1-lvl));
+                pProlongator = typename StructuredMeshBasedMGProjectorType::Pointer(new StructuredMeshBasedMGProjectorType());
+//            pProlongator->SetDivision(0, coarse_div_1 << (nlevels-1-lvl));
+//            pProlongator->SetDivision(1, coarse_div_2 << (nlevels-1-lvl));
+//            if (TDim == 3)
+//                pProlongator->SetDivision(2, coarse_div_3 << (nlevels-1-lvl));
+            for (unsigned int dim = 0; dim < 3; ++dim)
+            {
+                pProlongator->SetFineMeshSize(dim, coarse_div[dim] << (nlevels-1-lvl));
+                pProlongator->SetCoarseMeshSize(dim, coarse_div[dim] << (nlevels-2-lvl));
+            }
             pProlongator->Initialize();
 
             current_level.SetProlongationOperator(pProlongator);
@@ -272,14 +277,18 @@ public:
 
             typename MGRestrictorType::Pointer pRestrictor;
             if (lvl < nlevels-1)
-                pRestrictor = typename MGRestrictorType::Pointer(new MGRestrictorType(this->GetModelPart(lvl+1), this->GetModelPart(lvl)));
+                pRestrictor = mpRestrictionType->Create(this->GetModelPart(lvl+1), this->GetModelPart(lvl), block_size);
             else
-                pRestrictor = typename MGRestrictorType::Pointer(new MGRestrictorType());
-            pRestrictor->SetBlockSize(block_size);
-            pRestrictor->SetDivision(0, coarse_div_1 << (nlevels-2-lvl));
-            pRestrictor->SetDivision(1, coarse_div_2 << (nlevels-2-lvl));
-            if (TDim == 3)
-                pRestrictor->SetDivision(2, coarse_div_3 << (nlevels-2-lvl));
+                pRestrictor = typename StructuredMeshBasedMGProjectorType::Pointer(new StructuredMeshBasedMGProjectorType());
+//            pRestrictor->SetDivision(0, coarse_div_1 << (nlevels-2-lvl));
+//            pRestrictor->SetDivision(1, coarse_div_2 << (nlevels-2-lvl));
+//            if (TDim == 3)
+//                pRestrictor->SetDivision(2, coarse_div_3 << (nlevels-2-lvl));
+            for (unsigned int dim = 0; dim < 3; ++dim)
+            {
+                pRestrictor->SetFineMeshSize(dim, coarse_div[dim] << (nlevels-1-lvl));
+                pRestrictor->SetCoarseMeshSize(dim, coarse_div[dim] << (nlevels-2-lvl));
+            }
             pRestrictor->Initialize();
 
             current_level.SetRestrictionOperator(pRestrictor);
@@ -388,6 +397,8 @@ private:
     ///@{
 
     std::vector<ModelPart::Pointer> mpModelParts;
+    typename StructuredMeshBasedMGProjectorType::Pointer mpProlongationType;
+    typename StructuredMeshBasedMGProjectorType::Pointer mpRestrictionType;
 
     ///@}
     ///@name Private Operators

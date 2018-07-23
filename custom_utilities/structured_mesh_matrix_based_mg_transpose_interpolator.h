@@ -45,8 +45,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
 
-#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MATRIX_BASED_MG_PROLONGATOR_H_INCLUDED )
-#define  KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MATRIX_BASED_MG_PROLONGATOR_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MESH_MATRIX_BASED_MG_TRANSPOSE_INTERPOLATOR_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MESH_MATRIX_BASED_MG_TRANSPOSE_INTERPOLATOR_H_INCLUDED
 
 
 
@@ -62,6 +62,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "custom_utilities/matrix_based_mg_projector.h"
+#include "custom_utilities/structured_mesh_mg_projector.h"
 
 // #define CHECK_SIZE
 
@@ -88,20 +89,23 @@ namespace Kratos
 ///@{
 
 /**
- * Implementation of prolongation operator for geometric multigrid. The fine model_part must be double of the coarse model_part.
+ * Implementation of restriction operator for geometric multigrid by transpose of the corresponding prolongator as interpolator.
+ * The fine model_part must be double of the coarse model_part.
  * The prolongator assumes that the Dirichlet BC is not removed from the linear system matrix.
  */
 template<class TSpaceType, std::size_t TDim>
-class StructuredMatrixBasedMGProlongator : public MatrixBasedMGProjector<TSpaceType>
+class StructuredMeshMatrixBasedMGTransposeInterpolator : public MatrixBasedMGProjector<TSpaceType>, StructuredMeshMGProjector<TSpaceType, TDim>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of StructuredMatrixBasedMGProlongator
-    KRATOS_CLASS_POINTER_DEFINITION(StructuredMatrixBasedMGProlongator);
+    /// Pointer definition of StructuredMeshMatrixBasedMGTransposeInterpolator
+    KRATOS_CLASS_POINTER_DEFINITION(StructuredMeshMatrixBasedMGTransposeInterpolator);
 
-    typedef MatrixBasedMGProjector<TSpaceType> BaseType;
+    typedef MatrixBasedMGProjector<TSpaceType> BaseType1;
+
+    typedef StructuredMeshMGProjector<TSpaceType, TDim> BaseType2;
 
     typedef typename BaseType::MatrixType MatrixType;
 
@@ -119,23 +123,23 @@ public:
     ///@name Life Cycle
     ///@{
 
-    /// Empty constructor.
-    StructuredMatrixBasedMGProlongator() : BaseType()
+    /// Default constructor.
+    StructuredMeshMatrixBasedMGTransposeInterpolator(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine)
+    : BaseType1(), BaseType2(p_model_part_coarse, p_model_part_fine)
     {}
 
     /// Default constructor.
-    StructuredMatrixBasedMGProlongator(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine)
-    : BaseType(), mp_model_part_coarse(p_model_part_coarse), mp_model_part_fine(p_model_part_fine), m_block_size(1)
+    StructuredMeshMatrixBasedMGTransposeInterpolator(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine, const std::size_t& block_size)
+    : BaseType1(), BaseType2(p_model_part_coarse, p_model_part_fine, block_size)
     {}
 
     /// Destructor.
-    virtual ~StructuredMatrixBasedMGProlongator()
+    virtual ~StructuredMeshMatrixBasedMGTransposeInterpolator()
     {}
 
     /// Copy constructor
-    StructuredMatrixBasedMGProlongator(const StructuredMatrixBasedMGProlongator& rOther)
-    : BaseType(), mp_model_part_coarse(rOther.mp_model_part_coarse)
-    , mp_model_part_fine(rOther.mp_model_part_fine), m_block_size(rOther.m_block_size)
+    StructuredMeshMatrixBasedMGTransposeInterpolator(const StructuredMeshMatrixBasedMGTransposeInterpolator& rOther)
+    : BaseType1(rOther), BaseType2(rOther)
     {}
 
     ///@}
@@ -143,12 +147,10 @@ public:
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    StructuredMatrixBasedMGProlongator& operator= (const StructuredMatrixBasedMGProlongator& rOther)
+    StructuredMeshMatrixBasedMGTransposeInterpolator& operator= (const StructuredMeshMatrixBasedMGTransposeInterpolator& rOther)
     {
-        BaseType::operator=(rOther);
-        this.mp_model_part_coarse = rOther.mp_model_part_coarse;
-        this.mp_model_part_fine = rOther.mp_model_part_fine;
-        this.m_block_size = rOther.m_block_size;
+        BaseType1::operator=(rOther);
+        BaseType2::operator=(rOther);
         return *this;
     }
 
@@ -156,17 +158,28 @@ public:
     ///@name Operations
     ///@{
 
-    /// Set the number of d.o.fs per node
-    void SetBlockSize(const int& block_size)
+    /// Create the new instance of the mesh based projector
+    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine) const
     {
-        m_block_size = block_size;
+        return typename MeshBasedMGProjector<TSpaceType>::Pointer(
+            new StructuredMeshMatrixBasedMGTransposeInterpolator<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine));
     }
 
-    /// Set the number of division on a specific direction of the fine mesh
+    /// Create the new instance of the mesh based projector
+    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine,
+        const std::size_t& block_size) const
+    {
+        return typename MeshBasedMGProjector<TSpaceType>::Pointer(
+            new StructuredMeshMatrixBasedMGTransposeInterpolator<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine, block_size));
+    }
+
+    /// Set the number of division on a specific direction of the coarse mesh
     void SetDivision(const std::size_t& dim, const std::size_t& num_division)
     {
-        m_fine_mesh_size[dim] = num_division;
-        m_coarse_mesh_size[dim] = num_division/2;
+        this->CoarseMeshSize()[dim] = num_division;
+        this->FineMeshSize()[dim] = num_division*2;
     }
 
     /// Construct the underlying operator
@@ -177,7 +190,16 @@ public:
         if (TSpaceType::Size1(*pOperator) != this->GetProjectedSize()
          || TSpaceType::Size2(*pOperator) != this->GetBaseSize())
             TSpaceType::Resize(*pOperator, this->GetProjectedSize(), this->GetBaseSize());
-        if (mp_model_part_fine == NULL || mp_model_part_coarse == NULL)
+
+        // MatrixType P(this->GetBaseSize(), this->GetProjectedSize());
+        // StructuredMatrixBasedMGProlongator<TSpaceType, TDim> Op(this->pCoarseModelPart(), this->pFineModelPart());
+        // Op.SetBlockSize(this->BlockSize());
+        // for (std::size_t dim = 0; dim < TDim; ++dim)
+        //     Op.SetDivision(dim, this->FineMeshSize()[dim]);
+        // Op.Initialize();
+        // TSpaceType::TransposeCopy(*(Op.GetOperator()), *pOperator);
+
+        if (this->pFineModelPart() == NULL || this->pCoarseModelPart() == NULL)
             TSpaceType::SetToZero(*pOperator);
         else
             this->ConstructMatrix(*pOperator);
@@ -195,8 +217,8 @@ public:
     /// Get the size of the base space
     virtual SizeType GetBaseSize() const
     {
-        if (mp_model_part_coarse != NULL)
-            return mp_model_part_coarse->NumberOfNodes() * static_cast<SizeType>(m_block_size);
+        if (this->pFineModelPart() != NULL)
+            return this->pFineModelPart()->NumberOfNodes() * static_cast<SizeType>(this->BlockSize());
         else
             return 0;
     }
@@ -204,8 +226,8 @@ public:
     /// Get the size of the projected space
     virtual SizeType GetProjectedSize() const
     {
-        if (mp_model_part_fine != NULL)
-            return mp_model_part_fine->NumberOfNodes() * static_cast<SizeType>(m_block_size);
+        if (this->pCoarseModelPart() != NULL)
+            return this->pCoarseModelPart()->NumberOfNodes() * static_cast<SizeType>(this->BlockSize());
         else
             return 0;
     }
@@ -218,21 +240,21 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "StructuredMatrixBasedMGProlongator";
+        ss << "StructuredMeshMatrixBasedMGTransposeInterpolator";
 
         ss << ", model_part_coarse: ";
-        if (mp_model_part_coarse != NULL)
-            ss << mp_model_part_coarse->Name();
+        if (this->pCoarseModelPart() != NULL)
+            ss << this->pCoarseModelPart()->Name();
         else
             ss << "null";
 
         ss << ", model_part_fine: ";
-        if (mp_model_part_fine != NULL)
-            ss << mp_model_part_fine->Name();
+        if (this->pFineModelPart() != NULL)
+            ss << this->pFineModelPart()->Name();
         else
             ss << "null";
 
-        ss << ", block_size: " << m_block_size;
+        ss << ", block_size: " << this->BlockSize();
 
         return ss.str();
     }
@@ -304,11 +326,11 @@ private:
     ///@name Member Variables
     ///@{
 
-    ModelPart::Pointer mp_model_part_coarse;
-    ModelPart::Pointer mp_model_part_fine;
-    int m_block_size;
-    boost::array<std::size_t, TDim> m_fine_mesh_size;
-    boost::array<std::size_t, TDim> m_coarse_mesh_size;
+    ModelPart::Pointer this->pCoarseModelPart();
+    ModelPart::Pointer this->pFineModelPart();
+    int this->BlockSize();
+    boost::array<std::size_t, TDim> this->CoarseMeshSize();
+    boost::array<std::size_t, TDim> this->FineMeshSize();
 
     ///@}
     ///@name Private Operators
@@ -319,23 +341,23 @@ private:
     ///@name Private Operations
     ///@{
 
-    /// Construct the prolongation matrix
+    /// Construct the restriction matrix
     void ConstructMatrix(MatrixType& rOperator) const
     {
         // loop through fine nodes
-        for(ModelPart::NodeIterator it_node = mp_model_part_fine->NodesBegin();
-            it_node != mp_model_part_fine->NodesEnd(); ++it_node)
+        for(ModelPart::NodeIterator it_node = this->FineModelPart().NodesBegin();
+            it_node != this->FineModelPart().NodesEnd(); ++it_node)
         {
             // get the fine multi index
             std::size_t fine_node_id = it_node->Id();
             #ifdef CHECK_SIZE
             KRATOS_WATCH(fine_node_id)
-            KRATOS_WATCH(m_fine_mesh_size[0])
-            KRATOS_WATCH(m_fine_mesh_size[1])
-            if (fine_node_id*m_block_size > this->GetProjectedSize())
+            KRATOS_WATCH(this->FineMeshSize()[0])
+            KRATOS_WATCH(this->FineMeshSize()[1])
+            if (fine_node_id*this->BlockSize() > this->GetProjectedSize())
                 KRATOS_THROW_ERROR(std::logic_error, "fine node id exceeds the vector size", __FUNCTION__)
             #endif
-            MultiIndex<TDim> fine_indices = MultiIndex<TDim>::NodeIdToMultiIndex(fine_node_id, m_fine_mesh_size);
+            MultiIndex<TDim> fine_indices = MultiIndex<TDim>::NodeIdToMultiIndex(fine_node_id, this->FineMeshSize());
             #ifdef CHECK_SIZE
             KRATOS_WATCH(fine_indices)
             #endif
@@ -349,17 +371,17 @@ private:
                 MultiIndex<TDim> coarse_indices = fine_indices/2;
 
                 // transfer from coarse to fine
-                std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(coarse_indices, m_coarse_mesh_size);
+                std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(coarse_indices, this->CoarseMeshSize());
                 #ifdef CHECK_SIZE
                 std::cout << "1> coarse_node_id: " << coarse_node_id << std::endl;
-                if (coarse_node_id*m_block_size > this->GetBaseSize())
+                if (coarse_node_id*this->BlockSize() > this->GetBaseSize())
                     KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
                 #endif
-                for (unsigned int ib = 0; ib < m_block_size; ++ib)
+                for (unsigned int ib = 0; ib < this->BlockSize(); ++ib)
                 {
-                    row = (fine_node_id-1)*m_block_size + ib;
-                    col = (coarse_node_id-1)*m_block_size + ib;
-                    rOperator(row, col) = 1.0;
+                    row = (fine_node_id-1)*this->BlockSize() + ib;
+                    col = (coarse_node_id-1)*this->BlockSize() + ib;
+                    rOperator(col, row) = 1.0;
                 }
             }
             else
@@ -370,20 +392,20 @@ private:
                 double fact = 1.0 / neighbors_indices.size();
                 for (std::size_t i = 0; i < neighbors_indices.size(); ++i)
                 {
-                    std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(neighbors_indices[i], m_coarse_mesh_size);
+                    std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(neighbors_indices[i], this->CoarseMeshSize());
                     #ifdef CHECK_SIZE
                     std::cout << "2> "; KRATOS_WATCH(neighbors_indices[i])
                     std::cout << "2> "; KRATOS_WATCH(coarse_node_id)
-                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[0])
-                    std::cout << "2> "; KRATOS_WATCH(m_coarse_mesh_size[1])
-                    if (coarse_node_id*m_block_size > this->GetBaseSize())
+                    std::cout << "2> "; KRATOS_WATCH(this->CoarseMeshSize()[0])
+                    std::cout << "2> "; KRATOS_WATCH(this->CoarseMeshSize()[1])
+                    if (coarse_node_id*this->BlockSize() > this->GetBaseSize())
                         KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
                     #endif
-                    for (unsigned int ib = 0; ib < m_block_size; ++ib)
+                    for (unsigned int ib = 0; ib < this->BlockSize(); ++ib)
                     {
-                        row = (fine_node_id-1)*m_block_size + ib;
-                        col = (coarse_node_id-1)*m_block_size + ib;
-                        rOperator(row, col) = fact;
+                        row = (fine_node_id-1)*this->BlockSize() + ib;
+                        col = (coarse_node_id-1)*this->BlockSize() + ib;
+                        rOperator(col, row) = fact;
                     }
                 }
             }
@@ -422,15 +444,16 @@ private:
 
 /// input stream function
 template<class TSpaceType, std::size_t TDim>
-inline std::istream& operator >> (std::istream& IStream, StructuredMatrixBasedMGProlongator<TSpaceType, TDim>& rThis)
+inline std::istream& operator >> (std::istream& IStream, StructuredMeshMatrixBasedMGTransposeInterpolator<TSpaceType, TDim>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
 template<class TSpaceType, std::size_t TDim>
-inline std::ostream& operator << (std::ostream& rOStream, const StructuredMatrixBasedMGProlongator<TSpaceType, TDim>& rThis)
+inline std::ostream& operator << (std::ostream& rOStream, const StructuredMeshMatrixBasedMGTransposeInterpolator<TSpaceType, TDim>& rThis)
 {
+    rOStream << rThis.Info();
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
     rThis.PrintData(rOStream);
@@ -443,5 +466,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const StructuredMatrix
 
 #undef CHECK_SIZE
 
-#endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MATRIX_BASED_MG_PROLONGATOR_H_INCLUDED  defined
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MESH_MATRIX_BASED_MG_TRANSPOSE_INTERPOLATOR_H_INCLUDED  defined
 
