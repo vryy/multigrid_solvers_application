@@ -60,10 +60,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_utilities/matrix_based_mg_projector.h"
 #include "custom_utilities/mesh_based_mg_projector.h"
 #include "custom_utilities/structured_mesh_mg_projector.h"
-#include "custom_utilities/structured_mesh_mg_interpolator.h"
-#include "custom_utilities/structured_mesh_mg_transpose_interpolator.h"
-#include "custom_utilities/structured_mesh_matrix_based_mg_interpolator.h"
-#include "custom_utilities/structured_mesh_matrix_based_mg_transpose_interpolator.h"
+#include "custom_utilities/structured_mesh_mg_interpolator.h" // prolongation
+#include "custom_utilities/structured_mesh_mg_transpose_interpolator.h" // restriction
+#include "custom_utilities/structured_mesh_matrix_based_mg_interpolator.h" // prolongation
+#include "custom_utilities/structured_mesh_matrix_based_mg_transpose_interpolator.h" // restriction
+#include "custom_utilities/structured_mesh_mg_injector.h" // restriction
 #include "custom_python/add_level_to_python.h"
 
 namespace Kratos
@@ -166,6 +167,12 @@ void MultigridSolversApp_AddLevelToPython()
     typedef StructuredMeshMatrixBasedMGTransposeInterpolator<SparseSpaceType, 2> StructuredMeshMatrixBasedMGTransposeInterpolator2DType;
     class_<StructuredMeshMatrixBasedMGTransposeInterpolator2DType, StructuredMeshMatrixBasedMGTransposeInterpolator2DType::Pointer, bases<StructuredMeshMGProjector2DType, MatrixBasedMGProjectorType>, boost::noncopyable>
     ("StructuredMeshMatrixBasedMGTransposeInterpolator2D", init<>())
+    .def(self_ns::str(self))
+    ;
+
+    typedef StructuredMeshMGInjector<SparseSpaceType, 2> StructuredMeshMGInjector2DType;
+    class_<StructuredMeshMGInjector2DType, StructuredMeshMGInjector2DType::Pointer, bases<StructuredMeshMGProjector2DType>, boost::noncopyable>
+    ("StructuredMeshMGInjector2D", init<>())
     .def(self_ns::str(self))
     ;
 }
