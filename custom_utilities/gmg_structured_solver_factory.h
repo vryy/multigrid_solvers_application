@@ -147,16 +147,12 @@ public:
     {
         IndexType nlevels = gmg_parameter_list.get("num_levels", 1);
         mpModelParts.resize(nlevels);
-        mpBuilderAndSolvers.resize(nlevels);
-        mpSchemes.resize(nlevels);
     }
 
     /// Copy constructor.
     GMGStructuredSolverFactory(const GMGStructuredSolverFactory& rOther)
     : BaseType(rOther)
     , mpModelParts(rOther.mpModelParts)
-    , mpBuilderAndSolvers(rOther.mpBuilderAndSolvers)
-    , mpSchemes(rOther.mpSchemes)
     {}
 
     /// Destructor.
@@ -173,50 +169,12 @@ public:
     {
         BaseType::operator=(rOther);
         mpModelParts = rOther.mpModelParts;
-        mpBuilderAndSolvers = rOther.mpBuilderAndSolvers;
-        mpSchemes = rOther.mpSchemes;
         return *this;
     }
 
     ///@}
     ///@name Operations
     ///@{
-
-    typename BuilderAndSolverType::Pointer GetBuilderAndSolver(const std::size_t& lvl)
-    {
-        return mpBuilderAndSolvers[lvl];
-    }
-
-    typename BuilderAndSolverType::Pointer GetBuilderAndSolver(const std::size_t& lvl) const
-    {
-        return mpBuilderAndSolvers[lvl];
-    }
-
-    void SetBuilderAndSolver(const std::size_t& lvl, typename BuilderAndSolverType::Pointer pBuilderAndSolver)
-    {
-        if (lvl < mpBuilderAndSolvers.size())
-            mpBuilderAndSolvers[lvl] = pBuilderAndSolver;
-        else
-            KRATOS_THROW_ERROR(std::logic_error, "Error setting builder_and_solver for non-existing level", lvl)
-    }
-
-    typename SchemeType::Pointer GetScheme(const std::size_t& lvl)
-    {
-        return mpSchemes[lvl];
-    }
-
-    typename SchemeType::Pointer GetScheme(const std::size_t& lvl) const
-    {
-        return mpSchemes[lvl];
-    }
-
-    void SetScheme(const std::size_t& lvl, typename SchemeType::Pointer pScheme)
-    {
-        if (lvl < mpSchemes.size())
-            mpSchemes[lvl] = pScheme;
-        else
-            KRATOS_THROW_ERROR(std::logic_error, "Error setting scheme for non-existing level", lvl)
-    }
 
     ModelPart::Pointer GetModelPart(const std::size_t& lvl)
     {
@@ -238,6 +196,7 @@ public:
 
     virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
     {
+        // create the levels
         ParameterListType gmg_parameter_list = BaseType::mmg_parameter_list;
 
         IndexType nlevels = gmg_parameter_list.get("num_levels", 1);
@@ -246,14 +205,12 @@ public:
         {
             solver.AddLevel(typename LevelType::Pointer(new LevelType(lvl)));
         }
-    }
 
-    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
-    {
-        typedef StructuredMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
-        typedef StructuredMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
-        // typedef StructuredMatrixBasedMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
-        // typedef StructuredMatrixBasedMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
+        // initialize the levels
+        // typedef StructuredMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
+        // typedef StructuredMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
+        typedef StructuredMatrixBasedMGProlongator<TSparseSpaceType, TDim> MGProlongatorType;
+        typedef StructuredMatrixBasedMGRestrictor<TSparseSpaceType, TDim> MGRestrictorType;
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "##################################" << std::endl;
@@ -261,16 +218,10 @@ public:
         #endif
 
         // general parameters
-        ParameterListType gmg_parameter_list = BaseType::mmg_parameter_list;
-
-        IndexType nlevels = gmg_parameter_list.get("num_levels", 1);
         IndexType block_size = gmg_parameter_list.get("block_size", 1);
         IndexType coarse_div_1 = gmg_parameter_list.get("coarse_div_1", 10);
         IndexType coarse_div_2 = gmg_parameter_list.get("coarse_div_2", 10);
         IndexType coarse_div_3 = gmg_parameter_list.get("coarse_div_3", 10);
-        bool compute_coarse_matrix = gmg_parameter_list.get("compute_coarse_matrix", true);
-        // REMARKS: only use compute_coarse_matrix if do not want to compute the coarse matrix outside. But it's not recommended.
-        KRATOS_WATCH(compute_coarse_matrix)
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "gmg parameters:" << std::endl;
@@ -289,23 +240,6 @@ public:
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << "---------------" << std::endl;
             std::cout << "> generating level " << current_level.LevelDepth() << std::endl;
-            #endif
-
-            // generate coarsen matrix for next level
-            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << "   compute coarse matrix";
-            #endif
-
-            if (compute_coarse_matrix && (lvl > 0))
-            {
-                // set up level lvl. Level 0 coarse matrix is assumed to be rA
-                // assemble the coarse matrix
-                GMGUtilsType::ComputeCoarseMatrix(this->GetBuilderAndSolver(lvl),
-                    this->GetScheme(lvl), this->GetModelPart(lvl), current_level);
-            }
-
-            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
-            std::cout << " for level " << current_level.LevelDepth() << " completed" << std::endl;
             #endif
 
             // generate prolongation operator
@@ -360,6 +294,9 @@ public:
         std::cout << "#######################" << std::endl;
         #endif
     }
+
+    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
+    {}
 
     ///@}
     ///@name Access
@@ -450,8 +387,6 @@ private:
     ///@name Member Variables
     ///@{
 
-    std::vector<typename BuilderAndSolverType::Pointer> mpBuilderAndSolvers;
-    std::vector<typename SchemeType::Pointer> mpSchemes;
     std::vector<ModelPart::Pointer> mpModelParts;
 
     ///@}
