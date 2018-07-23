@@ -67,7 +67,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/parameter_list.h"
 #include "custom_linear_solvers/multilevel_solver.h"
-#include "custom_utilities/structured_mesh_based_mg_projector.h"
+#include "custom_utilities/structured_mesh_mg_projector.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_utilities/gmg_utils.h"
 
@@ -120,7 +120,7 @@ public:
 
     typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
-    typedef StructuredMeshBasedMGProjector<TSparseSpaceType> StructuredMeshBasedMGProjectorType;
+    typedef StructuredMeshMGProjector<TSparseSpaceType, TDim> StructuredMeshMGProjectorType;
 
     typedef typename LevelType::Pointer LevelPointerType;
 
@@ -142,6 +142,8 @@ public:
     {
         IndexType nlevels = gmg_parameter_list.get("num_levels", 1);
         mpModelParts.resize(nlevels);
+        mpProlongationType.resize(nlevels);
+        mpRestrictionType.resize(nlevels);
     }
 
     /// Copy constructor.
@@ -181,6 +183,7 @@ public:
         return mpModelParts[lvl];
     }
 
+    /// Set the model_part at specific level
     void SetModelPart(const std::size_t& lvl, ModelPart::Pointer pModelPart)
     {
         if (lvl < mpModelParts.size())
@@ -189,14 +192,18 @@ public:
             KRATOS_THROW_ERROR(std::logic_error, "Error setting model_part for non-existing level", lvl)
     }
 
-    void SetRestrictionOperator(typename StructuredMeshBasedMGProjector<TSparseSpaceType>::Pointer pProjector)
+    /// Set the restriction operator for all levels
+    void SetRestrictionOperator(typename StructuredMeshMGProjectorType::Pointer pProjector)
     {
-        mpRestrictionType = pProjector;
+        for (unsigned int lvl = 0; lvl < mpRestrictionType.size(); ++lvl)
+            mpRestrictionType[lvl] = pProjector;
     }
 
-    void SetProlongationOperator(typename StructuredMeshBasedMGProjector<TSparseSpaceType>::Pointer pProjector)
+    /// Set the prolongation operator for all levels
+    void SetProlongationOperator(typename StructuredMeshMGProjectorType::Pointer pProjector)
     {
-        mpProlongationType = pProjector;
+        for (unsigned int lvl = 0; lvl < mpProlongationType.size(); ++lvl)
+            mpProlongationType[lvl] = pProjector;
     }
 
     virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
@@ -219,18 +226,20 @@ public:
 
         // general parameters
         IndexType block_size = gmg_parameter_list.get("block_size", 1);
-        IndexType coarse_div[3];
-        coarse_div[0] = gmg_parameter_list.get("coarse_div_1", 10);
-        coarse_div[1] = gmg_parameter_list.get("coarse_div_2", 10);
-        coarse_div[2] = gmg_parameter_list.get("coarse_div_3", 10);
+        IndexType coarse_div[TDim];
+        for (unsigned int dim = 0; dim < TDim; ++dim)
+        {
+            std::stringstream ss;
+            ss << "coarse_div_" << (dim+1);
+            coarse_div[dim] = gmg_parameter_list.get(ss.str(), 10);
+        }
 
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "gmg parameters:" << std::endl;
         std::cout << "   "; KRATOS_WATCH(nlevels)
         std::cout << "   "; KRATOS_WATCH(block_size)
-        std::cout << "   "; KRATOS_WATCH(coarse_div_1)
-        std::cout << "   "; KRATOS_WATCH(coarse_div_2)
-        std::cout << "   "; KRATOS_WATCH(coarse_div_3)
+        for (unsigned int dim = 0; dim < TDim; ++dim)
+            std::cout << "   coarse_div[" << dim << "]: " << coarse_div[dim] << std::endl;
         #endif
 
         KRATOS_WATCH(solver.GetNumberOfLevels())
@@ -248,22 +257,26 @@ public:
             std::cout << "   generating prolongation operator";
             #endif
 
-            typename MGProlongatorType::Pointer pProlongator;
+            typename StructuredMeshMGProjectorType::Pointer pProlongator;
             if (lvl < nlevels-1)
-                pProlongator = mpProlongationType->Create(this->GetModelPart(lvl+1), this->GetModelPart(lvl), block_size);
+            {
+                if (mpProlongationType[lvl] == NULL)
+                {
+                    std::cout << "WARNING: the prolongation operator type for level " << lvl << " is not set. User is required to set it separately." << std::endl;
+                    pProlongator = typename StructuredMeshMGProjectorType::Pointer(new StructuredMeshMGProjectorType());
+                }
+                else
+                    pProlongator = boost::dynamic_pointer_cast<StructuredMeshMGProjectorType>(
+                        mpProlongationType[lvl]->Create(this->GetModelPart(lvl+1), this->GetModelPart(lvl), block_size));
+            }
             else
-                pProlongator = typename StructuredMeshBasedMGProjectorType::Pointer(new StructuredMeshBasedMGProjectorType());
-//            pProlongator->SetDivision(0, coarse_div_1 << (nlevels-1-lvl));
-//            pProlongator->SetDivision(1, coarse_div_2 << (nlevels-1-lvl));
-//            if (TDim == 3)
-//                pProlongator->SetDivision(2, coarse_div_3 << (nlevels-1-lvl));
-            for (unsigned int dim = 0; dim < 3; ++dim)
+                pProlongator = typename StructuredMeshMGProjectorType::Pointer(new StructuredMeshMGProjectorType());
+            for (unsigned int dim = 0; dim < TDim; ++dim)
             {
                 pProlongator->SetFineMeshSize(dim, coarse_div[dim] << (nlevels-1-lvl));
                 pProlongator->SetCoarseMeshSize(dim, coarse_div[dim] << (nlevels-2-lvl));
             }
             pProlongator->Initialize();
-
             current_level.SetProlongationOperator(pProlongator);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
@@ -275,22 +288,26 @@ public:
             std::cout << "   generating restriction operator";
             #endif
 
-            typename MGRestrictorType::Pointer pRestrictor;
+            typename StructuredMeshMGProjectorType::Pointer pRestrictor;
             if (lvl < nlevels-1)
-                pRestrictor = mpRestrictionType->Create(this->GetModelPart(lvl+1), this->GetModelPart(lvl), block_size);
+            {
+                if (mpRestrictionType[lvl] == NULL)
+                {
+                    std::cout << "WARNING: the restriction operator type for level " << lvl << " is not set. User is required to set it separately." << std::endl;
+                    pRestrictor = typename StructuredMeshMGProjectorType::Pointer(new StructuredMeshMGProjectorType());
+                }
+                else
+                    pRestrictor = boost::dynamic_pointer_cast<StructuredMeshMGProjectorType>(
+                        mpRestrictionType[lvl]->Create(this->GetModelPart(lvl+1), this->GetModelPart(lvl), block_size));
+            }
             else
-                pRestrictor = typename StructuredMeshBasedMGProjectorType::Pointer(new StructuredMeshBasedMGProjectorType());
-//            pRestrictor->SetDivision(0, coarse_div_1 << (nlevels-2-lvl));
-//            pRestrictor->SetDivision(1, coarse_div_2 << (nlevels-2-lvl));
-//            if (TDim == 3)
-//                pRestrictor->SetDivision(2, coarse_div_3 << (nlevels-2-lvl));
-            for (unsigned int dim = 0; dim < 3; ++dim)
+                pRestrictor = typename StructuredMeshMGProjectorType::Pointer(new StructuredMeshMGProjectorType());
+            for (unsigned int dim = 0; dim < TDim; ++dim)
             {
                 pRestrictor->SetFineMeshSize(dim, coarse_div[dim] << (nlevels-1-lvl));
                 pRestrictor->SetCoarseMeshSize(dim, coarse_div[dim] << (nlevels-2-lvl));
             }
             pRestrictor->Initialize();
-
             current_level.SetRestrictionOperator(pRestrictor);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
@@ -397,8 +414,8 @@ private:
     ///@{
 
     std::vector<ModelPart::Pointer> mpModelParts;
-    typename StructuredMeshBasedMGProjectorType::Pointer mpProlongationType;
-    typename StructuredMeshBasedMGProjectorType::Pointer mpRestrictionType;
+    std::vector<typename StructuredMeshMGProjectorType::Pointer> mpProlongationType;
+    std::vector<typename StructuredMeshMGProjectorType::Pointer> mpRestrictionType;
 
     ///@}
     ///@name Private Operators

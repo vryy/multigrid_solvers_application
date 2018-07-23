@@ -179,10 +179,13 @@ public:
     }
 
     /// Set the number of d.o.fs per node
-    void SetBlockSize(const std::size_t& block_size)
-    {
-        m_block_size = block_size;
-    }
+    void SetBlockSize(const std::size_t& block_size) {m_block_size = block_size;}
+
+    /// Set the coarse model_part
+    void SetCoarseModelPart(ModelPart::Pointer p_model_part) {mp_model_part_coarse = p_model_part;}
+
+    /// Set the fine model_part
+    void SetFineModelPart(ModelPart::Pointer p_model_part) {mp_model_part_fine = p_model_part;}
 
     ///@}
     ///@name Access
@@ -210,6 +213,17 @@ public:
     ///@name Inquiry
     ///@{
 
+    /// Get the size of the base space
+    virtual SizeType GetBaseSize() const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+    }
+
+    /// Get the size of the projected space
+    virtual SizeType GetProjectedSize() const
+    {
+        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+    }
 
     ///@}
     ///@name Input and output

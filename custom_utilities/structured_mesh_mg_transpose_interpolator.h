@@ -61,7 +61,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "custom_utilities/mg_projector.h"
+#include "custom_utilities/structured_mesh_mg_projector.h"
 
 // #define CHECK_SIZE
 
@@ -119,6 +119,10 @@ public:
     ///@}
     ///@name Life Cycle
     ///@{
+
+    /// Empty constructor.
+    StructuredMeshMGTransposeInterpolator() : BaseType()
+    {}
 
     /// Default constructor.
     StructuredMeshMGTransposeInterpolator(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine)
@@ -189,8 +193,8 @@ public:
         TSpaceType::SetToZero(rY);
 
         // loop through fine nodes
-        for(ModelPart::NodeIterator it_node = this->FineModelPart().NodesBegin();
-            it_node != this->FineModelPart().NodesEnd(); ++it_node)
+        for(ModelPart::NodeIterator it_node = this->pFineModelPart()->NodesBegin();
+            it_node != this->pFineModelPart()->NodesEnd(); ++it_node)
         {
             // get the fine multi index
             std::size_t fine_node_id = it_node->Id();

@@ -182,6 +182,8 @@ namespace Python
         class_<GMGStructuredSolverFactory2DType, GMGStructuredSolverFactory2DType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
         ( "GMGStructuredSolverFactory2D", init<ParameterListType&>())
         .def("SetModelPart", &GMGStructuredSolverFactory2DType::SetModelPart)
+        .def("SetRestrictionOperator", &GMGStructuredSolverFactory2DType::SetRestrictionOperator)
+        .def("SetProlongationOperator", &GMGStructuredSolverFactory2DType::SetProlongationOperator)
         .def(self_ns::str(self))
         ;
 

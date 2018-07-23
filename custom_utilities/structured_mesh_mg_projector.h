@@ -197,7 +197,7 @@ public:
     ///@{
 
     /// Get the dimension of the structured mesh
-    static const std::size_t Dimension() const {return TDim;}
+    static const std::size_t Dimension() {return TDim;}
 
     /// Get the fine mesh size
     const boost::array<std::size_t, TDim>& FineMeshSize() const {return m_fine_mesh_size;}
@@ -209,6 +209,17 @@ public:
     ///@name Inquiry
     ///@{
 
+    /// Get the size of the base space
+    virtual SizeType GetBaseSize() const
+    {
+        return 0;
+    }
+
+    /// Get the size of the projected space
+    virtual SizeType GetProjectedSize() const
+    {
+        return 0;
+    }
 
     ///@}
     ///@name Input and output

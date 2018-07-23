@@ -94,7 +94,7 @@ namespace Kratos
  * The prolongator assumes that the Dirichlet BC is not removed from the linear system matrix.
  */
 template<class TSpaceType, std::size_t TDim>
-class StructuredMeshMatrixBasedMGTransposeInterpolator : public MatrixBasedMGProjector<TSpaceType>, StructuredMeshMGProjector<TSpaceType, TDim>
+class StructuredMeshMatrixBasedMGTransposeInterpolator : public MatrixBasedMGProjector<TSpaceType>, public StructuredMeshMGProjector<TSpaceType, TDim>
 {
 public:
     ///@name Type Definitions
@@ -107,21 +107,25 @@ public:
 
     typedef StructuredMeshMGProjector<TSpaceType, TDim> BaseType2;
 
-    typedef typename BaseType::MatrixType MatrixType;
+    typedef typename BaseType1::MatrixType MatrixType;
 
-    typedef typename BaseType::MatrixPointerType MatrixPointerType;
+    typedef typename BaseType1::MatrixPointerType MatrixPointerType;
 
-    typedef typename BaseType::VectorType VectorType;
+    typedef typename BaseType1::VectorType VectorType;
 
-    typedef typename BaseType::VectorPointerType VectorPointerType;
+    typedef typename BaseType1::VectorPointerType VectorPointerType;
 
-    typedef typename BaseType::SizeType SizeType;
+    typedef typename BaseType1::SizeType SizeType;
 
-    typedef typename BaseType::IndexType IndexType;
+    typedef typename BaseType1::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
     ///@{
+
+    /// Empty constructor
+    StructuredMeshMatrixBasedMGTransposeInterpolator(): BaseType1(), BaseType2()
+    {}
 
     /// Default constructor.
     StructuredMeshMatrixBasedMGTransposeInterpolator(ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine)
@@ -186,7 +190,7 @@ public:
     /// This shall be called after all the Set...() are called
     virtual void Initialize()
     {
-        MatrixPointerType pOperator = BaseType::GetOperator();
+        MatrixPointerType pOperator = this->GetOperator();
         if (TSpaceType::Size1(*pOperator) != this->GetProjectedSize()
          || TSpaceType::Size2(*pOperator) != this->GetBaseSize())
             TSpaceType::Resize(*pOperator, this->GetProjectedSize(), this->GetBaseSize());
@@ -203,6 +207,12 @@ public:
             TSpaceType::SetToZero(*pOperator);
         else
             this->ConstructMatrix(*pOperator);
+    }
+
+    /// Apply the projection
+    virtual int Apply(VectorType& rX, VectorType& rY) const
+    {
+        return BaseType1::Apply(rX, rY);
     }
 
     ///@}
@@ -326,11 +336,6 @@ private:
     ///@name Member Variables
     ///@{
 
-    ModelPart::Pointer this->pCoarseModelPart();
-    ModelPart::Pointer this->pFineModelPart();
-    int this->BlockSize();
-    boost::array<std::size_t, TDim> this->CoarseMeshSize();
-    boost::array<std::size_t, TDim> this->FineMeshSize();
 
     ///@}
     ///@name Private Operators
@@ -345,8 +350,8 @@ private:
     void ConstructMatrix(MatrixType& rOperator) const
     {
         // loop through fine nodes
-        for(ModelPart::NodeIterator it_node = this->FineModelPart().NodesBegin();
-            it_node != this->FineModelPart().NodesEnd(); ++it_node)
+        for(ModelPart::NodeIterator it_node = this->pFineModelPart()->NodesBegin();
+            it_node != this->pFineModelPart()->NodesEnd(); ++it_node)
         {
             // get the fine multi index
             std::size_t fine_node_id = it_node->Id();
