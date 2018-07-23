@@ -148,6 +148,22 @@ public:
     ///@name Operations
     ///@{
 
+    /// Initialize the operator
+    virtual void Initialize()
+    {
+        if(mpOperator == NULL)
+        {
+            MatrixPointerType pNewP = TSpaceType::CreateEmptyMatrixPointer();
+            mpOperator.swap(pNewP);
+        }
+    }
+
+    /// Set the operator
+    void SetOperator(MatrixPointerType pOperator)
+    {
+        mpOperator = pOperator;
+    }
+
     /// Apply the projection
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
@@ -283,14 +299,6 @@ private:
     ///@name Private Operations
     ///@{
 
-    void Initialize()
-    {
-        if(mpOperator == NULL)
-        {
-            MatrixPointerType pNewP = MatrixPointerType(new MatrixType(0, 0));
-            mpOperator.swap(pNewP);
-        }
-    }
 
     ///@}
     ///@name Private  Access

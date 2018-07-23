@@ -57,6 +57,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_utilities/mg_level.h"
 #include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/mg_projector.h"
+#include "custom_utilities/matrix_based_mg_projector.h"
 #include "custom_utilities/structured_mg_prolongator.h"
 #include "custom_utilities/structured_mg_restrictor.h"
 #include "custom_python/add_level_to_python.h"
@@ -78,6 +79,8 @@ typedef MatrixBasedMGLevel<SparseSpaceType, LocalSpaceType> MatrixBasedMGLevelTy
 typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 
 typedef MGProjector<SparseSpaceType> MGProjectorType;
+
+typedef MatrixBasedMGProjector<SparseSpaceType> MatrixBasedMGProjectorType;
 
 typedef StructuredMGProlongator<SparseSpaceType, 2> StructuredMGProlongator2DType;
 
@@ -121,6 +124,12 @@ void MultigridSolversApp_AddLevelToPython()
     .def(self_ns::str(self))
     .def("Initialize", &MGProjectorType::Initialize)
     .def("Apply", &MGProjectorType::Apply)
+    ;
+
+    class_<MatrixBasedMGProjectorType, MatrixBasedMGProjectorType::Pointer, bases<MGProjectorType>, boost::noncopyable>
+    ( "MatrixBasedMGProjector", init<>())
+    .def("SetOperator", &MatrixBasedMGProjectorType::SetOperator)
+    .def(self_ns::str(self))
     ;
 
     class_<StructuredMGProlongator2DType, StructuredMGProlongator2DType::Pointer, bases<MGProjectorType>, boost::noncopyable>
