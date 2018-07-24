@@ -144,6 +144,7 @@ public:
         mpModelParts.resize(nlevels);
         mpProlongationType.resize(nlevels);
         mpRestrictionType.resize(nlevels);
+        mpTransferType.resize(nlevels);
     }
 
     /// Copy constructor.
@@ -197,6 +198,13 @@ public:
     {
         for (unsigned int lvl = 0; lvl < mpRestrictionType.size(); ++lvl)
             mpRestrictionType[lvl] = pProjector;
+    }
+
+    /// Set the transfer operator for all levels
+    void SetTransferOperator(typename StructuredMeshMGProjectorType::Pointer pProjector)
+    {
+        for (unsigned int lvl = 0; lvl < mpTransferType.size(); ++lvl)
+            mpTransferType[lvl] = pProjector;
     }
 
     /// Set the prolongation operator for all levels
@@ -283,7 +291,7 @@ public:
             std::cout << " completed" << std::endl;
             #endif
 
-            // generate prolongation operator
+            // generate restriction operator
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << "   generating restriction operator";
             #endif
@@ -309,6 +317,37 @@ public:
             }
             pRestrictor->Initialize();
             current_level.SetRestrictionOperator(pRestrictor);
+
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << " completed" << std::endl;
+            #endif
+
+            // generate transfer operator
+            #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
+            std::cout << "   generating transfer operator";
+            #endif
+
+            typename StructuredMeshMGProjectorType::Pointer pTransferOperator;
+            if (lvl < nlevels-1)
+            {
+                if (mpTransferType[lvl] == NULL)
+                {
+                    std::cout << "WARNING: the transfer operator type for level " << lvl << " is not set. Will use restriction operator for transfer." << std::endl;
+                    pTransferOperator = pRestrictor;
+                }
+                else
+                    pTransferOperator = boost::dynamic_pointer_cast<StructuredMeshMGProjectorType>(
+                        mpTransferType[lvl]->Create(this->GetModelPart(lvl+1), this->GetModelPart(lvl), block_size));
+            }
+            else
+                pTransferOperator = typename StructuredMeshMGProjectorType::Pointer(new StructuredMeshMGProjectorType());
+            for (unsigned int dim = 0; dim < TDim; ++dim)
+            {
+                pTransferOperator->SetFineMeshSize(dim, coarse_div[dim] << (nlevels-1-lvl));
+                pTransferOperator->SetCoarseMeshSize(dim, coarse_div[dim] << (nlevels-2-lvl));
+            }
+            pTransferOperator->Initialize();
+            current_level.SetTransferOperator(pTransferOperator);
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " completed" << std::endl;
@@ -416,6 +455,7 @@ private:
     std::vector<ModelPart::Pointer> mpModelParts;
     std::vector<typename StructuredMeshMGProjectorType::Pointer> mpProlongationType;
     std::vector<typename StructuredMeshMGProjectorType::Pointer> mpRestrictionType;
+    std::vector<typename StructuredMeshMGProjectorType::Pointer> mpTransferType;
 
     ///@}
     ///@name Private Operators

@@ -169,18 +169,21 @@ public:
     ///@name Operations
     ///@{
 
+    /// Apply the pre-smoothing
     virtual int ApplyPreSmoother(VectorType& rX, VectorType& rB) const
     {
         KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
         return 1;
     }
 
+    /// Apply the post-smoothing
     virtual int ApplyPostSmoother(VectorType& rX, VectorType& rB) const
     {
         KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
         return 1;
     }
 
+    /// Apply the restriction operator
     virtual int ApplyRestriction(VectorType& rX, VectorType& rY) const
     {
         if(mpRestrictor == NULL)
@@ -192,6 +195,19 @@ public:
         return mpRestrictor->Apply(rX, rY);
     }
 
+    /// Apply the transfer operator
+    virtual int ApplyTransfer(VectorType& rX, VectorType& rY) const
+    {
+        if(mpTransferOperator == NULL)
+        {
+            // use the restriction operator to transfer
+            return mpRestrictor->Apply(rX, rY);
+        }
+        else
+            return mpTransferOperator->Apply(rX, rY);
+    }
+
+    /// Apply the prolongation operator
     virtual int ApplyProlongation(VectorType& rX, VectorType& rY) const
     {
         if(mpProlongator == NULL)
@@ -203,12 +219,14 @@ public:
         return mpProlongator->Apply(rX, rY);
     }
 
+    /// If the level is represented by matrix A, then rY = A*rX
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
         KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
         return 1;
     }
 
+    /// If the level is represented by matrix A, then rY = A^-1*rX
     virtual int Inverse(LinearSolverPointerType pCoarseSolver, VectorType& rX, VectorType& rY) const
     {
         KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
@@ -232,6 +250,11 @@ public:
     void SetRestrictionOperator(ProjectorPointerType pProjector)
     {
         mpRestrictor = pProjector;
+    }
+
+    void SetTransferOperator(ProjectorPointerType pProjector)
+    {
+        mpTransferOperator = pProjector;
     }
 
     void SetProlongationOperator(ProjectorPointerType pProjector)
@@ -373,6 +396,7 @@ private:
 
     ProjectorPointerType mpProlongator;
     ProjectorPointerType mpRestrictor;
+    ProjectorPointerType mpTransferOperator;
 
     IndexType mLevelDepth;
 

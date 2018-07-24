@@ -244,6 +244,7 @@ public:
     ///@}
     ///@name Operations
     ///@{
+
     /** This function is designed to be called as few times as possible. It creates the data structures
      * that only depend on the connectivity of the matrix (and not on its coefficients)
      * so that the memory can be allocated once and expensive operations can be done only when strictly
@@ -256,7 +257,6 @@ public:
     {
         BaseType::Initialize(rA, rX, rB);
     }
-
 
     /** This function is designed to be called every time the coefficients change in the system
      * that is, normally at the beginning of each solve.
@@ -350,7 +350,6 @@ public:
 
         return IsConverged();
     }
-
 
     /** Multi solve method for solving a set of linear systems with same coefficient matrix.
     Solves the linear system Ax=b and puts the result on SystemVector& rX.

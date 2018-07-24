@@ -121,17 +121,18 @@ public:
 
     /// Default constructor.
     MultilevelSolverFactory(ParameterListType& mg_parameter_list)
-    : mmg_parameter_list(mg_parameter_list)
+    : mmg_parameter_list(mg_parameter_list), mIsMute(false)
     {}
 
 
     /// Copy constructor.
     MultilevelSolverFactory(const MultilevelSolverFactory& rOther)
-    : mmg_parameter_list(rOther.mmg_parameter_list)
+    : mmg_parameter_list(rOther.mmg_parameter_list), mIsMute(rOther.mIsMute)
     {}
 
     /// Destructor.
-    virtual ~MultilevelSolverFactory() {}
+    virtual ~MultilevelSolverFactory()
+    {}
 
 
     ///@}
@@ -142,6 +143,7 @@ public:
     MultilevelSolverFactory& operator=(const MultilevelSolverFactory& rOther)
     {
         mmg_parameter_list = rOther.mmg_parameter_list;
+        mIsMute = rOther.mIsMute;
         return *this;
     }
 
@@ -150,14 +152,18 @@ public:
     ///@name Operations
     ///@{
 
+    void SetMute(const bool& mute) {mIsMute = mute;}
+
     virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+        if (!mIsMute)
+            KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
     }
 
     virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+        if (!mIsMute)
+            KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
     }
 
     ///@}
@@ -249,6 +255,8 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
+
+    bool mIsMute;
 
     ///@}
     ///@name Private Operators

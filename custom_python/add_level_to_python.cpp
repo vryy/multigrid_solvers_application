@@ -94,10 +94,12 @@ void MultigridSolversApp_AddLevelToPython()
     .def("SetPreSmoother", &MGLevelType::SetPreSmoother)
     .def("SetPostSmoother", &MGLevelType::SetPostSmoother)
     .def("SetRestrictionOperator", &MGLevelType::SetRestrictionOperator)
+    .def("SetTransferOperator", &MGLevelType::SetTransferOperator)
     .def("SetProlongationOperator", &MGLevelType::SetProlongationOperator)
     .def("ApplyPreSmoother", &MGLevelType::ApplyPreSmoother)
     .def("ApplyPostSmoother", &MGLevelType::ApplyPostSmoother)
     .def("ApplyRestriction", &MGLevelType::ApplyRestriction)
+    .def("ApplyTransfer", &MGLevelType::ApplyTransfer)
     .def("ApplyProlongation", &MGLevelType::ApplyProlongation)
     ;
 
