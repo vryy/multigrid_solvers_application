@@ -174,7 +174,7 @@ class SolvingStrategyPython:
 
         ## update Dx for each level
         for i in range(1, len(self.gmg_level_list)):
-            self.gmg_level_list[i-1].ApplyRestriction(self.model_solver_list[i-1].Dx, self.model_solver_list[i].Dx)
+            self.gmg_level_list[i-1].ApplyTransfer(self.model_solver_list[i-1].Dx, self.model_solver_list[i].Dx)
 
         #perform update
         normDx = []
