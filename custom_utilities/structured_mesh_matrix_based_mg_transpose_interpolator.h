@@ -215,6 +215,12 @@ public:
         return BaseType1::Apply(rX, rY);
     }
 
+    /// Apply the transpose projection
+    virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
+    {
+        return BaseType1::ApplyTranspose(rX, rY);
+    }
+
     ///@}
     ///@name Access
     ///@{

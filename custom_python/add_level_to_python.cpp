@@ -57,6 +57,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_utilities/mg_level.h"
 #include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/mg_projector.h"
+#include "custom_utilities/mg_transpose_projector.h"
 #include "custom_utilities/matrix_based_mg_projector.h"
 #include "custom_utilities/mesh_based_mg_projector.h"
 #include "custom_utilities/structured_mesh_mg_projector.h"
@@ -122,6 +123,13 @@ void MultigridSolversApp_AddLevelToPython()
     .def(self_ns::str(self))
     .def("Initialize", &MGProjectorType::Initialize)
     .def("Apply", &MGProjectorType::Apply)
+    .def("ApplyTranspose", &MGProjectorType::ApplyTranspose)
+    ;
+
+    typedef MGTransposeProjector<SparseSpaceType> MGTransposeProjectorType;
+    class_<MGTransposeProjectorType, MGTransposeProjectorType::Pointer, bases<MGProjectorType>, boost::noncopyable>
+    ("MGTransposeProjector", init<typename MGProjectorType::Pointer>())
+    .def(self_ns::str(self))
     ;
 
     typedef MatrixBasedMGProjector<SparseSpaceType> MatrixBasedMGProjectorType;

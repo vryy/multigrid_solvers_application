@@ -182,6 +182,24 @@ public:
         return 0;
     }
 
+    /// Apply the transpose projection
+    virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
+    {
+        if(mpOperator == NULL)
+        {
+            std::stringstream ss;
+            ss << "The matrix has not been set for " << Info();
+            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+        }
+
+        int err = BaseType::ConsistencyCheck(rY, rX);
+        if(err != 0)
+            return err;
+
+        TSpaceType::TransposeMult(*mpOperator, rX, rY);
+        return 0;
+    }
+
     ///@}
     ///@name Access
     ///@{

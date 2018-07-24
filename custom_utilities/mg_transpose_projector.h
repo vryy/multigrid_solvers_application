@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 15/7/2018 $
+//   Date:                $Date: 24/7/2018 $
 //   Revision:            $Revision: 1.0 $
 //
 //
 
 
-#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MG_PROJECTOR_H_INCLUDED )
-#define  KRATOS_MULTIGRID_SOLVERS_APP_MG_PROJECTOR_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MG_TRANSPOSE_PROJECTOR_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_MG_TRANSPOSE_PROJECTOR_H_INCLUDED
 
 
 
@@ -63,6 +63,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 // Project includes
 #include "includes/define.h"
 #include "custom_utilities/multi_index.h"
+#include "custom_utilities/mg_projector.h"
 
 
 namespace Kratos
@@ -88,44 +89,48 @@ namespace Kratos
 ///@{
 
 /**
- * Abstract class for prolongator and restrictor
+ * Abstract class for transpose of the projector; can be used for both prolongation and restriction operator.
  */
 template<class TSpaceType>
-class MGProjector
+class MGTransposeProjector : public MGProjector<TSpaceType>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MGProjector
-    KRATOS_CLASS_POINTER_DEFINITION(MGProjector);
+    /// Pointer definition of MGTransposeProjector
+    KRATOS_CLASS_POINTER_DEFINITION(MGTransposeProjector);
 
-    typedef typename TSpaceType::MatrixType MatrixType;
+    typedef MGProjector<TSpaceType> BaseType;
 
-    typedef typename TSpaceType::MatrixPointerType MatrixPointerType;
+    typedef typename BaseType::MatrixType MatrixType;
 
-    typedef typename TSpaceType::VectorType VectorType;
+    typedef typename BaseType::MatrixPointerType MatrixPointerType;
 
-    typedef typename TSpaceType::VectorPointerType VectorPointerType;
+    typedef typename BaseType::VectorType VectorType;
 
-    typedef typename TSpaceType::SizeType SizeType;
+    typedef typename BaseType::VectorPointerType VectorPointerType;
 
-    typedef typename TSpaceType::IndexType IndexType;
+    typedef typename BaseType::SizeType SizeType;
+
+    typedef typename BaseType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
     ///@{
 
     /// Default constructor.
-    MGProjector()
+    MGTransposeProjector(typename BaseType::Pointer pProjector)
+    : BaseType(), mpProjector(pProjector)
     {}
 
     /// Destructor.
-    virtual ~MGProjector()
+    virtual ~MGTransposeProjector()
     {}
 
     /// Copy constructor
-    MGProjector(const MGProjector& rOther)
+    MGTransposeProjector(const MGTransposeProjector& rOther)
+    : BaseType(rOther), mpProjector(rOther.mpProjector)
     {}
 
 
@@ -134,8 +139,10 @@ public:
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    MGProjector& operator= (const MGProjector& rOther)
+    MGTransposeProjector& operator= (const MGTransposeProjector& rOther)
     {
+        BaseType::operator=(rOther);
+        mpProjector = rOther.mpProjector;
         return *this;
     }
 
@@ -145,21 +152,20 @@ public:
 
     /// Initialize the operator
     virtual void Initialize()
-    {}
+    {
+        mpProjector->Initialize();
+    }
 
     /// Apply the projection, rX: input, rY: output
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
-        return 0;
+        return mpProjector->ApplyTranspose(rX, rY);
     }
 
     /// Apply the transpose of the projection, rX: input, rY: output
-    /// It is noted that the GetBaseSize() and GetProjectedSize() is only applied for Apply operation. For ApplyTranspose it is reversed.
     virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
-        return 0;
+        return mpProjector->Apply(rX, rY);
     }
 
     ///@}
@@ -171,16 +177,19 @@ public:
     ///@name Inquiry
     ///@{
 
+    /// Get the underlying projector
+    typename BaseType::Pointer pProjector() const {return mpProjector;}
+
     /// Get the size of the base space
     virtual SizeType GetBaseSize() const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        return mpProjector->GetProjectedSize();
     }
 
     /// Get the size of the projected space
     virtual SizeType GetProjectedSize() const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        return mpProjector->GetBaseSize();
     }
 
     ///@}
@@ -191,7 +200,7 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "MGProjector";
+        ss << "MGTransposeProjector<" << mpProjector->Info() << ">";
         return ss.str();
     }
 
@@ -204,6 +213,7 @@ public:
     /// Print object's data.
     virtual void PrintData(std::ostream& rOStream) const
     {
+        mpProjector->PrintData(rOStream);
     }
 
 
@@ -236,13 +246,7 @@ protected:
 
     int ConsistencyCheck(VectorType& rX, VectorType& rY) const
     {
-        if(TSpaceType::Size(rX) != this->GetBaseSize())
-            return 1;
-
-        if(TSpaceType::Size(rY) != this->GetProjectedSize())
-            return 2;
-
-        return 0;
+        return mpProjector->ConsistencyCheck(rY, rX);
     }
 
     ///@}
@@ -272,6 +276,7 @@ private:
     ///@name Member Variables
     ///@{
 
+    typename BaseType::Pointer mpProjector;
 
     ///@}
     ///@name Private Operators
@@ -315,14 +320,14 @@ private:
 
 /// input stream function
 template<class TSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MGProjector<TSpaceType>& rThis)
+inline std::istream& operator >> (std::istream& IStream, MGTransposeProjector<TSpaceType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
 template<class TSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MGProjector<TSpaceType>& rThis)
+inline std::ostream& operator << (std::ostream& rOStream, const MGTransposeProjector<TSpaceType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -335,5 +340,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const MGProjector<TSpa
 
 } // namespace Kratos.
 
-#endif // KRATOS_MULTIGRID_SOLVERS_APP_PROJECTOR_H_INCLUDED  defined
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_TRANSPOSE_PROJECTOR_H_INCLUDED  defined
 
