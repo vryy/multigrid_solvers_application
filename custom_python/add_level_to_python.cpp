@@ -49,7 +49,10 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <string>
 
 // External includes
+#include <boost/foreach.hpp>
 #include <boost/python.hpp>
+#include <boost/python/stl_iterator.hpp>
+#include <boost/python/operators.hpp>
 
 // Project includes
 #include "includes/define.h"
@@ -57,9 +60,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "custom_utilities/mg_level.h"
 #include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/mg_projector.h"
+#include "custom_utilities/mg_null_projector.h"
 #include "custom_utilities/mg_transpose_projector.h"
 #include "custom_utilities/matrix_based_mg_projector.h"
 #include "custom_utilities/mesh_based_mg_projector.h"
+#include "custom_utilities/index_based_mg_projector.h"
 #include "custom_utilities/structured_mesh_mg_projector.h"
 #include "custom_utilities/structured_mesh_mg_interpolator.h" // prolongation
 #include "custom_utilities/structured_mesh_mg_transpose_interpolator.h" // restriction
@@ -79,6 +84,55 @@ typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
 typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
 typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
+
+template<class TProjectorType>
+void MGProjector_AssembleOperator(TProjectorType& rDummy,
+        boost::python::list rows, boost::python::list cols, const Matrix& values)
+{
+    std::vector<std::size_t> _rows(boost::python::len(rows));
+    std::vector<std::size_t> _cols(boost::python::len(cols));
+
+    typedef boost::python::stl_input_iterator<int> iterator_value_type;
+
+    std::size_t cnt = 0;
+    BOOST_FOREACH(const typename iterator_value_type::value_type& v, std::make_pair(iterator_value_type(rows), iterator_value_type() ) )
+    {
+        _rows[cnt++] = static_cast<std::size_t>(v);
+    }
+
+    cnt = 0;
+    BOOST_FOREACH(const typename iterator_value_type::value_type& v, std::make_pair(iterator_value_type(cols), iterator_value_type() ) )
+    {
+        _cols[cnt++] = static_cast<std::size_t>(v);
+    }
+
+    rDummy.AssembleOperator(_rows, _cols, values);
+}
+
+template<class TProjectorType>
+void MGProjector_AssembleOperatorByBlock(TProjectorType& rDummy,
+        boost::python::list rows, boost::python::list cols, const Matrix& values,
+        const std::size_t& block_size)
+{
+    std::vector<std::size_t> _rows(boost::python::len(rows));
+    std::vector<std::size_t> _cols(boost::python::len(cols));
+
+    typedef boost::python::stl_input_iterator<int> iterator_value_type;
+
+    std::size_t cnt = 0;
+    BOOST_FOREACH(const typename iterator_value_type::value_type& v, std::make_pair(iterator_value_type(rows), iterator_value_type() ) )
+    {
+        _rows[cnt++] = static_cast<std::size_t>(v);
+    }
+
+    cnt = 0;
+    BOOST_FOREACH(const typename iterator_value_type::value_type& v, std::make_pair(iterator_value_type(cols), iterator_value_type() ) )
+    {
+        _cols[cnt++] = static_cast<std::size_t>(v);
+    }
+
+    rDummy.AssembleOperator(_rows, _cols, values, block_size);
+}
 
 void MultigridSolversApp_AddLevelToPython()
 {
@@ -124,6 +178,14 @@ void MultigridSolversApp_AddLevelToPython()
     .def("Initialize", &MGProjectorType::Initialize)
     .def("Apply", &MGProjectorType::Apply)
     .def("ApplyTranspose", &MGProjectorType::ApplyTranspose)
+    .def("GetBaseSize", &MGProjectorType::GetBaseSize)
+    .def("GetProjectedSize", &MGProjectorType::GetProjectedSize)
+    ;
+
+    typedef MGNullProjector<SparseSpaceType> MGNullProjectorType;
+    class_<MGNullProjectorType, MGNullProjectorType::Pointer, bases<MGProjectorType>, boost::noncopyable>
+    ("MGNullProjector", init<>())
+    .def(self_ns::str(self))
     ;
 
     typedef MGTransposeProjector<SparseSpaceType> MGTransposeProjectorType;
@@ -132,10 +194,21 @@ void MultigridSolversApp_AddLevelToPython()
     .def(self_ns::str(self))
     ;
 
+    typedef IndexBasedMGProjector<SparseSpaceType> IndexBasedMGProjectorType;
+    class_<IndexBasedMGProjectorType, IndexBasedMGProjectorType::Pointer, bases<MGProjectorType>, boost::noncopyable>
+    ("IndexBasedMGProjector", init<const std::size_t&, const std::size_t&>())
+    .def("SetStride", &IndexBasedMGProjectorType::SetStride)
+    .def("AssembleOperator", &MGProjector_AssembleOperator<IndexBasedMGProjectorType>)
+    .def(self_ns::str(self))
+    ;
+
     typedef MatrixBasedMGProjector<SparseSpaceType> MatrixBasedMGProjectorType;
     class_<MatrixBasedMGProjectorType, MatrixBasedMGProjectorType::Pointer, bases<MGProjectorType>, boost::noncopyable>
     ("MatrixBasedMGProjector", init<>())
+    .def(init<const std::size_t&, const std::size_t&>())
     .def("SetOperator", &MatrixBasedMGProjectorType::SetOperator)
+    .def("AssembleOperator", &MGProjector_AssembleOperator<MatrixBasedMGProjectorType>)
+    .def("AssembleOperator", &MGProjector_AssembleOperatorByBlock<MatrixBasedMGProjectorType>)
     .def(self_ns::str(self))
     ;
 

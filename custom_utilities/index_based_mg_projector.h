@@ -39,14 +39,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //   Project Name:        Kratos
 //   Last Modified by:    $Author: hbui $
-//   Date:                $Date: 15/7/2018 $
+//   Date:                $Date: 24/7/2018 $
 //   Revision:            $Revision: 1.0 $
 //
 //
 
 
-#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_MATRIX_BASED_MG_PROJECTOR_H_INCLUDED )
-#define  KRATOS_MULTIGRID_SOLVERS_APP_MATRIX_BASED_MG_PROJECTOR_H_INCLUDED
+#if !defined(KRATOS_MULTIGRID_SOLVERS_APP_INDEX_BASED_MG_PROJECTOR_H_INCLUDED )
+#define  KRATOS_MULTIGRID_SOLVERS_APP_INDEX_BASED_MG_PROJECTOR_H_INCLUDED
 
 
 
@@ -54,6 +54,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <cstddef>
 
 
 // External includes
@@ -87,18 +88,17 @@ namespace Kratos
 ///@{
 
 /**
- * Class for prolongator and restrictor that uses matrix multiplication to apply the projection.
- * This can be used for both geometric multigrid and algebraic multigrid.
+ * Projector based on indexed entries. It is useful for matrix-based refinement, e.g. isogeometric alalysis.
  */
 template<class TSpaceType>
-class MatrixBasedMGProjector : public MGProjector<TSpaceType>
+class IndexBasedMGProjector : public MGProjector<TSpaceType>
 {
 public:
     ///@name Type Definitions
     ///@{
 
-    /// Pointer definition of MatrixBasedMGProjector
-    KRATOS_CLASS_POINTER_DEFINITION(MatrixBasedMGProjector);
+    /// Pointer definition of IndexBasedMGProjector
+    KRATOS_CLASS_POINTER_DEFINITION(IndexBasedMGProjector);
 
     typedef MGProjector<TSpaceType> BaseType;
 
@@ -118,37 +118,30 @@ public:
     ///@name Life Cycle
     ///@{
 
-    /// Default constructor
-    MatrixBasedMGProjector()
-    {
-        this->Initialize();
-    }
-
-    /// Constructor with size
-    MatrixBasedMGProjector(const std::size_t& nrows, const std::size_t& ncols)
-    {
-        this->Initialize();
-        TSpaceType::Resize(*mpOperator, nrows, ncols);
-        TSpaceType::SetToZero(*mpOperator);
-    }
+    /// Default constructor.
+    IndexBasedMGProjector(const SizeType& nRows, const SizeType& nCols)
+    : BaseType(), m_nrows(nRows), m_ncols(nCols), m_stride(1)
+    {}
 
     /// Destructor.
-    virtual ~MatrixBasedMGProjector()
+    virtual ~IndexBasedMGProjector()
     {}
 
     /// Copy constructor
-    MatrixBasedMGProjector(const MatrixBasedMGProjector& rOther)
-    : BaseType(), mpOperator(rOther.mpOperator)
+    IndexBasedMGProjector(const IndexBasedMGProjector& rOther)
+    : BaseType(rOther)
+    , m_nrows(rOther.m_nrows), m_ncols(rOther.m_ncols)
+    , m_stride(rOther.m_stride)
     {}
+
 
     ///@}
     ///@name Operators
     ///@{
 
     /// Assignment operator. It's also important like the Copy constructor
-    MatrixBasedMGProjector& operator= (const MatrixBasedMGProjector& rOther)
+    IndexBasedMGProjector& operator= (const IndexBasedMGProjector& rOther)
     {
-        this.mpOperator = rOther.mpOperator;
         return *this;
     }
 
@@ -159,17 +152,17 @@ public:
     /// Initialize the operator
     virtual void Initialize()
     {
-        if(mpOperator == NULL)
-        {
-            MatrixPointerType pNewP = TSpaceType::CreateEmptyMatrixPointer();
-            mpOperator.swap(pNewP);
-        }
+        m_row_indices.resize(m_nrows);
+        m_row_values.resize(m_nrows);
+
+        m_column_indices.resize(m_ncols);
+        m_column_values.resize(m_ncols);
     }
 
-    /// Set the operator
-    void SetOperator(MatrixPointerType pOperator)
+    /// Set the stride, i.e. block size
+    void SetStride(const std::size_t& stride)
     {
-        mpOperator = pOperator;
+        m_stride = stride;
     }
 
     /// populate the transformation matrix
@@ -194,74 +187,54 @@ public:
             {
                 if (values(i, j) != 0.0)
                 {
-                    (*mpOperator)(rows[i], columns[j]) = values(i, j);
+                    m_row_indices[rows[i]].push_back(columns[j]);
+                    m_row_values[rows[i]].push_back(values(i, j));
+
+                    m_column_indices[columns[j]].push_back(rows[i]);
+                    m_column_values[columns[j]].push_back(values(i, j));
                 }
             }
         }
     }
 
-    /// populate the transformation matrix by block
-    void AssembleOperator(const std::vector<std::size_t>& rows,
-        const std::vector<std::size_t>& columns, const MatrixType& values,
-        const std::size_t& block_size)
-    {
-        // size check
-        KRATOS_WATCH(rows.size())
-        KRATOS_WATCH(columns.size())
-        KRATOS_WATCH(values.size1())
-        KRATOS_WATCH(values.size2())
-        if (rows.size() != TSpaceType::Size1(values))
-            KRATOS_THROW_ERROR(std::logic_error, "The row size of the matrix is incompatible", __FUNCTION__)
-
-        if (columns.size() != TSpaceType::Size2(values))
-            KRATOS_THROW_ERROR(std::logic_error, "The column size of the matrix is incompatible", __FUNCTION__)
-
-        // populate values
-        for (std::size_t i = 0; i < rows.size(); ++i)
-        {
-            for (std::size_t j = 0; j < columns.size(); ++j)
-            {
-                if (values(i, j) != 0.0)
-                {
-                    for (std::size_t s = 0; s < block_size; ++s)
-                        (*mpOperator)(rows[i]*block_size+s, columns[j]*block_size+s) = values(i, j);
-                }
-            }
-        }
-    }
-
-    /// Apply the projection
+    /// Apply the projection, rX: input, rY: output
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
-        if(mpOperator == NULL)
+        int err = BaseType::ConsistencyCheck(rX, rY);
+        if(err != 0) return err;
+
+        TSpaceType::SetToZero(rY);
+
+        for (std::size_t i = 0; i < m_nrows; ++i)
         {
-            std::stringstream ss;
-            ss << "The matrix has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            for (std::size_t j = 0; j < m_row_indices[i].size(); ++j)
+            {
+                for (std::size_t s = 0; s < m_stride; ++s)
+                    rY[i*m_stride+s] += m_row_values[i][j] * rX[m_row_indices[i][j]*m_stride+s];
+            }
         }
 
-        int err = BaseType::ConsistencyCheck(rX, rY);
-        if(err != 0)
-            return err;
-
-        TSpaceType::Mult(*mpOperator, rX, rY);
         return 0;
     }
 
-    /// Apply the transpose projection
+    /// Apply the transpose of the projection, rX: input, rY: output
+    /// It is noted that the GetBaseSize() and GetProjectedSize() is only applied for Apply operation. For ApplyTranspose it is reversed.
     virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
     {
-        if(mpOperator == NULL)
-        {
-            std::stringstream ss;
-            ss << "The matrix has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
-        }
-
         int err = BaseType::ConsistencyCheck(rY, rX);
         if(err != 0) return err;
 
-        TSpaceType::TransposeMult(*mpOperator, rX, rY);
+        TSpaceType::SetToZero(rY);
+
+        for (std::size_t i = 0; i < m_ncols; ++i)
+        {
+            for (std::size_t j = 0; j < m_column_indices[i].size(); ++j)
+            {
+                for (std::size_t s = 0; s < m_stride; ++s)
+                    rY[i*m_stride+s] += m_column_values[i][j] * rX[m_column_indices[i][j]*m_stride+s];
+            }
+        }
+
         return 0;
     }
 
@@ -269,10 +242,6 @@ public:
     ///@name Access
     ///@{
 
-    MatrixPointerType GetOperator() const
-    {
-        return mpOperator;
-    }
 
     ///@}
     ///@name Inquiry
@@ -281,13 +250,13 @@ public:
     /// Get the size of the base space
     virtual SizeType GetBaseSize() const
     {
-        return TSpaceType::Size2(*mpOperator);
+        return m_ncols*m_stride;
     }
 
     /// Get the size of the projected space
     virtual SizeType GetProjectedSize() const
     {
-        return TSpaceType::Size1(*mpOperator);
+        return m_nrows*m_stride;
     }
 
     ///@}
@@ -298,9 +267,7 @@ public:
     virtual std::string Info() const
     {
         std::stringstream ss;
-        ss << "MatrixBasedMGProjector, size = ("
-           << TSpaceType::Size1(*mpOperator) << ", "
-           << TSpaceType::Size2(*mpOperator) << ")";
+        ss << "IndexBasedMGProjector(" << m_nrows << ", " << m_ncols << ")";
         return ss.str();
     }
 
@@ -371,7 +338,17 @@ private:
     ///@name Member Variables
     ///@{
 
-    MatrixPointerType mpOperator;
+    // arrays to store the entries of the transformation matrix, row by column
+    SizeType m_nrows;
+    std::vector<std::vector<IndexType> > m_row_indices;
+    std::vector<std::vector<double> > m_row_values;
+
+    // arrays to store the entries of the transformation matrix, column by row
+    SizeType m_ncols;
+    std::vector<std::vector<IndexType> > m_column_indices;
+    std::vector<std::vector<double> > m_column_values;
+
+    std::size_t m_stride;
 
     ///@}
     ///@name Private Operators
@@ -415,14 +392,14 @@ private:
 
 /// input stream function
 template<class TSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MatrixBasedMGProjector<TSpaceType>& rThis)
+inline std::istream& operator >> (std::istream& IStream, IndexBasedMGProjector<TSpaceType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
 template<class TSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGProjector<TSpaceType>& rThis)
+inline std::ostream& operator << (std::ostream& rOStream, const IndexBasedMGProjector<TSpaceType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -435,5 +412,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGPro
 
 } // namespace Kratos.
 
-#endif // KRATOS_MULTIGRID_SOLVERS_APP_MATRIX_BASED_MG_PROJECTOR_H_INCLUDED  defined
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_INDEX_BASED_MG_PROJECTOR_H_INCLUDED  defined
 
