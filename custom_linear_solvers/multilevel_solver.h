@@ -716,7 +716,7 @@ private:
 
         // Pre smoothing
         // TODO do more presmooth
-        err = GetLevel(lvl).ApplyPreSmoother(rX, rB); ErrorCheck(err, "Error with ApplySmoother at", KRATOS_HERE);
+        err = GetLevel(lvl).ApplyPreSmoother(rX, rB); ErrorCheck(err, "Error with ApplyPreSmoother at", KRATOS_HERE);
 
         // restriction
         const SizeType size = TSparseSpaceType::Size(rX);

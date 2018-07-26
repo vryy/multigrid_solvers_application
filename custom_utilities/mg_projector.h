@@ -62,7 +62,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "custom_utilities/multi_index.h"
 
 
 namespace Kratos
@@ -335,5 +334,5 @@ inline std::ostream& operator << (std::ostream& rOStream, const MGProjector<TSpa
 
 } // namespace Kratos.
 
-#endif // KRATOS_MULTIGRID_SOLVERS_APP_PROJECTOR_H_INCLUDED  defined
+#endif // KRATOS_MULTIGRID_SOLVERS_APP_MG_PROJECTOR_H_INCLUDED  defined
 

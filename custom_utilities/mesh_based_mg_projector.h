@@ -61,6 +61,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
+#include "custom_utilities/multi_index.h"
 #include "custom_utilities/mg_projector.h"
 
 // #define CHECK_SIZE
