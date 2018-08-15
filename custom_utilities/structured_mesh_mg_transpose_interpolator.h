@@ -202,8 +202,15 @@ public:
             KRATOS_WATCH(fine_node_id)
             KRATOS_WATCH(this->FineMeshSize()[0])
             KRATOS_WATCH(this->FineMeshSize()[1])
-            if (fine_node_id*this->BlockSize() > this->GetProjectedSize())
+            if (fine_node_id*this->BlockSize() > this->GetBaseSize())
+            {
+                KRATOS_WATCH(fine_node_id)
+                KRATOS_WATCH(this->BlockSize())
+                KRATOS_WATCH(this->GetProjectedSize())
+                KRATOS_WATCH(this->pFineModelPart()->NumberOfNodes())
+                KRATOS_WATCH(this->pCoarseModelPart()->NumberOfNodes())
                 KRATOS_THROW_ERROR(std::logic_error, "fine node id exceeds the vector size", __FUNCTION__)
+            }
             #endif
             MultiIndex<TDim> fine_indices = MultiIndex<TDim>::NodeIdToMultiIndex(fine_node_id, this->FineMeshSize());
             #ifdef CHECK_SIZE
@@ -222,7 +229,7 @@ public:
                 std::size_t coarse_node_id = MultiIndex<TDim>::MultiIndexToNodeId(coarse_indices, this->CoarseMeshSize());
                 #ifdef CHECK_SIZE
                 std::cout << "1> coarse_node_id: " << coarse_node_id << std::endl;
-                if (coarse_node_id*this->BlockSize() > this->GetBaseSize())
+                if (coarse_node_id*this->BlockSize() > this->GetProjectedSize())
                     KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
                 #endif
                 for (unsigned int ib = 0; ib < this->BlockSize(); ++ib)
@@ -246,7 +253,11 @@ public:
                     std::cout << "2> "; KRATOS_WATCH(coarse_node_id)
                     std::cout << "2> "; KRATOS_WATCH(this->CoarseMeshSize()[0])
                     std::cout << "2> "; KRATOS_WATCH(this->CoarseMeshSize()[1])
-                    if (coarse_node_id*this->BlockSize() > this->GetBaseSize())
+                    if (TDim == 3)
+                        std::cout << "2> "; KRATOS_WATCH(this->CoarseMeshSize()[2])
+                    std::cout << "2> "; KRATOS_WATCH(this->GetBaseSize())
+                    std::cout << "2> "; KRATOS_WATCH(this->GetProjectedSize())
+                    if (coarse_node_id*this->BlockSize() > this->GetProjectedSize())
                         KRATOS_THROW_ERROR(std::logic_error, "coarse node id exceeds the vector size", __FUNCTION__)
                     #endif
                     for (unsigned int ib = 0; ib < this->BlockSize(); ++ib)
