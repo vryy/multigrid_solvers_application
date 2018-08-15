@@ -184,6 +184,16 @@ namespace Python
         .def(self_ns::str(self))
         ;
 
+        typedef GMGStructuredSolverFactory<SparseSpaceType, LocalSpaceType, 3> GMGStructuredSolverFactory3DType;
+        class_<GMGStructuredSolverFactory3DType, GMGStructuredSolverFactory3DType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
+        ( "GMGStructuredSolverFactory3D", init<ParameterListType&>())
+        .def("SetModelPart", &GMGStructuredSolverFactory3DType::SetModelPart)
+        .def("SetRestrictionOperator", &GMGStructuredSolverFactory3DType::SetRestrictionOperator)
+        .def("SetTransferOperator", &GMGStructuredSolverFactory3DType::SetTransferOperator)
+        .def("SetProlongationOperator", &GMGStructuredSolverFactory3DType::SetProlongationOperator)
+        .def(self_ns::str(self))
+        ;
+
     }
 
 }  // namespace Python.

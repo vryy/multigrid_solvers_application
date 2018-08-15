@@ -79,12 +79,6 @@ namespace Kratos
 namespace Python
 {
 
-typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
-
-typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
-
-typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
-
 template<class TProjectorType>
 void MGProjector_AssembleOperator(TProjectorType& rDummy,
         boost::python::list rows, boost::python::list cols, const Matrix& values)
@@ -134,9 +128,75 @@ void MGProjector_AssembleOperatorByBlock(TProjectorType& rDummy,
     rDummy.AssembleOperator(_rows, _cols, values, block_size);
 }
 
+template<class SparseSpaceType, std::size_t TDim>
+void MultigridSolversApp_AddStructuredMeshMGProjectorToPython()
+{
+    using namespace boost::python;
+
+    typedef MeshBasedMGProjector<SparseSpaceType> MeshBasedMGProjectorType;
+    typedef MatrixBasedMGProjector<SparseSpaceType> MatrixBasedMGProjectorType;
+
+    std::stringstream ss;
+    ss << "StructuredMeshMGProjector" << TDim << "D";
+    typedef StructuredMeshMGProjector<SparseSpaceType, TDim> StructuredMeshMGProjectorType;
+    class_<StructuredMeshMGProjectorType, typename StructuredMeshMGProjectorType::Pointer, bases<MeshBasedMGProjectorType>, boost::noncopyable>
+    (ss.str().c_str(), init<>())
+    .def("SetFineMeshSize", &StructuredMeshMGProjectorType::SetFineMeshSize)
+    .def("SetCoarseMeshSize", &StructuredMeshMGProjectorType::SetCoarseMeshSize)
+    .def(self_ns::str(self))
+    ;
+
+    ss.str("");
+    ss << "StructuredMeshMGInterpolator" << TDim << "D";
+    typedef StructuredMeshMGInterpolator<SparseSpaceType, TDim> StructuredMeshMGInterpolatorType;
+    class_<StructuredMeshMGInterpolatorType, typename StructuredMeshMGInterpolatorType::Pointer, bases<StructuredMeshMGProjectorType>, boost::noncopyable>
+    (ss.str().c_str(), init<>())
+    .def(self_ns::str(self))
+    ;
+
+    ss.str("");
+    ss << "StructuredMeshMGTransposeInterpolator" << TDim << "D";
+    typedef StructuredMeshMGTransposeInterpolator<SparseSpaceType, TDim> StructuredMeshMGTransposeInterpolatorType;
+    class_<StructuredMeshMGTransposeInterpolatorType, typename StructuredMeshMGTransposeInterpolatorType::Pointer, bases<StructuredMeshMGProjectorType>, boost::noncopyable>
+    (ss.str().c_str(), init<>())
+    .def(self_ns::str(self))
+    ;
+
+    ss.str("");
+    ss << "StructuredMeshMatrixBasedMGInterpolator" << TDim << "D";
+    KRATOS_WATCH(ss.str())
+    typedef StructuredMeshMatrixBasedMGInterpolator<SparseSpaceType, TDim> StructuredMeshMatrixBasedMGInterpolatorType;
+    class_<StructuredMeshMatrixBasedMGInterpolatorType, typename StructuredMeshMatrixBasedMGInterpolatorType::Pointer, bases<StructuredMeshMGProjectorType, MatrixBasedMGProjectorType>, boost::noncopyable>
+    (ss.str().c_str(), init<>())
+    .def(self_ns::str(self))
+    ;
+
+    ss.str("");
+    ss << "StructuredMeshMatrixBasedMGTransposeInterpolator" << TDim << "D";
+    typedef StructuredMeshMatrixBasedMGTransposeInterpolator<SparseSpaceType, TDim> StructuredMeshMatrixBasedMGTransposeInterpolatorType;
+    class_<StructuredMeshMatrixBasedMGTransposeInterpolatorType, typename StructuredMeshMatrixBasedMGTransposeInterpolatorType::Pointer, bases<StructuredMeshMGProjectorType, MatrixBasedMGProjectorType>, boost::noncopyable>
+    (ss.str().c_str(), init<>())
+    .def(self_ns::str(self))
+    ;
+
+    ss.str("");
+    ss << "StructuredMeshMGInjector" << TDim << "D";
+    typedef StructuredMeshMGInjector<SparseSpaceType, TDim> StructuredMeshMGInjectorType;
+    class_<StructuredMeshMGInjectorType, typename StructuredMeshMGInjectorType::Pointer, bases<StructuredMeshMGProjectorType>, boost::noncopyable>
+    (ss.str().c_str(), init<>())
+    .def(self_ns::str(self))
+    ;
+}
+
 void MultigridSolversApp_AddLevelToPython()
 {
     using namespace boost::python;
+
+    typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
+
+    typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
+
+    typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
 
    //****************************************************************************************************
    // level definition
@@ -221,43 +281,8 @@ void MultigridSolversApp_AddLevelToPython()
     .def(self_ns::str(self))
     ;
 
-    typedef StructuredMeshMGProjector<SparseSpaceType, 2> StructuredMeshMGProjector2DType;
-    class_<StructuredMeshMGProjector2DType, StructuredMeshMGProjector2DType::Pointer, bases<MeshBasedMGProjectorType>, boost::noncopyable>
-    ("StructuredMeshMGProjector2D", init<>())
-    .def("SetFineMeshSize", &StructuredMeshMGProjector2DType::SetFineMeshSize)
-    .def("SetCoarseMeshSize", &StructuredMeshMGProjector2DType::SetCoarseMeshSize)
-    .def(self_ns::str(self))
-    ;
-
-    typedef StructuredMeshMGInterpolator<SparseSpaceType, 2> StructuredMeshMGInterpolator2DType;
-    class_<StructuredMeshMGInterpolator2DType, StructuredMeshMGInterpolator2DType::Pointer, bases<StructuredMeshMGProjector2DType>, boost::noncopyable>
-    ("StructuredMeshMGInterpolator2D", init<>())
-    .def(self_ns::str(self))
-    ;
-
-    typedef StructuredMeshMGTransposeInterpolator<SparseSpaceType, 2> StructuredMeshMGTransposeInterpolator2DType;
-    class_<StructuredMeshMGTransposeInterpolator2DType, StructuredMeshMGTransposeInterpolator2DType::Pointer, bases<StructuredMeshMGProjector2DType>, boost::noncopyable>
-    ("StructuredMeshMGTransposeInterpolator2D", init<>())
-    .def(self_ns::str(self))
-    ;
-
-    typedef StructuredMeshMatrixBasedMGInterpolator<SparseSpaceType, 2> StructuredMeshMatrixBasedMGInterpolator2DType;
-    class_<StructuredMeshMatrixBasedMGInterpolator2DType, StructuredMeshMatrixBasedMGInterpolator2DType::Pointer, bases<StructuredMeshMGProjector2DType, MatrixBasedMGProjectorType>, boost::noncopyable>
-    ("StructuredMeshMatrixBasedMGInterpolator2D", init<>())
-    .def(self_ns::str(self))
-    ;
-
-    typedef StructuredMeshMatrixBasedMGTransposeInterpolator<SparseSpaceType, 2> StructuredMeshMatrixBasedMGTransposeInterpolator2DType;
-    class_<StructuredMeshMatrixBasedMGTransposeInterpolator2DType, StructuredMeshMatrixBasedMGTransposeInterpolator2DType::Pointer, bases<StructuredMeshMGProjector2DType, MatrixBasedMGProjectorType>, boost::noncopyable>
-    ("StructuredMeshMatrixBasedMGTransposeInterpolator2D", init<>())
-    .def(self_ns::str(self))
-    ;
-
-    typedef StructuredMeshMGInjector<SparseSpaceType, 2> StructuredMeshMGInjector2DType;
-    class_<StructuredMeshMGInjector2DType, StructuredMeshMGInjector2DType::Pointer, bases<StructuredMeshMGProjector2DType>, boost::noncopyable>
-    ("StructuredMeshMGInjector2D", init<>())
-    .def(self_ns::str(self))
-    ;
+    MultigridSolversApp_AddStructuredMeshMGProjectorToPython<SparseSpaceType, 2>();
+    MultigridSolversApp_AddStructuredMeshMGProjectorToPython<SparseSpaceType, 3>();
 }
 
 }  // namespace Python.
