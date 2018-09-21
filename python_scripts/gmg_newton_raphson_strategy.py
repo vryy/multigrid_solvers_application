@@ -171,7 +171,9 @@ class SolvingStrategyPython:
         model_solver0 = self.model_solver_list[0]
         if model_solver0.linear_solver.AdditionalPhysicalDataIsNeeded():
             model_solver0.linear_solver.ProvideAdditionalData(model_solver0.A,model_solver0.Dx,model_solver0.b,model_solver0.builder_and_solver.GetDofSet(),model_solver0.model_part)
-        model_solver0.linear_solver.Solve(model_solver0.A,model_solver0.Dx,model_solver0.b)
+        converged = model_solver0.linear_solver.Solve(model_solver0.A,model_solver0.Dx,model_solver0.b)
+        if not converged:
+            raise Exception("The linear solver does not converge")
 
         ## update Dx for each level
         for i in range(1, len(self.gmg_level_list)):
