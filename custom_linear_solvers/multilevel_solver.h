@@ -150,7 +150,8 @@ public:
         mMaxLevels(10),
         mNumPreSmooth(1),
         mNumPostSmooth(1),
-        mMaxCoarseSize(500)
+        mMaxCoarseSize(500),
+        mEchoLevel(0)
     {}
 
     MultilevelSolver(LinearSolverPointerType pCoarseSolver) :
@@ -164,7 +165,8 @@ public:
         mMaxLevels(10),
         mNumPreSmooth(1),
         mNumPostSmooth(1),
-        mMaxCoarseSize(500)
+        mMaxCoarseSize(500),
+        mEchoLevel(0)
     {}
 
     MultilevelSolver(LinearSolverPointerType pCoarseSolver, const std::string Cycle) :
@@ -178,7 +180,8 @@ public:
         mMaxLevels(10),
         mNumPreSmooth(1),
         mNumPostSmooth(1),
-        mMaxCoarseSize(500)
+        mMaxCoarseSize(500),
+        mEchoLevel(0)
     {}
 
     MultilevelSolver(double NewTolerance, IndexType NewMaxIterationsNumber,
@@ -193,7 +196,8 @@ public:
         mMaxLevels(10),
         mNumPreSmooth(1),
         mNumPostSmooth(1),
-        mMaxCoarseSize(500)
+        mMaxCoarseSize(500),
+        mEchoLevel(0)
     {}
 
     /// Copy constructor.
@@ -211,6 +215,7 @@ public:
         mResidualNorm = 0.00;
         mIterationsNumber = 0;
         mBNorm = 0.00;
+        mEchoLevel = Other.mEchoLevel;
     }
 
     /// Destructor.
@@ -237,6 +242,7 @@ public:
         mResidualNorm = 0.00;
         mIterationsNumber = 0;
         mBNorm = 0.00;
+        mEchoLevel = Other.mEchoLevel;
         return *this;
     }
 
@@ -244,6 +250,12 @@ public:
     ///@}
     ///@name Operations
     ///@{
+
+    /// Set the echo level
+    void SetEchoLevel(const int& Level)
+    {
+        mEchoLevel = Level;
+    }
 
     /** This function is designed to be called as few times as possible. It creates the data structures
      * that only depend on the connectivity of the matrix (and not on its coefficients)
@@ -303,7 +315,8 @@ public:
         start = OpenMPUtils::GetCurrentTime();
 
         mBNorm = TSparseSpaceType::TwoNorm(rB);
-        std::cout << "Start solving, ||B|| = " << mBNorm << ", Tolerance = " << mTolerance << std::endl;
+        if (mEchoLevel > 0)
+            std::cout << "Start solving, ||B|| = " << mBNorm << ", Tolerance = " << mTolerance << std::endl;
 //        KRATOS_WATCH(&rA);
 
         if (mpCoarseSolver == NULL)
@@ -335,10 +348,11 @@ public:
 
             ++mIterationsNumber;
 
-            std::cout << " iteration " << mIterationsNumber
-                      << ", residual: rel = " << mResidualNorm/mBNorm
-                      << ", abs = " << mResidualNorm
-                      << std::endl;
+            if (mEchoLevel > 0)
+                std::cout << " iteration " << mIterationsNumber
+                          << ", residual: rel = " << mResidualNorm/mBNorm
+                          << ", abs = " << mResidualNorm
+                          << std::endl;
         }
         while(IterationNeeded());
 
@@ -701,6 +715,8 @@ private:
     std::vector<LinearSolverPointerType> mPreSmoothers;
     std::vector<LinearSolverPointerType> mPostSmoothers;
 
+    int mEchoLevel;
+
     ///@}
     ///@name Private Operators
     ///@{
@@ -714,19 +730,32 @@ private:
     {
         int err;
 
+        const SizeType size = TSparseSpaceType::Size(rX);
+        VectorType r(size, 0.00);
+
+        double aux[10];
+
+        if (mEchoLevel > 1)
+        {
+            Indent(std::cout, lvl+2); std::cout << "reporting at level " << lvl << ":" << std::endl;
+            ComputeResidual(r, lvl, rX, rB);
+            aux[0] = norm_2(r);
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual before ApplyPreSmoother: r = " << aux[0] << std::endl;
+        }
+
         // Pre smoothing
         // TODO do more presmooth
         err = GetLevel(lvl).ApplyPreSmoother(rX, rB); ErrorCheck(err, "Error with ApplyPreSmoother at", KRATOS_HERE);
 
-        // restriction
-        const SizeType size = TSparseSpaceType::Size(rX);
-        VectorType r(size, 0.00);
+        // compute residual
+        ComputeResidual(r, lvl, rX, rB);
 
-        GetLevel(lvl).Apply(rX, r); // r = A*x
-
-        TSparseSpaceType::UnaliasedAdd(r, -1.00, rB); // r = A*x - b
-
-        TSparseSpaceType::InplaceMult(r, -1.00); // r = b - A*x
+        if (mEchoLevel > 1)
+        {
+            aux[1] = norm_2(r);
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after ApplyPreSmoother: r = " << aux[1] << ", reduction factor = " << aux[0]/aux[1] << std::endl;
+            // REMARKS: the residual here must be small or start to reduce significantly
+        }
 
         const SizeType csize = GetLevel(lvl).GetCoarseSize();
 //        KRATOS_WATCH(csize);
@@ -734,15 +763,21 @@ private:
         VectorType cR(csize, 0.00);
         VectorType cX(csize, 0.00);
 
-        // KRATOS_WATCH(r)
+        // restriction
         err = GetLevel(lvl).ApplyRestriction(r, cR); ErrorCheck(err, "Error with ApplyRestriction at", KRATOS_HERE);
-        // KRATOS_WATCH(cR)
+
+        if (mEchoLevel > 1)
+        {
+            aux[2] = norm_2(cR);
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual at the coarse level after ApplyRestriction: cR = " << aux[2] << std::endl;
+        }
 
         // solve
         if(lvl == this->GetNumberOfLevels() - 2)
         {
+//            KRATOS_WATCH(norm_2(cR))
             err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cR); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
-            // KRATOS_WATCH(cX)
+//            KRATOS_WATCH(norm_2(cX))
         }
         else
         {
@@ -766,17 +801,51 @@ private:
             }
         }
 
+        if (mEchoLevel > 1)
+        {
+            ComputeResidual(r, lvl, rX, rB);
+            aux[3] = norm_2(r);
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after coarse solve: r = " << aux[3] << std::endl;
+        }
+
         // prolongation
         VectorType Dx(size, 0.00);
+//        KRATOS_WATCH(norm_2(cX))
         err = GetLevel(lvl).ApplyProlongation(cX, Dx); ErrorCheck(err, "Error with ApplyProlongation at", KRATOS_HERE);
-        // KRATOS_WATCH(Dx)
+//        KRATOS_WATCH(norm_2(Dx))
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
+
+        if (mEchoLevel > 1)
+        {
+            ComputeResidual(r, lvl, rX, rB);
+            aux[4] = norm_2(r);
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after prolong: r = " << aux[4] << std::endl;
+        }
 
         // Post smoothing
         //TODO do more postsmooth
         err = GetLevel(lvl).ApplyPostSmoother(rX, rB); ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
+
+        if (mEchoLevel > 1)
+        {
+            ComputeResidual(r, lvl, rX, rB);
+            aux[4] = norm_2(r);
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after ApplyPostSmoother: r = " << aux[4] << ", reduction factor = " << aux[3]/aux[4] << std::endl;
+        }
     }
 
+    inline void Indent(std::ostream& rOStream, const std::size_t& num) const
+    {
+        for (std::size_t i = 0; i < num; ++i)
+            rOStream << " ";
+    }
+
+    void ComputeResidual(VectorType& r, const IndexType& lvl, VectorType& rX, VectorType& rB) const
+    {
+        GetLevel(lvl).Apply(rX, r); // r = A*x
+        TSparseSpaceType::UnaliasedAdd(r, -1.00, rB); // r = A*x - b
+        TSparseSpaceType::InplaceMult(r, -1.00); // r = b - A*x
+    }
 
     ///@}
     ///@name Private  Access
