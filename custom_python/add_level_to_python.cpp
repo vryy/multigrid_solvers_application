@@ -164,7 +164,6 @@ void MultigridSolversApp_AddStructuredMeshMGProjectorToPython()
 
     ss.str("");
     ss << "StructuredMeshMatrixBasedMGInterpolator" << TDim << "D";
-    KRATOS_WATCH(ss.str())
     typedef StructuredMeshMatrixBasedMGInterpolator<SparseSpaceType, TDim> StructuredMeshMatrixBasedMGInterpolatorType;
     class_<StructuredMeshMatrixBasedMGInterpolatorType, typename StructuredMeshMatrixBasedMGInterpolatorType::Pointer, bases<StructuredMeshMGProjectorType, MatrixBasedMGProjectorType>, boost::noncopyable>
     (ss.str().c_str(), init<>())

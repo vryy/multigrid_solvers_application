@@ -102,15 +102,16 @@ namespace Python
 
         typedef GaussSeidelIterativeSolver<SparseSpaceType, LocalSpaceType> GaussSeidelIterativeSolverType;
         class_<GaussSeidelIterativeSolverType, GaussSeidelIterativeSolverType::Pointer, bases<LinearSolverType> >( "GaussSeidelIterativeSolver")
-        .def(init< >())
-        .def(init<unsigned int, std::string >())
+        .def(init<>())
+        .def(init<unsigned int>())
+        .def(init<unsigned int, std::string>())
         .def(self_ns::str(self))
         ;
 
         typedef JacobiIterativeSolver<SparseSpaceType, LocalSpaceType> JacobiIterativeSolverType;
         class_<JacobiIterativeSolverType, JacobiIterativeSolverType::Pointer, bases<LinearSolverType> >( "JacobiIterativeSolver")
-        .def(init< >())
-        .def(init<unsigned int, double >())
+        .def(init<>())
+        .def(init<unsigned int, double>())
         .def(self_ns::str(self))
         ;
 
@@ -138,6 +139,7 @@ namespace Python
         .def("SetMaxLevels", &MultilevelSolverType::SetMaxLevels)
         .def("SetMaxCoarseSize", &MultilevelSolverType::SetMaxCoarseSize)
         .def("SetFactory", &MultilevelSolverType::SetFactory)
+        .def("SetEchoLevel", &MultilevelSolverType::SetEchoLevel)
         ;
 
         //****************************************************************************************************
