@@ -135,6 +135,11 @@ public:
     {
     }
 
+    GaussSeidelIterativeSolver(const IndexType NewMaxIterationsNumber)
+        : mMaxIterationsNumber(NewMaxIterationsNumber), mSweepMode("symmetric")
+    {
+    }
+
     GaussSeidelIterativeSolver(const IndexType NewMaxIterationsNumber, const std::string SweepMode)
         : mMaxIterationsNumber(NewMaxIterationsNumber), mSweepMode(SweepMode)
     {
@@ -329,7 +334,7 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-    void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const std::string Sweep)
+    void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const std::string& Sweep)
     {
         IndexType row_start, row_stop, row_step;
 
@@ -347,7 +352,6 @@ private:
         }
 
         gauss_seidel(rA.index1_data(), rA.index2_data(), rA.value_data(), rX, rB, row_start, row_stop, row_step);
-
     }
 
 

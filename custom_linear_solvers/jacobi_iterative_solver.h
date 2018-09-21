@@ -301,9 +301,9 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
+
     IndexType mMaxIterationsNumber;
     double mOmega;
-
 
     ///@}
     ///@name Private Operators
@@ -313,7 +313,7 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-    void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const double Omega)
+    void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const double& Omega)
     {
         IndexType row_start, row_stop, row_step;
 
