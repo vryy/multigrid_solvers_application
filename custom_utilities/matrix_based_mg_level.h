@@ -161,7 +161,9 @@ public:
             ss << "The pre-smoother has not been set for " << Info();
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
-        return !(BaseType::PreSmoother()->Solve(*mpA, rX, rB));
+        int stat = !(BaseType::PreSmoother()->Solve(*mpA, rX, rB));
+/*        KRATOS_WATCH(*(BaseType::PreSmoother()))*/
+        return stat;
     }
 
     virtual int ApplyPostSmoother(VectorType& rX, VectorType& rB) const
@@ -196,6 +198,7 @@ public:
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
         bool stat = pCoarseSolver->Solve(*mpA, rX, rY);
+        std::cout << *pCoarseSolver << std::endl;
         return !stat;
     }
 

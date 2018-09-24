@@ -124,6 +124,7 @@ namespace Python
         .def(self_ns::str(self))
         .def("AdditionalPhysicalDataIsNeeded", &MultilevelSolverType::AdditionalPhysicalDataIsNeeded)
         .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalData)
+        .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalDataForLevel)
         .def("AddPreSmoother", &MultilevelSolverType::AddPreSmoother)
         .def("ChangePreSmoother", &MultilevelSolverType::ChangePreSmoother)
         .def("AddPostSmoother", &MultilevelSolverType::AddPostSmoother)

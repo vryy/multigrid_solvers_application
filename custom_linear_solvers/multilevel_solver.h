@@ -270,6 +270,59 @@ public:
         BaseType::Initialize(rA, rX, rB);
     }
 
+    /** Some solvers may require a minimum degree of knowledge of the structure of the matrix. To make an example
+     * when solving a mixed u-p problem, it is important to identify the row associated to v and p.
+     * another example is the automatic prescription of rotation null-space for smoothed-aggregation solvers
+     * which require knowledge on the spatial position of the nodes associated to a given dof.
+     * This function tells if the solver requires such data
+     */
+    virtual bool AdditionalPhysicalDataIsNeeded()
+    {
+        return true;
+    }
+
+    /** Some solvers may require a minimum degree of knowledge of the structure of the matrix. To make an example
+     * when solving a mixed u-p problem, it is important to identify the row associated to v and p.
+     * another example is the automatic prescription of rotation null-space for smoothed-aggregation solvers
+     * which require knowledge on the spatial position of the nodes associated to a given dof.
+     * This function is the place to eventually provide such data
+     */
+    virtual void ProvideAdditionalData(
+        SparseMatrixType& rA,
+        VectorType& rX,
+        VectorType& rB,
+        typename ModelPart::DofsArrayType& rdof_set,
+        ModelPart& r_model_part
+    )
+    {
+        // DO NOTHING
+    }
+
+    /** Some solvers may require a minimum degree of knowledge of the structure of the matrix. To make an example
+     * when solving a mixed u-p problem, it is important to identify the row associated to v and p.
+     * another example is the automatic prescription of rotation null-space for smoothed-aggregation solvers
+     * which require knowledge on the spatial position of the nodes associated to a given dof.
+     * This function is the place to eventually provide such data
+     */
+    void ProvideAdditionalDataForLevel(
+        const std::size_t& lvl,
+        SparseMatrixType& rA,
+        VectorType& rX,
+        VectorType& rB,
+        typename ModelPart::DofsArrayType& rdof_set,
+        ModelPart& r_model_part
+    )
+    {
+        if (lvl < mLevels.size())
+        {
+            mPreSmoothers[lvl]->ProvideAdditionalData(rA, rX, rB, rdof_set, r_model_part);
+            mPostSmoothers[lvl]->ProvideAdditionalData(rA, rX, rB, rdof_set, r_model_part);
+        }
+
+        if (lvl == mLevels.size()-1)
+            mpCoarseSolver->ProvideAdditionalData(rA, rX, rB, rdof_set, r_model_part);
+    }
+
     /** This function is designed to be called every time the coefficients change in the system
      * that is, normally at the beginning of each solve.
      * For example if we are implementing a direct solver, this is the place to do the factorization
@@ -745,7 +798,7 @@ private:
 
         // Pre smoothing
         // TODO do more presmooth
-        err = GetLevel(lvl).ApplyPreSmoother(rX, rB); ErrorCheck(err, "Error with ApplyPreSmoother at", KRATOS_HERE);
+        err = GetLevel(lvl).ApplyPreSmoother(rX, rB);// ErrorCheck(err, "Error with ApplyPreSmoother at", KRATOS_HERE);
 
         // compute residual
         ComputeResidual(r, lvl, rX, rB);
@@ -775,9 +828,8 @@ private:
         // solve
         if(lvl == this->GetNumberOfLevels() - 2)
         {
-//            KRATOS_WATCH(norm_2(cR))
             err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cR); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
-//            KRATOS_WATCH(norm_2(cX))
+            KRATOS_WATCH(norm_2(cX))
         }
         else
         {
@@ -801,30 +853,22 @@ private:
             }
         }
 
-        if (mEchoLevel > 1)
-        {
-            ComputeResidual(r, lvl, rX, rB);
-            aux[3] = norm_2(r);
-            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after coarse solve: r = " << aux[3] << std::endl;
-        }
-
         // prolongation
         VectorType Dx(size, 0.00);
-//        KRATOS_WATCH(norm_2(cX))
         err = GetLevel(lvl).ApplyProlongation(cX, Dx); ErrorCheck(err, "Error with ApplyProlongation at", KRATOS_HERE);
-//        KRATOS_WATCH(norm_2(Dx))
+        KRATOS_WATCH(norm_2(Dx))
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
 
         if (mEchoLevel > 1)
         {
             ComputeResidual(r, lvl, rX, rB);
             aux[4] = norm_2(r);
-            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after prolong: r = " << aux[4] << std::endl;
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after coarse solve and prolong: r = " << aux[4] << std::endl;
         }
 
         // Post smoothing
         //TODO do more postsmooth
-        err = GetLevel(lvl).ApplyPostSmoother(rX, rB); ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
+        err = GetLevel(lvl).ApplyPostSmoother(rX, rB);// ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
 
         if (mEchoLevel > 1)
         {
