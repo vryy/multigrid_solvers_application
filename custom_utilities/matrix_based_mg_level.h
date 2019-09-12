@@ -198,7 +198,7 @@ public:
             KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
         }
         bool stat = pCoarseSolver->Solve(*mpA, rX, rY);
-        std::cout << *pCoarseSolver << std::endl;
+        // std::cout << *pCoarseSolver << std::endl;
         return !stat;
     }
 

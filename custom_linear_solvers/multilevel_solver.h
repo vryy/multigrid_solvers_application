@@ -67,6 +67,8 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "utilities/openmp_utils.h"
 #include "custom_utilities/mg_level.h"
 
+//#define DEBUG_PRESMOOTHER
+
 
 namespace Kratos
 {
@@ -257,6 +259,18 @@ public:
         mEchoLevel = Level;
     }
 
+    /// Set number of pre-smoothing steps
+    void SetNumPreSmooth(const SizeType& NumPreSmooth)
+    {
+        mNumPreSmooth = NumPreSmooth;
+    }
+
+    /// Set number of post-smoothing steps
+    void SetNumPostSmooth(const SizeType& NumPostSmooth)
+    {
+        mNumPostSmooth = NumPostSmooth;
+    }
+
     /** This function is designed to be called as few times as possible. It creates the data structures
      * that only depend on the connectivity of the matrix (and not on its coefficients)
      * so that the memory can be allocated once and expensive operations can be done only when strictly
@@ -377,6 +391,7 @@ public:
 
         const SizeType size = TSparseSpaceType::Size(rX);
         VectorType r(size, 0.00);
+        TSparseSpaceType::SetToZero(rX);
 
         do
         {
@@ -796,9 +811,25 @@ private:
             Indent(std::cout, lvl+3); std::cout << lvl << ": residual before ApplyPreSmoother: r = " << aux[0] << std::endl;
         }
 
+        #ifdef DEBUG_PRESMOOTHER
+        WriteMatrixMarketVector("r0.mm", r);
+        #endif
+
         // Pre smoothing
-        // TODO do more presmooth
-        err = GetLevel(lvl).ApplyPreSmoother(rX, rB);// ErrorCheck(err, "Error with ApplyPreSmoother at", KRATOS_HERE);
+        for (SizeType i = 0; i < mNumPreSmooth; ++i)
+        {
+            err = GetLevel(lvl).ApplyPreSmoother(rX, rB);// ErrorCheck(err, "Error with ApplyPreSmoother at", KRATOS_HERE);
+            #ifdef DEBUG_PRESMOOTHER
+            ComputeResidual(r, lvl, rX, rB);
+            std::stringstream ss;
+            ss << "rs" << (i+1) << ".mm";
+            WriteMatrixMarketVector(ss.str().c_str(), r);
+            #endif
+        }
+
+        #ifdef DEBUG_PRESMOOTHER
+        KRATOS_THROW_ERROR(std::runtime_error, "Debug Presmoother is completed. I think we have to stop.", "")
+        #endif
 
         // compute residual
         ComputeResidual(r, lvl, rX, rB);
@@ -829,7 +860,7 @@ private:
         if(lvl == this->GetNumberOfLevels() - 2)
         {
             err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cR); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
-            KRATOS_WATCH(norm_2(cX))
+            // KRATOS_WATCH(norm_2(cX))
         }
         else
         {
@@ -856,19 +887,19 @@ private:
         // prolongation
         VectorType Dx(size, 0.00);
         err = GetLevel(lvl).ApplyProlongation(cX, Dx); ErrorCheck(err, "Error with ApplyProlongation at", KRATOS_HERE);
-        KRATOS_WATCH(norm_2(Dx))
+        // KRATOS_WATCH(norm_2(Dx))
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
 
         if (mEchoLevel > 1)
         {
             ComputeResidual(r, lvl, rX, rB);
-            aux[4] = norm_2(r);
-            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after coarse solve and prolong: r = " << aux[4] << std::endl;
+            aux[3] = norm_2(r);
+            Indent(std::cout, lvl+3); std::cout << lvl << ": residual after coarse solve and prolong: r = " << aux[3] << std::endl;
         }
 
         // Post smoothing
-        //TODO do more postsmooth
-        err = GetLevel(lvl).ApplyPostSmoother(rX, rB);// ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
+        for (SizeType i = 0; i < mNumPostSmooth; ++i)
+            err = GetLevel(lvl).ApplyPostSmoother(rX, rB);// ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
 
         if (mEchoLevel > 1)
         {
@@ -958,6 +989,8 @@ inline std::ostream& operator << (std::ostream& rOStream,
 
 
 }  // namespace Kratos.
+
+#undef DEBUG_PRESMOOTHER
 
 #endif // KRATOS_MULTILEVEL_SOLVER_H_INCLUDED  defined
 

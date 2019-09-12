@@ -237,6 +237,16 @@ public:
     ///@name Access
     ///@{
 
+    LinearSolverPointerType PreSmoother() const
+    {
+        return mpPreSmoother;
+    }
+
+    LinearSolverPointerType PostSmoother() const
+    {
+        return mpPostSmoother;
+    }
+
     void SetPreSmoother(LinearSolverPointerType pPreSmoother)
     {
         mpPreSmoother = pPreSmoother;
@@ -354,15 +364,6 @@ protected:
     ///@name Protected Operations
     ///@{
 
-    LinearSolverPointerType PreSmoother() const
-    {
-        return mpPreSmoother;
-    }
-
-    LinearSolverPointerType PostSmoother() const
-    {
-        return mpPostSmoother;
-    }
 
     ///@}
     ///@name Protected  Access

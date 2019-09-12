@@ -205,6 +205,8 @@ void MultigridSolversApp_AddLevelToPython()
     class_<MGLevelType, MGLevelType::Pointer, boost::noncopyable>
     ( "MGLevel", init<const typename MGLevelType::IndexType&>())
     .def(self_ns::str(self))
+    .def("PreSmoother", &MGLevelType::PreSmoother)
+    .def("PostSmoother", &MGLevelType::PostSmoother)
     .def("SetPreSmoother", &MGLevelType::SetPreSmoother)
     .def("SetPostSmoother", &MGLevelType::SetPostSmoother)
     .def("SetRestrictionOperator", &MGLevelType::SetRestrictionOperator)

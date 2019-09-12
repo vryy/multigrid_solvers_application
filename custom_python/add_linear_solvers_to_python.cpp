@@ -23,6 +23,7 @@
 #include "custom_linear_solvers/multilevel_preconditioner.h"
 #include "custom_linear_solvers/gauss_seidel_iterative_solver.h"
 #include "custom_linear_solvers/jacobi_iterative_solver.h"
+#include "custom_linear_solvers/vanka_smoother.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_utilities/ruge_stueben_solver_factory.h"
 // #include "custom_utilities/smoothed_aggregation_solver_factory.h"
@@ -115,6 +116,13 @@ namespace Python
         .def(self_ns::str(self))
         ;
 
+        typedef VankaSmoother<SparseSpaceType, LocalSpaceType> VankaSmootherType;
+        class_<VankaSmootherType, VankaSmootherType::Pointer, bases<LinearSolverType> >
+        ( "VankaSmoother", init<ModelPart::Pointer>())
+        .def(init<ModelPart::Pointer, double>())
+        .def(self_ns::str(self))
+        ;
+
         /* multilevel solver */
         typedef MultilevelSolver<SparseSpaceType, LocalSpaceType> MultilevelSolverType;
         class_<MultilevelSolverType, MultilevelSolverType::Pointer, bases<LinearSolverType> >("MultilevelSolver", init<>())
@@ -126,8 +134,10 @@ namespace Python
         .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalData)
         .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalDataForLevel)
         .def("AddPreSmoother", &MultilevelSolverType::AddPreSmoother)
+        .def("SetNumPreSmooth", &MultilevelSolverType::SetNumPreSmooth)
         .def("ChangePreSmoother", &MultilevelSolverType::ChangePreSmoother)
         .def("AddPostSmoother", &MultilevelSolverType::AddPostSmoother)
+        .def("SetNumPostSmooth", &MultilevelSolverType::SetNumPostSmooth)
         .def("ChangePostSmoother", &MultilevelSolverType::ChangePostSmoother)
         .def("SetUpSmoothers", &MultilevelSolverType::SetUpSmoothers)
         .def("AddLevel", &MultilevelSolverType::AddLevel)

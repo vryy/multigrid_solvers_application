@@ -4,6 +4,7 @@ message("**** configuring KratosMultigridSolversApplication ****")
 
 ######### add include directory here
 include_directories( ${CMAKE_SOURCE_DIR}/kratos )
+include_directories( ${CMAKE_SOURCE_DIR}/applications )
 #######################################################################
 
 
