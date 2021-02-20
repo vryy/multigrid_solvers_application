@@ -661,7 +661,7 @@ public:
     virtual std::string Info() const
     {
         std::stringstream buffer;
-        buffer << "<<<<<<<" << std::endl;
+        buffer << "+++++++++" << std::endl;
         buffer << "Multilevel solver with " << this->Cycle() << " cycle";
         buffer << ", number of level(s) = " << this->GetNumberOfLevels() << std::endl;
         for(SizeType i = 0; i < this->GetNumberOfLevels(); ++i)
@@ -671,7 +671,7 @@ public:
             buffer << this->GetLevel(i).Info();
             buffer << std::endl;
         }
-        buffer << ">>>>>>>>" << std::endl;
+        buffer << "+++++++++" << std::endl;
         return  buffer.str();
     }
 

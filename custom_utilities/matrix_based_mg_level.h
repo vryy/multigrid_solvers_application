@@ -241,7 +241,10 @@ public:
     {
         std::stringstream ss;
         ss << "Matrix-based " << BaseType::Info() << std::endl;
-        ss << "  Fine matrix size: " << TSparseSpaceType::Size1(*mpA) << ", nonzeros = " << mpA->filled2() << std::endl;
+        ss << "  Fine matrix size: " << TSparseSpaceType::Size1(*mpA)
+           << ", nonzeros = " << mpA->filled2()
+           << ", frob_norm = " << norm_frobenius(*mpA)
+           << std::endl;
         return ss.str();
     }
 
