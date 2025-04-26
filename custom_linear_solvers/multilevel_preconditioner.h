@@ -169,9 +169,8 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
-
         mml_solver->Initialize(rA, rX, rB);
 
         mml_solver->SetMaxIterationsNumber(1);
@@ -194,13 +193,13 @@ public:
     }
 
 
-    virtual bool AdditionalPhysicalDataIsNeeded()
+    bool AdditionalPhysicalDataIsNeeded() override
     {
         return false;
     }
 
 
-    virtual void Mult(SparseMatrixType& rA, VectorType& rX, VectorType& rY)
+    void Mult(SparseMatrixType& rA, VectorType& rX, VectorType& rY) override
     {
         VectorType z = rX;
         TSparseSpaceType::Mult(rA, z, rY);
@@ -211,7 +210,7 @@ public:
     /** calculate preconditioned_X = A^{-1} * X;
         @param rX  Unknows of preconditioner suystem
     */
-    virtual VectorType& ApplyLeft(VectorType& rX)
+    VectorType& ApplyLeft(VectorType& rX) override
     {
         SizeType size = TSparseSpaceType::Size(rX);
 
@@ -243,7 +242,7 @@ public:
     ///@{
 
     /// Return information about this object.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream buffer;
         buffer << "MultilevelPreconditioner with ";
@@ -253,13 +252,13 @@ public:
 
 
     /// Print information about this object.
-    virtual void  PrintInfo(std::ostream& OStream) const
+    void  PrintInfo(std::ostream& OStream) const override
     {
         OStream << Info();
     }
 
 
-    virtual void PrintData(std::ostream& OStream) const
+    void PrintData(std::ostream& OStream) const override
     {
     }
 

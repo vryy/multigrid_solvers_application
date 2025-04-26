@@ -58,7 +58,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 // External includes
-#include <boost/progress.hpp>
 
 
 // Project includes
@@ -67,6 +66,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "linear_solvers/reorderer.h"
 #include "linear_solvers/linear_solver.h"
 #include "utilities/openmp_utils.h"
+#include "utilities/progress.h"
 #include "solving_strategies/builder_and_solvers/builder_and_solver.h"
 #include "structural_application/custom_utilities/sd_math_utils.h"
 
@@ -96,6 +96,7 @@ namespace Kratos
 
 /// Class for Vanka smoother.
 /**
+ * TODO add some information or reference
 */
 template<class TSparseSpaceType, class TDenseSpaceType,
          class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
@@ -199,7 +200,7 @@ public:
         VectorType r(rB.size()), aux(rB.size());
 
         #ifdef ENABLE_PROFILING
-        boost::progress_display show_progress(mpModelPart->Elements().size());
+        Kratos::progress_display show_progress(mpModelPart->Elements().size());
         double cur_time;
         double extract_local_time = 0.0;
         double update_local_time = 0.0;

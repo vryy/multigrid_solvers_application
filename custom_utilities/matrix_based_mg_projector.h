@@ -1,39 +1,5 @@
 /*
-==============================================================================
-Kratos
-A General Purpose Software for Multi-Physics Finite Element Analysis
-Version 1.0 (Released on march 05, 2007).
-
-Copyright 2007
-Pooyan Dadvand, Riccardo Rossi
-pooyan@cimne.upc.edu
-rrossi@cimne.upc.edu
-CIMNE (International Center for Numerical Methods in Engineering),
-Gran Capita' s/n, 08034 Barcelona, Spain
-
-Permission is hereby granted, free  of charge, to any person obtaining
-a  copy  of this  software  and  associated  documentation files  (the
-"Software"), to  deal in  the Software without  restriction, including
-without limitation  the rights to  use, copy, modify,  merge, publish,
-distribute,  sublicense and/or  sell copies  of the  Software,  and to
-permit persons to whom the Software  is furnished to do so, subject to
-the following condition:
-
-Distribution of this code for  any  commercial purpose  is permissible
-ONLY BY DIRECT ARRANGEMENT WITH THE COPYRIGHT OWNER.
-
-The  above  copyright  notice  and  this permission  notice  shall  be
-included in all copies or substantial portions of the Software.
-
-THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
-EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT  SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY
-CLAIM, DAMAGES OR  OTHER LIABILITY, WHETHER IN AN  ACTION OF CONTRACT,
-TORT  OR OTHERWISE, ARISING  FROM, OUT  OF OR  IN CONNECTION  WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-==============================================================================
+see multigrid_solvers_application/LICENSE.txt
 */
 
 //
@@ -125,7 +91,7 @@ public:
     }
 
     /// Constructor with size
-    MatrixBasedMGProjector(const std::size_t& nrows, const std::size_t& ncols)
+    MatrixBasedMGProjector(const std::size_t nrows, const std::size_t ncols)
     {
         this->Initialize();
         TSpaceType::Resize(*mpOperator, nrows, ncols);
@@ -133,7 +99,7 @@ public:
     }
 
     /// Destructor.
-    virtual ~MatrixBasedMGProjector()
+    ~MatrixBasedMGProjector() override
     {}
 
     /// Copy constructor
@@ -148,7 +114,7 @@ public:
     /// Assignment operator. It's also important like the Copy constructor
     MatrixBasedMGProjector& operator= (const MatrixBasedMGProjector& rOther)
     {
-        this.mpOperator = rOther.mpOperator;
+        this->mpOperator = rOther.mpOperator;
         return *this;
     }
 
@@ -157,9 +123,9 @@ public:
     ///@{
 
     /// Initialize the operator
-    virtual void Initialize()
+    void Initialize() override
     {
-        if(mpOperator == NULL)
+        if(mpOperator == nullptr)
         {
             MatrixPointerType pNewP = TSpaceType::CreateEmptyMatrixPointer();
             mpOperator.swap(pNewP);
@@ -231,9 +197,9 @@ public:
     }
 
     /// Apply the projection
-    virtual int Apply(VectorType& rX, VectorType& rY) const
+    int Apply(VectorType& rX, VectorType& rY) const override
     {
-        if(mpOperator == NULL)
+        if(mpOperator == nullptr)
         {
             std::stringstream ss;
             ss << "The matrix has not been set for " << Info();
@@ -249,9 +215,9 @@ public:
     }
 
     /// Apply the transpose projection
-    virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
+    int ApplyTranspose(VectorType& rX, VectorType& rY) const override
     {
-        if(mpOperator == NULL)
+        if(mpOperator == nullptr)
         {
             std::stringstream ss;
             ss << "The matrix has not been set for " << Info();
@@ -279,13 +245,13 @@ public:
     ///@{
 
     /// Get the size of the base space
-    virtual SizeType GetBaseSize() const
+    SizeType GetBaseSize() const override
     {
         return TSpaceType::Size2(*mpOperator);
     }
 
     /// Get the size of the projected space
-    virtual SizeType GetProjectedSize() const
+    SizeType GetProjectedSize() const override
     {
         return TSpaceType::Size1(*mpOperator);
     }
@@ -295,7 +261,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream ss;
         ss << "MatrixBasedMGProjector, size = ("
@@ -305,13 +271,13 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
 

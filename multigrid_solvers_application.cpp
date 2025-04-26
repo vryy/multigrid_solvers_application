@@ -24,10 +24,7 @@ namespace Kratos
 
     void KratosMultigridSolversApplication::Register()
     {
-        // calling base class register to register Kratos components
-        KratosApplication::Register();
-        std::cout << "Initializing KratosMultigridSolversApplication... " << std::endl;
+        std::cout << "Initializing KratosMultigridSolversApplication..." << std::endl;
     }
 
 } // namespace Kratos
-

@@ -53,7 +53,7 @@ namespace Kratos
     /// Short class definition.
     /** Detail class definition.
     */
-    class KratosMultigridSolversApplication : public KratosApplication
+    class KRATOS_API(MULTIGRID_SOLVERS_APPLICATION) KratosMultigridSolversApplication : public KratosApplication
     {
     public:
         ///@name Type Definitions
@@ -67,10 +67,10 @@ namespace Kratos
         ///@{
 
         /// Default constructor.
-        KratosMultigridSolversApplication(){}
+        KratosMultigridSolversApplication() {}
 
         /// Destructor.
-        virtual ~KratosMultigridSolversApplication(){}
+        ~KratosMultigridSolversApplication() override {}
 
         ///@}
         ///@name Operators
@@ -81,7 +81,7 @@ namespace Kratos
         ///@name Operations
         ///@{
 
-        virtual void Register();
+        void Register() override;
 
         ///@}
         ///@name Access
@@ -98,20 +98,20 @@ namespace Kratos
         ///@{
 
         /// Turn back information as a string.
-        virtual std::string Info() const
+        std::string Info() const override
         {
             return "Application for multigrid/multilevel based solvers & preconditioners";
         }
 
         /// Print information about this object.
-        virtual void PrintInfo(std::ostream& rOStream) const
+        void PrintInfo(std::ostream& rOStream) const override
         {
             rOStream << Info();
             PrintData(rOStream);
         }
 
         ///// Print object's data.
-        virtual void PrintData(std::ostream& rOStream) const
+        void PrintData(std::ostream& rOStream) const override
         {
             rOStream << "in KratosMultigridSolversApplication:";
             KRATOS_WATCH(KratosComponents<VariableData>::GetComponents().size());

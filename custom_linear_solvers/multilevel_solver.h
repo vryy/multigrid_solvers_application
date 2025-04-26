@@ -1,39 +1,5 @@
 /*
-==============================================================================
-Kratos
-A General Purpose Software for Multi-Physics Finite Element Analysis
-Version 1.0 (Released on march 05, 2007).
-
-Copyright 2007
-Pooyan Dadvand, Riccardo Rossi
-pooyan@cimne.upc.edu
-rrossi@cimne.upc.edu
-CIMNE (International Center for Numerical Methods in Engineering),
-Gran Capita' s/n, 08034 Barcelona, Spain
-
-Permission is hereby granted, free  of charge, to any person obtaining
-a  copy  of this  software  and  associated  documentation files  (the
-"Software"), to  deal in  the Software without  restriction, including
-without limitation  the rights to  use, copy, modify,  merge, publish,
-distribute,  sublicense and/or  sell copies  of the  Software,  and to
-permit persons to whom the Software  is furnished to do so, subject to
-the following condition:
-
-Distribution of this code for  any  commercial purpose  is permissible
-ONLY BY DIRECT ARRANGEMENT WITH THE COPYRIGHT OWNER.
-
-The  above  copyright  notice  and  this permission  notice  shall  be
-included in all copies or substantial portions of the Software.
-
-THE  SOFTWARE IS  PROVIDED  "AS  IS", WITHOUT  WARRANTY  OF ANY  KIND,
-EXPRESS OR  IMPLIED, INCLUDING  BUT NOT LIMITED  TO THE  WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT  SHALL THE AUTHORS OR COPYRIGHT HOLDERS  BE LIABLE FOR ANY
-CLAIM, DAMAGES OR  OTHER LIABILITY, WHETHER IN AN  ACTION OF CONTRACT,
-TORT  OR OTHERWISE, ARISING  FROM, OUT  OF OR  IN CONNECTION  WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-==============================================================================
+see multigrid_solvers_application/LICENSE.txt
 */
 
 //
@@ -387,7 +353,7 @@ public:
 //        KRATOS_WATCH(&rA);
 
         if (mpCoarseSolver == NULL)
-            KRATOS_THROW_ERROR(std::logic_error, "The coarse solver is not set", "")
+            KRATOS_ERROR << "The coarse solver is not set";
 
         const SizeType size = TSparseSpaceType::Size(rX);
         VectorType r(size, 0.00);
@@ -475,7 +441,7 @@ public:
     {
         if(mPreSmoothers.size() == 0 || mPostSmoothers.size() == 0)
         {
-            KRATOS_THROW_ERROR(std::logic_error, "PreSmoother/PostSmoother must be assigned before solving", "");
+            KRATOS_ERROR << "PreSmoother/PostSmoother must be assigned before solving";
         }
 
         // set up presmoother
@@ -524,16 +490,12 @@ public:
             }
             else
             {
-                std::stringstream buffer;
-                buffer << "The input level has an incompatible level depth" << std::endl;
-                KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
+                KRATOS_ERROR << "The input level has an invalid level depth of " << plevel->LevelDepth();
             }
         }
         else
         {
-            std::stringstream buffer;
-            buffer << "The maximum number of levels is " << mMaxLevels << std::endl;
-            KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
+            KRATOS_ERROR << "The maximum number of levels is " << mMaxLevels;
         }
     }
 
@@ -547,9 +509,7 @@ public:
         }
         else
         {
-            std::stringstream buffer;
-            buffer << "The input level has an exceeded level depth" << std::endl;
-            KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
+            KRATOS_ERROR << "The input level has an exceeded level depth > " << this->GetNumberOfLevels();
         }
     }
 
@@ -563,9 +523,7 @@ public:
         }
         else
         {
-            std::stringstream buffer;
-            buffer << "The maximum number of levels is " << mMaxLevels << std::endl;
-            KRATOS_THROW_ERROR(std::logic_error, buffer.str(), "");
+            KRATOS_ERROR << "The maximum number of levels is " << mMaxLevels;
         }
     }
 
@@ -828,7 +786,7 @@ private:
         }
 
         #ifdef DEBUG_PRESMOOTHER
-        KRATOS_THROW_ERROR(std::runtime_error, "Debug Presmoother is completed. I think we have to stop.", "")
+        KRATOS_ERROR "Debug Presmoother is completed. I think we have to stop.";
         #endif
 
         // compute residual
@@ -848,7 +806,7 @@ private:
         VectorType cX(csize, 0.00);
 
         // restriction
-        err = GetLevel(lvl).ApplyRestriction(r, cR); ErrorCheck(err, "Error with ApplyRestriction at", KRATOS_HERE);
+        err = GetLevel(lvl).ApplyRestriction(r, cR); if (err != 0) KRATOS_ERROR << "Error with ApplyRestriction";
 
         if (mEchoLevel > 1)
         {
@@ -859,7 +817,7 @@ private:
         // solve
         if(lvl == this->GetNumberOfLevels() - 2)
         {
-            err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cR); ErrorCheck(err, "Error with Coarse Solver at", KRATOS_HERE);
+            err = GetLevel(lvl+1).Inverse(mpCoarseSolver, cX, cR); if (err != 0) KRATOS_ERROR << "Error with Coarse Solver";
             // KRATOS_WATCH(norm_2(cX))
         }
         else
@@ -880,13 +838,13 @@ private:
             }
             else
             {
-                KRATOS_THROW_ERROR (std::logic_error,"valid multilevel cycles are 'V', 'W' or 'F'","");
+                KRATOS_ERROR << "valid multilevel cycles are 'V', 'W' or 'F'";
             }
         }
 
         // prolongation
         VectorType Dx(size, 0.00);
-        err = GetLevel(lvl).ApplyProlongation(cX, Dx); ErrorCheck(err, "Error with ApplyProlongation at", KRATOS_HERE);
+        err = GetLevel(lvl).ApplyProlongation(cX, Dx); if (err != 0) KRATOS_ERROR << "Error with ApplyProlongation";
         // KRATOS_WATCH(norm_2(Dx))
         TSparseSpaceType::UnaliasedAdd(rX, 1.00, Dx);
 
@@ -899,7 +857,7 @@ private:
 
         // Post smoothing
         for (SizeType i = 0; i < mNumPostSmooth; ++i)
-            err = GetLevel(lvl).ApplyPostSmoother(rX, rB);// ErrorCheck(err, "Error with ApplyPostSmoother at", KRATOS_HERE);
+            err = GetLevel(lvl).ApplyPostSmoother(rX, rB);// if (err != 0) KRATOS_ERROR << "Error with ApplyPostSmoother";
 
         if (mEchoLevel > 1)
         {
@@ -939,12 +897,6 @@ private:
     virtual bool IsConverged()
     {
         return (mResidualNorm <= mTolerance * mBNorm);
-    }
-
-    void ErrorCheck(const int& flag, const std::string& msg1, const std::string& msg2) const
-    {
-        if(flag != 0)
-            KRATOS_THROW_ERROR(std::logic_error, msg1, msg2);
     }
 
     ///@}
@@ -987,10 +939,8 @@ inline std::ostream& operator << (std::ostream& rOStream,
 }
 ///@}
 
-
 }  // namespace Kratos.
 
 #undef DEBUG_PRESMOOTHER
 
 #endif // KRATOS_MULTILEVEL_SOLVER_H_INCLUDED  defined
-
