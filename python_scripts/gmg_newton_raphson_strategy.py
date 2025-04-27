@@ -38,12 +38,12 @@ class SolvingStrategyPython:
     #######################################################################
     def Initialize(self):
         for model_solver in self.model_solver_list:
-            if(model_solver.scheme.SchemeIsInitialized() == False):
-                model_solver.scheme.Initialize(model_solver.model_part)
-            if (model_solver.scheme.ElementsAreInitialized() == False):
-                model_solver.scheme.InitializeElements(model_solver.model_part)
-            if (model_solver.scheme.ConditionsAreInitialized() == False):
-                model_solver.scheme.InitializeConditions(model_solver.model_part)
+            if(model_solver.time_scheme.time_schemeIsInitialized() == False):
+                model_solver.time_scheme.Initialize(model_solver.model_part)
+            if (model_solver.time_scheme.ElementsAreInitialized() == False):
+                model_solver.time_scheme.InitializeElements(model_solver.model_part)
+            if (model_solver.time_scheme.ConditionsAreInitialized() == False):
+                model_solver.time_scheme.InitializeConditions(model_solver.model_part)
 
     #######################################################################
     def Solve( self, time, from_deac, to_deac, from_reac, to_reac ):
@@ -132,14 +132,14 @@ class SolvingStrategyPython:
     #######################################################################
     def Predict(self):
         for model_solver in self.model_solver_list:
-            model_solver.scheme.Predict(model_solver.model_part,model_solver.builder_and_solver.GetDofSet(),model_solver.A,model_solver.Dx,model_solver.b)
+            model_solver.time_scheme.Predict(model_solver.model_part,model_solver.builder_and_solver.GetDofSet(),model_solver.A,model_solver.Dx,model_solver.b)
 
     #######################################################################
     def InitializeSolutionStep(self):
         for model_solver in self.model_solver_list:
             if(model_solver.builder_and_solver.GetDofSetIsInitializedFlag() == False or model_solver.ReformDofSetAtEachStep == True):
                 #initialize the list of degrees of freedom to be used
-                model_solver.builder_and_solver.SetUpDofSet(model_solver.scheme,model_solver.model_part)
+                model_solver.builder_and_solver.SetUpDofSet(model_solver.time_scheme,model_solver.model_part)
                 #reorder the list of degrees of freedom to identify fixity and system size
                 model_solver.builder_and_solver.SetUpSystem(model_solver.model_part)
                 #allocate memory for the system and preallocate the structure of the matrix
@@ -150,7 +150,7 @@ class SolvingStrategyPython:
                 model_solver.b = (model_solver.pb).GetReference()
             if(model_solver.SolutionStepIsInitialized == False):
                 model_solver.builder_and_solver.InitializeSolutionStep(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
-                model_solver.scheme.InitializeSolutionStep(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
+                model_solver.time_scheme.InitializeSolutionStep(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
 
     #######################################################################
     def ExecuteIteration(self,echo_level,CalculateNormDxFlag):
@@ -160,11 +160,11 @@ class SolvingStrategyPython:
             model_solver.space_utils.SetToZeroVector(model_solver.Dx)
             model_solver.space_utils.SetToZeroVector(model_solver.b)
 
-            model_solver.scheme.InitializeNonLinIteration(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
+            model_solver.time_scheme.InitializeNonLinIteration(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
 
             #build and solve the problem
-            model_solver.builder_and_solver.Build(model_solver.scheme,model_solver.model_part,model_solver.A,model_solver.b)
-            model_solver.builder_and_solver.ApplyDirichletConditions(model_solver.scheme,model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
+            model_solver.builder_and_solver.Build(model_solver.time_scheme,model_solver.model_part,model_solver.A,model_solver.b)
+            model_solver.builder_and_solver.ApplyDirichletConditions(model_solver.time_scheme,model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
             model_solver.dof_util.ListDofs(model_solver.builder_and_solver.GetDofSet(),model_solver.builder_and_solver.GetEquationSystemSize())
 
         #provide data for the preconditioner and linear solver
@@ -186,11 +186,11 @@ class SolvingStrategyPython:
         #perform update
         normDx = []
         for model_solver in self.model_solver_list:
-            model_solver.scheme.Update(model_solver.model_part,model_solver.builder_and_solver.GetDofSet(),model_solver.A,model_solver.Dx,model_solver.b)
+            model_solver.time_scheme.Update(model_solver.model_part,model_solver.builder_and_solver.GetDofSet(),model_solver.A,model_solver.Dx,model_solver.b)
 
             #move the mesh as needed
             if(model_solver.MoveMeshFlag == True):
-                model_solver.scheme.MoveMesh(model_solver.model_part.Nodes)
+                model_solver.time_scheme.MoveMesh(model_solver.model_part.Nodes)
 
             #to account for prescribed displacement, the displacement at prescribed nodes need to be updated
             for node in model_solver.model_part.Nodes:
@@ -210,7 +210,7 @@ class SolvingStrategyPython:
                     node.SetSolutionStepValue(DISPLACEMENT_Z, curr_disp + delta_disp)
                     node.SetSolutionStepValue(PRESCRIBED_DELTA_DISPLACEMENT_Z, 0.0) # set the prescribed displacement to zero to avoid update in the second step
 
-            model_solver.scheme.FinalizeNonLinIteration(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
+            model_solver.time_scheme.FinalizeNonLinIteration(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
 
             #calculate the norm of the "correction" Dx
             if(CalculateNormDxFlag == True):
@@ -224,12 +224,12 @@ class SolvingStrategyPython:
     def FinalizeSolutionStep(self):
         for model_solver in self.model_solver_list:
             if(model_solver.CalculateReactionsFlag == True):
-                model_solver.builder_and_solver.CalculateReactions(model_solver.scheme,model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
+                model_solver.builder_and_solver.CalculateReactions(model_solver.time_scheme,model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
 
             #Finalisation of the solution step,
-            model_solver.scheme.FinalizeSolutionStep(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
+            model_solver.time_scheme.FinalizeSolutionStep(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
             model_solver.builder_and_solver.FinalizeSolutionStep(model_solver.model_part,model_solver.A,model_solver.Dx,model_solver.b)
-            model_solver.scheme.Clean()
+            model_solver.time_scheme.Clean()
             #reset flags for the next step
             model_solver.SolutionStepIsInitialized = False
 
