@@ -95,7 +95,7 @@ namespace Kratos
 */
 template<class TSparseSpaceType, class TDenseSpaceType,
          class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
-class GaussSeidelIterativeSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>
+class GaussSeidelIterativeSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType>
 {
 public:
     ///@name Type Definitions
@@ -104,18 +104,18 @@ public:
     /// Pointer definition of LinearSolver
     KRATOS_CLASS_POINTER_DEFINITION(GaussSeidelIterativeSolver);
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::VectorType VectorType;
+    typedef typename BaseType::VectorType VectorType;
 
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+    typedef typename BaseType::DenseMatrixType DenseMatrixType;
 
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    typedef typename BaseType::DenseVectorType DenseVectorType;
 
-    typedef std::size_t  SizeType;
-    typedef unsigned int  IndexType;
+    typedef typename BaseType::SizeType SizeType;
+    typedef typename BaseType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle

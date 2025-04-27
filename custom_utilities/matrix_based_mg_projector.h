@@ -143,6 +143,10 @@ public:
         const std::vector<std::size_t>& columns, const MatrixType& values)
     {
         // size check
+        // KRATOS_WATCH(rows.size())
+        // KRATOS_WATCH(columns.size())
+        // KRATOS_WATCH(values.size1())
+        // KRATOS_WATCH(values.size2())
         if (rows.size() != TSpaceType::Size1(values))
             KRATOS_ERROR << "The row size of the matrix is incompatible";
 
@@ -168,6 +172,10 @@ public:
         const std::size_t& block_size)
     {
         // size check
+        // KRATOS_WATCH(rows.size())
+        // KRATOS_WATCH(columns.size())
+        // KRATOS_WATCH(values.size1())
+        // KRATOS_WATCH(values.size2())
         if (rows.size() != TSpaceType::Size1(values))
             KRATOS_ERROR << "The row size of the matrix is incompatible";
 

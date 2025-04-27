@@ -100,7 +100,7 @@ namespace Kratos
 */
 template<class TSparseSpaceType, class TDenseSpaceType,
          class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
-class VankaSmoother : public LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>
+class VankaSmoother : public LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType>
 {
 public:
     ///@name Type Definitions
@@ -109,20 +109,20 @@ public:
     /// Pointer definition of LinearSolver
     KRATOS_CLASS_POINTER_DEFINITION(VankaSmoother);
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::VectorType VectorType;
+    typedef typename BaseType::VectorType VectorType;
 
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+    typedef typename BaseType::DenseMatrixType DenseMatrixType;
 
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    typedef typename BaseType::DenseVectorType DenseVectorType;
+
+    typedef typename BaseType::SizeType SizeType;
+    typedef typename BaseType::IndexType IndexType;
 
     typedef ModelPart::ElementsContainerType ElementsArrayType;
-
-    typedef std::size_t  SizeType;
-    typedef unsigned int  IndexType;
 
     ///@}
     ///@name Life Cycle
@@ -146,8 +146,7 @@ public:
     }
 
     /// Destructor.
-    virtual ~VankaSmoother() {}
-
+    ~VankaSmoother() override {}
 
     ///@}
     ///@name Operators
@@ -162,10 +161,10 @@ public:
         return *this;
     }
 
-
     ///@}
     ///@name Operations
     ///@{
+
     /** This function is designed to be called as few times as possible. It creates the data structures
      * that only depend on the connectivity of the matrix (and not on its coefficients)
      * so that the memory can be allocated once and expensive operations can be done only when strictly
@@ -174,11 +173,10 @@ public:
     @param rX. Solution vector. it's also the initial guess for iterative linear solvers.
     @param rB. Right hand side vector.
     */
-    virtual void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
         BaseType::Initialize(rA, rX, rB);
     }
-
 
     /** Normal solve method.
     Solves the linear system Ax=b and puts the result on SystemVector& rX.
@@ -188,7 +186,7 @@ public:
     guess for iterative linear solvers.
      @param rB. Right hand side vector.
     */
-    virtual bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
         if(this->IsNotConsistent(rA, rX, rB))
             return false;
@@ -277,7 +275,6 @@ public:
         return true;
     }
 
-
     /** Multi solve method for solving a set of linear systems with same coefficient matrix.
     Solves the linear system Ax=b and puts the result on SystemVector& rX.
     rVectorx is also th initial guess for iterative methods.
@@ -286,11 +283,10 @@ public:
     guess for iterative linear solvers.
      @param rB. Right hand side vector.
     */
-    virtual bool Solve(SparseMatrixType& rA, DenseMatrixType& rX, DenseMatrixType& rB)
+    bool Solve(SparseMatrixType& rA, DenseMatrixType& rX, DenseMatrixType& rB) override
     {
         return false;
     }
-
 
     ///@}
     ///@name Access
@@ -307,7 +303,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream buffer;
         buffer << "Vanka smoother, model_part " << mpModelPart->Name() << ", lambda = " << mLambda;
@@ -315,16 +311,15 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -422,25 +417,6 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType, class TReordererType>
-inline std::istream& operator >> (std::istream& IStream,
-                                  VankaSmoother<TSparseSpaceType, TDenseSpaceType, TReordererType>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType, class TReordererType>
-inline std::ostream& operator << (std::ostream& rOStream,
-                                  const VankaSmoother<TSparseSpaceType, TDenseSpaceType, TReordererType>& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
 
 }  // namespace Kratos.
@@ -448,5 +424,3 @@ inline std::ostream& operator << (std::ostream& rOStream,
 #undef ENABLE_PROFILING
 
 #endif // KRATOS_VANKA_SMOOTHER_H_INCLUDED  defined
-
-

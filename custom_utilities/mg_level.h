@@ -62,6 +62,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/mg_projector.h"
 
@@ -115,7 +116,7 @@ public:
 
     typedef Reorderer<TSparseSpaceType, TDenseSpaceType> ReordererType;
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ReordererType> LinearSolverType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, ReordererType> LinearSolverType;
 
     typedef typename LinearSolverType::Pointer LinearSolverPointerType;
 

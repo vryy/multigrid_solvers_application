@@ -49,25 +49,16 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define  KRATOS_JACOBI_ITERATIVE_SOLVER_H_INCLUDED
 
 
-
 // System includes
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <cstddef>
-
 
 // External includes
 #include "external_includes/pyamg/relaxation.h"
-
 
 // Project includes
 #include "includes/define.h"
 #include "linear_solvers/reorderer.h"
 #include "linear_solvers/linear_solver.h"
-#include "solving_strategies/builder_and_solvers/builder_and_solver.h"
 #include "includes/model_part.h"
-
 
 namespace Kratos
 {
@@ -104,7 +95,7 @@ namespace Kratos
 */
 template<class TSparseSpaceType, class TDenseSpaceType,
          class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
-class JacobiIterativeSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>
+class JacobiIterativeSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType>
 {
 public:
     ///@name Type Definitions
@@ -113,18 +104,18 @@ public:
     /// Pointer definition of LinearSolver
     KRATOS_CLASS_POINTER_DEFINITION(JacobiIterativeSolver);
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::VectorType VectorType;
+    typedef typename BaseType::VectorType VectorType;
 
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+    typedef typename BaseType::DenseMatrixType DenseMatrixType;
 
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
+    typedef typename BaseType::DenseVectorType DenseVectorType;
 
-    typedef std::size_t  SizeType;
-    typedef unsigned int  IndexType;
+    typedef typename BaseType::SizeType SizeType;
+    typedef typename BaseType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle

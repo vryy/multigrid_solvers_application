@@ -67,7 +67,7 @@ typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
 
 typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
-typedef GMGUtils<SparseSpaceType, LocalSpaceType> GMGUtilsType;
+typedef GMGUtils<SparseSpaceType, LocalSpaceType, ModelPart> GMGUtilsType;
 
 void MultigridSolversApp_AddGMGToPython()
 {

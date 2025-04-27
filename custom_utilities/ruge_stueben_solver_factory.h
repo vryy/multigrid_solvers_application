@@ -64,6 +64,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/matrix_based_mg_projector.h"
@@ -106,7 +107,7 @@ public:
     /// Pointer definition of RugeStuebenSolverFactory
     KRATOS_CLASS_POINTER_DEFINITION(RugeStuebenSolverFactory);
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType> LinearSolverType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart> LinearSolverType;
 
     typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> BaseType;
 

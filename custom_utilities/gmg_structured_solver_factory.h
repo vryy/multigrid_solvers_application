@@ -64,6 +64,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/parameter_list.h"
 #include "custom_linear_solvers/multilevel_solver.h"
@@ -124,7 +125,7 @@ public:
 
     typedef typename LevelType::Pointer LevelPointerType;
 
-    typedef GMGUtils<TSparseSpaceType, TDenseSpaceType> GMGUtilsType;
+    typedef GMGUtils<TSparseSpaceType, TDenseSpaceType, ModelPart> GMGUtilsType;
 
     typedef typename BaseType::SizeType SizeType;
 

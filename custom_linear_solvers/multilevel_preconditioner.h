@@ -47,23 +47,14 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define KRATOS_BUI_MULTILEVEL_PRECONDITIONER_H_INCLUDED
 
 
-
-
 // System includes
 
-
-
 // External includes
-#include "boost/smart_ptr.hpp"
-
 
 // Project includes
 #include "includes/define.h"
-#include <boost/numeric/ublas/vector.hpp>
-#include "utilities/openmp_utils.h"
+#include "includes/model_part.h"
 #include "custom_linear_solvers/multilevel_solver.h"
-
-
 
 namespace Kratos
 {
@@ -92,9 +83,8 @@ namespace Kratos
 ///@{
 
 /// MultilevelPreconditioner class.
-/**   */
 template<class TSparseSpaceType, class TDenseSpaceType>
-class MultilevelPreconditioner : public Preconditioner<TSparseSpaceType, TDenseSpaceType>
+class MultilevelPreconditioner : public Preconditioner<TSparseSpaceType, TDenseSpaceType, ModelPart>
 {
 public:
     ///@name Type Definitions
@@ -103,23 +93,19 @@ public:
     /// Pointer definition of Block2PhasePreconditioner
     KRATOS_CLASS_POINTER_DEFINITION (MultilevelPreconditioner);
 
-    typedef Preconditioner<TSparseSpaceType, TDenseSpaceType> BaseType;
+    typedef Preconditioner<TSparseSpaceType, TDenseSpaceType, ModelPart> BaseType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
-    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
+    typedef typename BaseType::VectorType VectorType;
 
-    typedef typename TSparseSpaceType::VectorType VectorType;
+    typedef typename BaseType::DenseMatrixType DenseMatrixType;
 
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
+    typedef typename TSparseSpaceType::SizeType SizeType;
 
     typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
 
     typedef typename MultilevelSolverType::Pointer MultilevelSolverPointerType;
-
-    typedef typename TSparseSpaceType::SizeType SizeType;
-
-    typedef typename TSparseSpaceType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle
@@ -131,7 +117,6 @@ public:
         mml_solver = ml_solver;
         std::cout << "invoking multiphase_application/multilevel_preconditioner" << std::endl;
     }
-
 
     /// Copy constructor.
     MultilevelPreconditioner(const MultilevelPreconditioner& Other)

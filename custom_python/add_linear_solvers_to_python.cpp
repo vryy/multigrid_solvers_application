@@ -77,10 +77,10 @@ namespace Python
         typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
         typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
-        typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
-        typedef DirectSolver<SparseSpaceType, LocalSpaceType> DirectSolverType;
-        typedef IterativeSolver<SparseSpaceType, LocalSpaceType> IterativeSolverType;
-        typedef Preconditioner<SparseSpaceType, LocalSpaceType> PreconditionerType;
+        typedef LinearSolver<SparseSpaceType, LocalSpaceType, ModelPart> LinearSolverType;
+        typedef DirectSolver<SparseSpaceType, LocalSpaceType, ModelPart> DirectSolverType;
+        typedef IterativeSolver<SparseSpaceType, LocalSpaceType, ModelPart> IterativeSolverType;
+        typedef Preconditioner<SparseSpaceType, LocalSpaceType, ModelPart> PreconditionerType;
 
         using namespace boost::python;
 
@@ -159,8 +159,7 @@ namespace Python
 
         typedef MultilevelPreconditioner<SparseSpaceType, LocalSpaceType> MultilevelPreconditionerType;
         class_<MultilevelPreconditionerType, MultilevelPreconditionerType::Pointer, bases<PreconditionerType> >("MultilevelPreconditioner", init<MultilevelSolverType::Pointer>())
-        .def(self_ns::str(self))
-        .def("SetMultilevelSolver",&MultilevelPreconditionerType::SetMultilevelSolver)
+        .def("SetMultilevelSolver", &MultilevelPreconditionerType::SetMultilevelSolver)
         ;
 
         //***************************************************************************

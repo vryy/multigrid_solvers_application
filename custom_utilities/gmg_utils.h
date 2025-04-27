@@ -99,20 +99,15 @@ namespace Kratos
 /**
  * This class defines utility for aggregation of node clusters to be used in deflated solvers.
  */
-template<class TSparseSpaceType, class TDenseSpaceType>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
 class GMGUtils
 {
 public:
 
-    KRATOS_CLASS_POINTER_DEFINITION(GMGUtils);
-
-
-    /**@name constant Definitions */
-    /*@{ */
-
-
     /**@name Type Definitions */
     /*@{ */
+
+    KRATOS_CLASS_POINTER_DEFINITION(GMGUtils);
 
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
@@ -124,7 +119,7 @@ public:
 
     typedef typename TSparseSpaceType::IndexType IndexType;
 
-    typedef double ValueType;
+    typedef typename TModelPartType::DataType ValueType;
 
     typedef boost::numeric::ublas::unbounded_array<IndexType> IndexContainerType;
 
@@ -146,9 +141,9 @@ public:
 
     typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> MatrixBasedLevelType;
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType> LinearSolverType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TModelPartType> LinearSolverType;
 
-    typedef BuilderAndSolver<TSparseSpaceType, TDenseSpaceType, LinearSolverType> BuilderAndSolverType;
+    typedef BuilderAndSolver<TSparseSpaceType, TDenseSpaceType, LinearSolverType, TModelPartType> BuilderAndSolverType;
 
     typedef typename BuilderAndSolverType::TSchemeType SchemeType;
 
@@ -192,7 +187,7 @@ public:
     /// Compute the coarse matrix on the multigrid level of GMG. The model_part is required to compute the coarse matrix, which is sparse.
     static void ComputeCoarseMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
         typename SchemeType::Pointer pScheme,
-        ModelPart::Pointer pModelPart,
+        typename TModelPartType::Pointer pModelPart,
         MatrixBasedLevelType& rLevel)
     {
         VectorType dummy;
@@ -205,7 +200,7 @@ public:
     /// Compute the coarse matrix on the multigrid level of GMG. The model_part is required to compute the coarse matrix, which is sparse.
     static void ComputeCoarseMatrix(typename BuilderAndSolverType::Pointer pBuilderAndSolver,
         typename SchemeType::Pointer pScheme,
-        ModelPart::Pointer pModelPart,
+        typename TModelPartType::Pointer pModelPart,
         typename MatrixBasedLevelType::Pointer pLevel)
     {
         ComputeCoarseMatrix(pBuilderAndSolver, pScheme, pModelPart, *pLevel);
@@ -279,4 +274,3 @@ private:
 } /* namespace Kratos.*/
 
 #endif /* KRATOS_MULTIGRID_SOLVERS_APP_GMG_UTILS  defined */
-

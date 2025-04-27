@@ -15,20 +15,18 @@ see multigrid_solvers_application/LICENSE.txt
 #define  KRATOS_MULTIGRID_SOLVERS_APP_MULTILEVEL_SOLVER_H_INCLUDED
 
 
-
 // System includes
 #include <string>
 #include <iostream>
 #include <sstream>
 #include <cstddef>
 
-
 // External includes
 #include "external_includes/pyamg/relaxation.h"
 
-
 // Project includes
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "linear_solvers/linear_solver.h"
 #include "utilities/openmp_utils.h"
 #include "custom_utilities/mg_level.h"
@@ -58,8 +56,6 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-
-
 // forward declaration
 template<class TSparseSpaceType, class TDenseSpaceType>
 class MultilevelSolverFactory;
@@ -67,10 +63,9 @@ class MultilevelSolverFactory;
 template<class TSparseSpaceType, class TDenseSpaceType>
 class MultilevelPreconditioner;
 
-
 template<class TSparseSpaceType, class TDenseSpaceType,
          class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
-class MultilevelSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>
+class MultilevelSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType>
 {
 public:
     ///@name Type Definitions
@@ -79,29 +74,26 @@ public:
     /// Pointer definition of MultilevelSolver
     KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolver);
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TReordererType> BaseType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType> BaseType;
+
+    typedef typename BaseType::SparseMatrixType SparseMatrixType;
+
+    typedef typename BaseType::VectorType VectorType;
+
+    typedef typename BaseType::DenseMatrixType DenseMatrixType;
+
+    typedef typename BaseType::DenseVectorType DenseVectorType;
+
+    typedef typename BaseType::SizeType SizeType;
+    typedef typename BaseType::IndexType IndexType;
 
     typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> FactoryType;
 
     typedef typename FactoryType::Pointer FactoryPointerType;
 
-    typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
-
-    typedef typename TSparseSpaceType::MatrixPointerType SparseMatrixPointerType;
-
-    typedef typename TSparseSpaceType::VectorType VectorType;
-
-    typedef typename TDenseSpaceType::MatrixType DenseMatrixType;
-
-    typedef typename TDenseSpaceType::VectorType DenseVectorType;
-
     typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
 
     typedef typename BaseType::Pointer LinearSolverPointerType;
-
-    typedef typename TSparseSpaceType::SizeType SizeType;
-
-    typedef typename TSparseSpaceType::IndexType IndexType;
 
     ///@}
     ///@name Life Cycle

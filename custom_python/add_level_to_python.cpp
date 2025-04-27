@@ -190,7 +190,7 @@ void MultigridSolversApp_AddLevelToPython()
 
     typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
-    typedef LinearSolver<SparseSpaceType, LocalSpaceType> LinearSolverType;
+    typedef LinearSolver<SparseSpaceType, LocalSpaceType, ModelPart> LinearSolverType;
 
    //****************************************************************************************************
    // level definition
