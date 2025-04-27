@@ -143,15 +143,11 @@ public:
         const std::vector<std::size_t>& columns, const MatrixType& values)
     {
         // size check
-        KRATOS_WATCH(rows.size())
-        KRATOS_WATCH(columns.size())
-        KRATOS_WATCH(values.size1())
-        KRATOS_WATCH(values.size2())
         if (rows.size() != TSpaceType::Size1(values))
-            KRATOS_THROW_ERROR(std::logic_error, "The row size of the matrix is incompatible", __FUNCTION__)
+            KRATOS_ERROR << "The row size of the matrix is incompatible";
 
         if (columns.size() != TSpaceType::Size2(values))
-            KRATOS_THROW_ERROR(std::logic_error, "The column size of the matrix is incompatible", __FUNCTION__)
+            KRATOS_ERROR << "The column size of the matrix is incompatible";
 
         // populate values
         for (std::size_t i = 0; i < rows.size(); ++i)
@@ -172,15 +168,11 @@ public:
         const std::size_t& block_size)
     {
         // size check
-        KRATOS_WATCH(rows.size())
-        KRATOS_WATCH(columns.size())
-        KRATOS_WATCH(values.size1())
-        KRATOS_WATCH(values.size2())
         if (rows.size() != TSpaceType::Size1(values))
-            KRATOS_THROW_ERROR(std::logic_error, "The row size of the matrix is incompatible", __FUNCTION__)
+            KRATOS_ERROR << "The row size of the matrix is incompatible";
 
         if (columns.size() != TSpaceType::Size2(values))
-            KRATOS_THROW_ERROR(std::logic_error, "The column size of the matrix is incompatible", __FUNCTION__)
+            KRATOS_ERROR << "The column size of the matrix is incompatible";
 
         // populate values
         for (std::size_t i = 0; i < rows.size(); ++i)
@@ -201,9 +193,7 @@ public:
     {
         if(mpOperator == nullptr)
         {
-            std::stringstream ss;
-            ss << "The matrix has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The matrix has not been set for " << Info();
         }
 
         int err = BaseType::ConsistencyCheck(rX, rY);
@@ -219,9 +209,7 @@ public:
     {
         if(mpOperator == nullptr)
         {
-            std::stringstream ss;
-            ss << "The matrix has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The matrix has not been set for " << Info();
         }
 
         int err = BaseType::ConsistencyCheck(rY, rX);
@@ -280,7 +268,6 @@ public:
     void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -365,7 +352,6 @@ private:
 
 
     ///@}
-
 };
 
 ///@}
@@ -379,27 +365,8 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MatrixBasedMGProjector<TSpaceType>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGProjector<TSpaceType>& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
-
 
 } // namespace Kratos.
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_MATRIX_BASED_MG_PROJECTOR_H_INCLUDED  defined
-

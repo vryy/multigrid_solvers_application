@@ -1,6 +1,8 @@
 #if !defined(KRATOS_MULTIINDEX_H_INCLUDED )
 #define  KRATOS_MULTIINDEX_H_INCLUDED
 
+#include <boost/array.hpp>
+
 namespace Kratos
 {
 
@@ -12,19 +14,19 @@ struct MultiIndex_Helper
 {
     static std::vector<MultiIndex<TDim, TDivision> > FindCoarseNeighbours(const MultiIndex<TDim, TDivision>& rIndex)
     {
-        KRATOS_THROW_ERROR(std::logic_error, __FUNCTION__, "is not implemented");
+        KRATOS_ERROR << "not implemented";
     }
 
     static std::size_t MultiIndexToNodeId(const MultiIndex<TDim, TDivision>& mindex,
         const boost::array<std::size_t, TDim>& mesh_size)
     {
-        KRATOS_THROW_ERROR(std::logic_error, __FUNCTION__, "is not implemented");
+        KRATOS_ERROR << "not implemented";
     }
 
     static MultiIndex<TDim, TDivision> NodeIdToMultiIndex(const std::size_t& node_id,
         const boost::array<std::size_t, TDim>& mesh_size)
     {
-        KRATOS_THROW_ERROR(std::logic_error, __FUNCTION__, "is not implemented");
+        KRATOS_ERROR << "not implemented";
     }
 };
 

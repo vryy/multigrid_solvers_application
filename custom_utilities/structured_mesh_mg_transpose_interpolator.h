@@ -135,7 +135,7 @@ public:
     {}
 
     /// Destructor.
-    virtual ~StructuredMeshMGTransposeInterpolator()
+    ~StructuredMeshMGTransposeInterpolator() override
     {}
 
     /// Copy constructor
@@ -159,17 +159,17 @@ public:
     ///@{
 
     /// Create the new instance of the mesh based projector
-    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
-        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine) const
+    typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine) const override
     {
         return typename MeshBasedMGProjector<TSpaceType>::Pointer(
             new StructuredMeshMGTransposeInterpolator<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine));
     }
 
     /// Create the new instance of the mesh based projector
-    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+    typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
         ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine,
-        const std::size_t& block_size) const
+        const std::size_t& block_size) const override
     {
         return typename MeshBasedMGProjector<TSpaceType>::Pointer(
             new StructuredMeshMGTransposeInterpolator<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine, block_size));
@@ -183,7 +183,7 @@ public:
     }
 
     /// Apply the projection
-    virtual int Apply(VectorType& rX, VectorType& rY) const
+    int Apply(VectorType& rX, VectorType& rY) const override
     {
         #ifdef CHECK_SIZE
         KRATOS_WATCH(rX.size())
@@ -283,7 +283,7 @@ public:
     ///@{
 
     /// Get the size of the base space
-    virtual SizeType GetBaseSize() const
+    SizeType GetBaseSize() const override
     {
         if (this->pFineModelPart() != NULL)
             return this->pFineModelPart()->NumberOfNodes() * static_cast<SizeType>(this->BlockSize());
@@ -292,7 +292,7 @@ public:
     }
 
     /// Get the size of the projected space
-    virtual SizeType GetProjectedSize() const
+    SizeType GetProjectedSize() const override
     {
         if (this->pCoarseModelPart() != NULL)
             return this->pCoarseModelPart()->NumberOfNodes() * static_cast<SizeType>(this->BlockSize());
@@ -305,7 +305,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream ss;
         ss << "StructuredMeshMGTransposeInterpolator<" << TDim << ">";
@@ -313,16 +313,15 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -420,30 +419,10 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSpaceType, std::size_t TDim>
-inline std::istream& operator >> (std::istream& IStream, StructuredMeshMGTransposeInterpolator<TSpaceType, TDim>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSpaceType, std::size_t TDim>
-inline std::ostream& operator << (std::ostream& rOStream, const StructuredMeshMGTransposeInterpolator<TSpaceType, TDim>& rThis)
-{
-    rOStream << rThis.Info();
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
-
 
 } // namespace Kratos.
 
 #undef CHECK_SIZE
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MESH_MG_TRANSPOSE_INTERPOLATOR_H_INCLUDED  defined
-

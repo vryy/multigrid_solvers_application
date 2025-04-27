@@ -115,7 +115,7 @@ public:
     /// Apply the projection, rX: input, rY: output
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
         return 0;
     }
 
@@ -123,7 +123,7 @@ public:
     /// It is noted that the GetBaseSize() and GetProjectedSize() is only applied for Apply operation. For ApplyTranspose it is reversed.
     virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
         return 0;
     }
 
@@ -139,13 +139,13 @@ public:
     /// Get the size of the base space
     virtual SizeType GetBaseSize() const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
     }
 
     /// Get the size of the projected space
     virtual SizeType GetProjectedSize() const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
     }
 
     ///@}
@@ -277,7 +277,6 @@ private:
 ///@name Input and output
 ///@{
 
-
 /// input stream function
 template<class TSpaceType>
 inline std::istream& operator >> (std::istream& IStream, MGProjector<TSpaceType>& rThis)
@@ -295,10 +294,9 @@ inline std::ostream& operator << (std::ostream& rOStream, const MGProjector<TSpa
 
     return rOStream;
 }
-///@}
 
+///@}
 
 } // namespace Kratos.
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_MG_PROJECTOR_H_INCLUDED  defined
-

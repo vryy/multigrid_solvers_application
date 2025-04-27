@@ -154,9 +154,8 @@ public:
     {}
 
     /// Destructor.
-    virtual ~GMGStructuredSolverFactory()
+    ~GMGStructuredSolverFactory() override
     {}
-
 
     ///@}
     ///@name Operators
@@ -190,7 +189,7 @@ public:
         if (lvl < mpModelParts.size())
             mpModelParts[lvl] = pModelPart;
         else
-            KRATOS_THROW_ERROR(std::logic_error, "Error setting model_part for non-existing level", lvl)
+            KRATOS_ERROR << "Error setting model_part for non-existing level " << lvl;
     }
 
     /// Set the restriction operator for all levels
@@ -214,7 +213,7 @@ public:
             mpProlongationType[lvl] = pProjector;
     }
 
-    virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
+    void InitializeMultilevelSolver(MultilevelSolverType& solver) const override
     {
         // create the levels
         ParameterListType gmg_parameter_list = BaseType::mmg_parameter_list;
@@ -270,7 +269,7 @@ public:
             {
                 if (mpProlongationType[lvl] == NULL)
                 {
-                    std::cout << "WARNING: the prolongation operator type for level " << lvl << " is not set. User is required to set it separately." << std::endl;
+                    std::cout << " (WARNING: the prolongation operator type for level " << lvl << " is not set. User is required to set it separately)";
                     pProlongator = typename StructuredMeshMGProjectorType::Pointer(new StructuredMeshMGProjectorType());
                 }
                 else
@@ -301,7 +300,7 @@ public:
             {
                 if (mpRestrictionType[lvl] == NULL)
                 {
-                    std::cout << "WARNING: the restriction operator type for level " << lvl << " is not set. User is required to set it separately." << std::endl;
+                    std::cout << " (WARNING: the restriction operator type for level " << lvl << " is not set. User is required to set it separately)";
                     pRestrictor = typename StructuredMeshMGProjectorType::Pointer(new StructuredMeshMGProjectorType());
                 }
                 else
@@ -332,7 +331,7 @@ public:
             {
                 if (mpTransferType[lvl] == NULL)
                 {
-                    std::cout << "WARNING: the transfer operator type for level " << lvl << " is not set. Will use restriction operator for transfer." << std::endl;
+                    std::cout << " (WARNING: the transfer operator type for level " << lvl << " is not set. Will use restriction operator for transfer)";
                     pTransferOperator = pRestrictor;
                 }
                 else
@@ -360,7 +359,7 @@ public:
         #endif
     }
 
-    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
+    void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const override
     {}
 
     ///@}
@@ -380,7 +379,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream buffer;
         buffer << "Geometric multigrid solver factory";
@@ -388,17 +387,16 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
         BaseType::PrintData(rOStream);
     }
-
 
     ///@}
     ///@name Friends
@@ -492,23 +490,6 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType, std::size_t TDim>
-inline std::istream& operator >> (std::istream& IStream, GMGStructuredSolverFactory<TSparseSpaceType, TDenseSpaceType, TDim>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType, std::size_t TDim>
-inline std::ostream& operator << (std::ostream& rOStream, const GMGStructuredSolverFactory<TSparseSpaceType, TDenseSpaceType, TDim>& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
 
 }  // namespace Kratos.

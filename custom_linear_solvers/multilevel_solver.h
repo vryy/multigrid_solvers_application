@@ -187,8 +187,7 @@ public:
     }
 
     /// Destructor.
-    virtual ~MultilevelSolver() {}
-
+    ~MultilevelSolver() override {}
 
     ///@}
     ///@name Operators
@@ -213,7 +212,6 @@ public:
         mEchoLevel = Other.mEchoLevel;
         return *this;
     }
-
 
     ///@}
     ///@name Operations
@@ -245,7 +243,7 @@ public:
     @param rX. Solution vector. it's also the initial guess for iterative linear solvers.
     @param rB. Right hand side vector.
     */
-    virtual void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
         BaseType::Initialize(rA, rX, rB);
     }
@@ -256,7 +254,7 @@ public:
      * which require knowledge on the spatial position of the nodes associated to a given dof.
      * This function tells if the solver requires such data
      */
-    virtual bool AdditionalPhysicalDataIsNeeded()
+    bool AdditionalPhysicalDataIsNeeded() override
     {
         return true;
     }
@@ -267,13 +265,13 @@ public:
      * which require knowledge on the spatial position of the nodes associated to a given dof.
      * This function is the place to eventually provide such data
      */
-    virtual void ProvideAdditionalData(
+    void ProvideAdditionalData(
         SparseMatrixType& rA,
         VectorType& rX,
         VectorType& rB,
         typename ModelPart::DofsArrayType& rdof_set,
         ModelPart& r_model_part
-    )
+    ) override
     {
         // DO NOTHING
     }
@@ -311,7 +309,7 @@ public:
     @param rX. Solution vector. it's also the initial guess for iterative linear solvers.
     @param rB. Right hand side vector.
     */
-    virtual void InitializeSolutionStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    void InitializeSolutionStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {}
 
     /** Normal solve method.
@@ -322,7 +320,7 @@ public:
     guess for iterative linear solvers.
      @param rB. Right hand side vector.
     */
-    virtual bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
         double start = OpenMPUtils::GetCurrentTime();
 
@@ -407,7 +405,7 @@ public:
     guess for iterative linear solvers.
      @param rB. Right hand side vector.
     */
-    virtual bool Solve(SparseMatrixType& rA, DenseMatrixType& rX, DenseMatrixType& rB)
+    bool Solve(SparseMatrixType& rA, DenseMatrixType& rX, DenseMatrixType& rB) override
     {
         return false;
     }

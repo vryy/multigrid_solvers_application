@@ -1,6 +1,8 @@
 #ifndef RELAXATION_H
 #define RELAXATION_H
 
+#include <vector>
+
 #include "linalg.h"
 
 /*
@@ -46,7 +48,7 @@ void gauss_seidel(const IndexContainerType& Ap,
         ValueType rsum = 0;
         ValueType diag = 0;
 
-        for(IndexType jj = start; jj < end; jj++){
+        for(IndexType jj = start; jj < end; jj++) {
             IndexType j = Aj[jj];
             if (i == j)
                 diag  = Ax[jj];
@@ -55,7 +57,7 @@ void gauss_seidel(const IndexContainerType& Ap,
         }
 
         //TODO raise error? inform user?
-        if (diag != 0){
+        if (diag != 0) {
             x[i] = (b[i] - rsum)/diag;
         }
     }
@@ -98,8 +100,8 @@ void bsr_gauss_seidel(const I Ap[],
                       const I blocksize)
 {
     I B2 = blocksize*blocksize;
-    T *rsum = new T[blocksize];
-    T *Axloc = new T[blocksize];
+    std::vector<T> rsum(blocksize);
+    std::vector<T> Axloc(blocksize);
     //T zero = 0.0;
 
     // Determine if this is a forward, or backward sweep
@@ -138,7 +140,7 @@ void bsr_gauss_seidel(const I Ap[],
                 // do a dense multiply of this block times x and accumulate in rsum
                 gemm(&(Ax[jj*B2]),  blocksize, blocksize, 'F',
                      &(x[col]),     blocksize,   1,       'F',
-                     &(Axloc[0]),   blocksize,   1,       'F',
+                     Axloc.data(),   blocksize,   1,       'F',
                      'T');
                 for(I m = 0; m < blocksize; m++) {
                     rsum[m] -= Axloc[m]; }
@@ -167,10 +169,7 @@ void bsr_gauss_seidel(const I Ap[],
         //}
 
     } // end outer-most for loop
-
-    delete[] rsum;
-    delete[] Axloc;
-}// end function
+} // end bsr_gauss_seidel
 
 
 /*
@@ -307,7 +306,6 @@ void bsr_jacobi(const I Ap[],
         I end   = Ap[i+1];
         I diag_ptr = -1;
 
-
         // initialize rsum to b, then later subtract A*x
         for(I k = 0; k < blocksize; k++) {
             rsum[k] = b[i*blocksize+k]; }
@@ -357,8 +355,7 @@ void bsr_jacobi(const I Ap[],
 
     delete[] rsum;
     delete[] Axloc;
-}// end function
-
+} // end bsr_jacobi
 
 
 /*
@@ -627,7 +624,6 @@ void gauss_seidel_nr(const I Ap[],
         for(I j = start; j < end; j++)
         {   r[Aj[j]] -= delta*Ax[j]; }
     }
-
 }
 
 /*
@@ -948,7 +944,6 @@ void overlapping_schwarz_csr(const I Ap[],
                                    I row_stop,
                                    I row_step)
 {
-
     T zero = 0.0;
     T *rsum = new T[nrows];
     T *Dinv_rsum = new T[nrows];
@@ -994,6 +989,5 @@ void overlapping_schwarz_csr(const I Ap[],
     delete[] rsum;
     delete[] Dinv_rsum;
 }
-
 
 #endif

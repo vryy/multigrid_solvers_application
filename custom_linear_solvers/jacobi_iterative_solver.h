@@ -146,9 +146,8 @@ public:
     {}
 
     /// Destructor.
-    virtual ~JacobiIterativeSolver()
+    ~JacobiIterativeSolver() override
     {}
-
 
     ///@}
     ///@name Operators
@@ -163,10 +162,10 @@ public:
         return *this;
     }
 
-
     ///@}
     ///@name Operations
     ///@{
+
     /** This function is designed to be called as few times as possible. It creates the data structures
      * that only depend on the connectivity of the matrix (and not on its coefficients)
      * so that the memory can be allocated once and expensive operations can be done only when strictly
@@ -175,11 +174,10 @@ public:
     @param rX. Solution vector. it's also the initial guess for iterative linear solvers.
     @param rB. Right hand side vector.
     */
-    virtual void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    void Initialize(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
         BaseType::Initialize(rA, rX, rB);
     }
-
 
     /** Normal solve method.
     Solves the linear system Ax=b and puts the result on SystemVector& rX.
@@ -189,7 +187,7 @@ public:
     guess for iterative linear solvers.
      @param rB. Right hand side vector.
     */
-    virtual bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB)
+    bool Solve(SparseMatrixType& rA, VectorType& rX, VectorType& rB) override
     {
         if(this->IsNotConsistent(rA, rX, rB))
             return false;
@@ -200,7 +198,6 @@ public:
         return true;
     }
 
-
     /** Multi solve method for solving a set of linear systems with same coefficient matrix.
     Solves the linear system Ax=b and puts the result on SystemVector& rX.
     rVectorx is also th initial guess for iterative methods.
@@ -209,11 +206,10 @@ public:
     guess for iterative linear solvers.
      @param rB. Right hand side vector.
     */
-    virtual bool Solve(SparseMatrixType& rA, DenseMatrixType& rX, DenseMatrixType& rB)
+    bool Solve(SparseMatrixType& rA, DenseMatrixType& rX, DenseMatrixType& rB) override
     {
         return false;
     }
-
 
     ///@}
     ///@name Access
@@ -230,7 +226,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream buffer;
         buffer << "Jacobi iterative solver, omega = " << mOmega;
@@ -238,16 +234,15 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -313,7 +308,8 @@ private:
     ///@}
     ///@name Private Operations
     ///@{
-    void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const double& Omega)
+
+    void SolveOneStep(SparseMatrixType& rA, VectorType& rX, VectorType& rB, const double Omega)
     {
         IndexType row_start, row_stop, row_step;
 
@@ -326,7 +322,6 @@ private:
 
         jacobi(rA.index1_data(), rA.index2_data(), rA.value_data(), rX, rB, temp, row_start, row_stop, row_step, &Omega);
     }
-
 
     ///@}
     ///@name Private  Access
@@ -358,30 +353,8 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType, class TReordererType>
-inline std::istream& operator >> (std::istream& IStream,
-                                  JacobiIterativeSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType, class TReordererType>
-inline std::ostream& operator << (std::ostream& rOStream,
-                                  const JacobiIterativeSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
-
 
 }  // namespace Kratos.
 
 #endif // KRATOS_JACOBI_ITERATIVE_SOLVER_H_INCLUDED  defined
-
-

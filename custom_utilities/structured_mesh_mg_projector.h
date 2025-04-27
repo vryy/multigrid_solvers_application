@@ -134,7 +134,7 @@ public:
     {}
 
     /// Destructor.
-    virtual ~StructuredMeshMGProjector()
+    ~StructuredMeshMGProjector() override
     {}
 
     /// Copy constructor
@@ -162,17 +162,17 @@ public:
     ///@{
 
     /// Create the new instance of the mesh based projector
-    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
-        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine) const
+    typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine) const override
     {
         return typename MeshBasedMGProjector<TSpaceType>::Pointer(
             new StructuredMeshMGProjector<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine));
     }
 
     /// Create the new instance of the mesh based projector
-    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+    typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
         ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine,
-        const std::size_t& block_size) const
+        const std::size_t& block_size) const override
     {
         return typename MeshBasedMGProjector<TSpaceType>::Pointer(
             new StructuredMeshMGProjector<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine, block_size));
@@ -210,13 +210,13 @@ public:
     ///@{
 
     /// Get the size of the base space
-    virtual SizeType GetBaseSize() const
+    SizeType GetBaseSize() const override
     {
         return 0;
     }
 
     /// Get the size of the projected space
-    virtual SizeType GetProjectedSize() const
+    SizeType GetProjectedSize() const override
     {
         return 0;
     }
@@ -226,7 +226,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream ss;
         ss << "StructuredMeshMGProjector<" << TDim << ">";
@@ -234,16 +234,15 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         BaseType::PrintInfo(rOStream);
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -343,24 +342,6 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSpaceType, std::size_t TDim>
-inline std::istream& operator >> (std::istream& IStream, StructuredMeshMGProjector<TSpaceType, TDim>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSpaceType, std::size_t TDim>
-inline std::ostream& operator << (std::ostream& rOStream, const StructuredMeshMGProjector<TSpaceType, TDim>& rThis)
-{
-    rOStream << rThis.Info();
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
 
 } // namespace Kratos.

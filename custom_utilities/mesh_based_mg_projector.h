@@ -27,6 +27,7 @@ see multigrid_solvers_application/LICENSE.txt
 
 // Project includes
 #include "includes/define.h"
+#include "includes/model_part.h"
 #include "custom_utilities/multi_index.h"
 #include "custom_utilities/mg_projector.h"
 
@@ -101,7 +102,7 @@ public:
     {}
 
     /// Destructor.
-    virtual ~MeshBasedMGProjector()
+    ~MeshBasedMGProjector() override
     {}
 
     /// Copy constructor
@@ -181,15 +182,15 @@ public:
     ///@{
 
     /// Get the size of the base space
-    virtual SizeType GetBaseSize() const
+    SizeType GetBaseSize() const override
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
     }
 
     /// Get the size of the projected space
-    virtual SizeType GetProjectedSize() const
+    SizeType GetProjectedSize() const override
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
     }
 
     ///@}
@@ -197,7 +198,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream ss;
         ss << "MeshBasedMGProjector";
@@ -205,7 +206,7 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << ", model_part_coarse: ";
         if (mp_model_part_coarse != NULL)
@@ -223,10 +224,9 @@ public:
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -327,30 +327,10 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MeshBasedMGProjector<TSpaceType>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MeshBasedMGProjector<TSpaceType>& rThis)
-{
-    rOStream << rThis.Info();
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
-
 
 } // namespace Kratos.
 
 #undef CHECK_SIZE
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_MESH_BASED_MG_PROJECTOR_H_INCLUDED  defined
-

@@ -209,7 +209,6 @@ namespace Python
 
     }
 
-}  // namespace Python.
+} // namespace Python.
 
 } // Namespace Kratos
-

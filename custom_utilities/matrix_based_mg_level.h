@@ -120,7 +120,7 @@ public:
     ///@{
 
     /// Default constructor.
-    MatrixBasedMGLevel(const IndexType& lvl)
+    MatrixBasedMGLevel(const IndexType lvl)
     : BaseType(lvl)
     {
         this->Initialize();
@@ -133,9 +133,8 @@ public:
     {}
 
     /// Destructor.
-    virtual ~MatrixBasedMGLevel()
+    ~MatrixBasedMGLevel() override
     {}
-
 
     ///@}
     ///@name Operators
@@ -153,49 +152,41 @@ public:
     ///@name Operations
     ///@{
 
-    virtual int ApplyPreSmoother(VectorType& rX, VectorType& rB) const
+    int ApplyPreSmoother(VectorType& rX, VectorType& rB) const override
     {
         if(BaseType::PreSmoother() == NULL)
         {
-            std::stringstream ss;
-            ss << "The pre-smoother has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The pre-smoother has not been set for " << Info();
         }
         int stat = !(BaseType::PreSmoother()->Solve(*mpA, rX, rB));
 /*        KRATOS_WATCH(*(BaseType::PreSmoother()))*/
         return stat;
     }
 
-    virtual int ApplyPostSmoother(VectorType& rX, VectorType& rB) const
+    int ApplyPostSmoother(VectorType& rX, VectorType& rB) const override
     {
         if(BaseType::PostSmoother() == NULL)
         {
-            std::stringstream ss;
-            ss << "The post-smoother has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The post-smoother has not been set for " << Info();
         }
         return !(BaseType::PostSmoother()->Solve(*mpA, rX, rB));
     }
 
-    virtual int Apply(VectorType& rX, VectorType& rY) const
+    int Apply(VectorType& rX, VectorType& rY) const override
     {
         if(mpA == NULL)
         {
-            std::stringstream ss;
-            ss << "The matrix operator has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The matrix operator has not been set for " << Info();
         }
         TSparseSpaceType::Mult(*mpA, rX, rY);
         return 0;
     }
 
-    virtual int Inverse(LinearSolverPointerType pCoarseSolver, VectorType& rX, VectorType& rY) const
+    int Inverse(LinearSolverPointerType pCoarseSolver, VectorType& rX, VectorType& rY) const override
     {
         if(mpA == NULL)
         {
-            std::stringstream ss;
-            ss << "The matrix operator has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The matrix operator has not been set for " << Info();
         }
         bool stat = pCoarseSolver->Solve(*mpA, rX, rY);
         // std::cout << *pCoarseSolver << std::endl;
@@ -237,7 +228,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream ss;
         ss << "Matrix-based " << BaseType::Info() << std::endl;
@@ -249,17 +240,16 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
         // rOStream << "Coarse Matrix: " << *mpA;
     }
-
 
     ///@}
     ///@name Friends
@@ -267,7 +257,6 @@ public:
 
 
     ///@}
-
 
 protected:
     ///@name Protected static Member Variables
@@ -378,27 +367,8 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
-
 
 } // namespace Kratos.
 
 #endif // KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED  defined
-

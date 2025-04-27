@@ -132,7 +132,7 @@ public:
     ///@{
 
     /// Default constructor.
-    MGLevel(const IndexType& lvl)
+    MGLevel(const IndexType lvl)
     : mLevelDepth(lvl)
     {}
 
@@ -172,14 +172,14 @@ public:
     /// Apply the pre-smoothing
     virtual int ApplyPreSmoother(VectorType& rX, VectorType& rB) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
         return 1;
     }
 
     /// Apply the post-smoothing
     virtual int ApplyPostSmoother(VectorType& rX, VectorType& rB) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
         return 1;
     }
 
@@ -188,9 +188,7 @@ public:
     {
         if(mpRestrictor == NULL)
         {
-            std::stringstream ss;
-            ss << "The restriction operator has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The restriction operator has not been set for " << Info();
         }
         return mpRestrictor->Apply(rX, rY);
     }
@@ -212,9 +210,7 @@ public:
     {
         if(mpProlongator == NULL)
         {
-            std::stringstream ss;
-            ss << "The prolongation operator has not been set for " << Info();
-            KRATOS_THROW_ERROR(std::logic_error, ss.str(), "");
+            KRATOS_ERROR << "The prolongation operator has not been set for " << Info();
         }
         return mpProlongator->Apply(rX, rY);
     }
@@ -222,14 +218,14 @@ public:
     /// If the level is represented by matrix A, then rY = A*rX
     virtual int Apply(VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
         return 1;
     }
 
     /// If the level is represented by matrix A, then rY = A^-1*rX
     virtual int Inverse(LinearSolverPointerType pCoarseSolver, VectorType& rX, VectorType& rY) const
     {
-        KRATOS_THROW_ERROR(std::logic_error, "Calling base class function", __FUNCTION__);
+        KRATOS_ERROR << "Calling base class function";
         return 1;
     }
 
@@ -336,7 +332,6 @@ public:
     {
     }
 
-
     ///@}
     ///@name Friends
     ///@{
@@ -440,7 +435,6 @@ private:
 ///@name Input and output
 ///@{
 
-
 /// input stream function
 template<class TSparseSpaceType, class TDenseSpaceType>
 inline std::istream& operator >> (std::istream& IStream, MGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
@@ -458,10 +452,9 @@ inline std::ostream& operator << (std::ostream& rOStream, const MGLevel<TSparseS
 
     return rOStream;
 }
-///@}
 
+///@}
 
 } // namespace Kratos.
 
 #endif // KRATOS_MULTIGRID_LEVEL_H_INCLUDED  defined
-

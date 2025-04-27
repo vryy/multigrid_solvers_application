@@ -138,7 +138,7 @@ public:
     {}
 
     /// Destructor.
-    virtual ~StructuredMeshMatrixBasedMGInterpolator()
+    ~StructuredMeshMatrixBasedMGInterpolator() override
     {}
 
     /// Copy constructor
@@ -163,17 +163,17 @@ public:
     ///@{
 
     /// Create the new instance of the mesh based projector
-    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
-        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine) const
+    typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+        ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine) const override
     {
         return typename MeshBasedMGProjector<TSpaceType>::Pointer(
             new StructuredMeshMatrixBasedMGInterpolator<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine));
     }
 
     /// Create the new instance of the mesh based projector
-    virtual typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
+    typename MeshBasedMGProjector<TSpaceType>::Pointer Create(
         ModelPart::Pointer p_model_part_coarse, ModelPart::Pointer p_model_part_fine,
-        const std::size_t& block_size) const
+        const std::size_t& block_size) const override
     {
         return typename MeshBasedMGProjector<TSpaceType>::Pointer(
             new StructuredMeshMatrixBasedMGInterpolator<TSpaceType, TDim>(p_model_part_coarse, p_model_part_fine, block_size));
@@ -188,7 +188,7 @@ public:
 
     /// Construct the underlying operator
     /// This shall be called after all the Set...() are called
-    virtual void Initialize()
+    void Initialize() override
     {
         MatrixPointerType pOperator = this->GetOperator();
         if (TSpaceType::Size1(*pOperator) != this->GetProjectedSize()
@@ -201,13 +201,13 @@ public:
     }
 
     /// Apply the projection
-    virtual int Apply(VectorType& rX, VectorType& rY) const
+    int Apply(VectorType& rX, VectorType& rY) const override
     {
         return BaseType1::Apply(rX, rY);
     }
 
     /// Apply the transpose projection
-    virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
+    int ApplyTranspose(VectorType& rX, VectorType& rY) const override
     {
         return BaseType1::ApplyTranspose(rX, rY);
     }
@@ -222,7 +222,7 @@ public:
     ///@{
 
     /// Get the size of the base space
-    virtual SizeType GetBaseSize() const
+    SizeType GetBaseSize() const override
     {
         if (this->pCoarseModelPart() != NULL)
             return this->pCoarseModelPart()->NumberOfNodes() * static_cast<SizeType>(this->BlockSize());
@@ -231,7 +231,7 @@ public:
     }
 
     /// Get the size of the projected space
-    virtual SizeType GetProjectedSize() const
+    SizeType GetProjectedSize() const override
     {
         if (this->pFineModelPart() != NULL)
             return this->pFineModelPart()->NumberOfNodes() * static_cast<SizeType>(this->BlockSize());
@@ -244,7 +244,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream ss;
         ss << "StructuredMeshMatrixBasedMGInterpolator<" << TDim << ">";
@@ -252,16 +252,15 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -415,7 +414,6 @@ private:
 
 
     ///@}
-
 };
 
 ///@}
@@ -429,24 +427,6 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSpaceType, std::size_t TDim>
-inline std::istream& operator >> (std::istream& IStream, StructuredMeshMatrixBasedMGInterpolator<TSpaceType, TDim>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSpaceType, std::size_t TDim>
-inline std::ostream& operator << (std::ostream& rOStream, const StructuredMeshMatrixBasedMGInterpolator<TSpaceType, TDim>& rThis)
-{
-    rOStream << rThis.Info();
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
 
 } // namespace Kratos.
@@ -454,4 +434,3 @@ inline std::ostream& operator << (std::ostream& rOStream, const StructuredMeshMa
 #undef CHECK_SIZE
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MATRIX_BASED_MG_PROLONGATOR_H_INCLUDED  defined
-

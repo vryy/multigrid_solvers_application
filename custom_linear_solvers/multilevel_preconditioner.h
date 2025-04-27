@@ -139,13 +139,10 @@ public:
         mml_solver = Other.mml_solver;
     }
 
-
     /// Destructor.
-    virtual ~MultilevelPreconditioner()
+    ~MultilevelPreconditioner() override
     {
     }
-
-
 
     ///@}
     ///@name Operators
@@ -158,12 +155,10 @@ public:
         return *this;
     }
 
-
     void SetMultilevelSolver(MultilevelSolverPointerType ml_solver)
     {
         mml_solver = ml_solver;
     }
-
 
     ///@}
     ///@name Operations
@@ -192,12 +187,10 @@ public:
         }
     }
 
-
     bool AdditionalPhysicalDataIsNeeded() override
     {
         return false;
     }
-
 
     void Mult(SparseMatrixType& rA, VectorType& rX, VectorType& rY) override
     {
@@ -205,7 +198,6 @@ public:
         TSparseSpaceType::Mult(rA, z, rY);
         ApplyLeft(rY);
     }
-
 
     /** calculate preconditioned_X = A^{-1} * X;
         @param rX  Unknows of preconditioner suystem
@@ -224,8 +216,6 @@ public:
 
         return rX;
     }
-
-
 
     ///@}
     ///@name Access
@@ -250,19 +240,15 @@ public:
         return buffer.str();
     }
 
-
     /// Print information about this object.
     void  PrintInfo(std::ostream& OStream) const override
     {
         OStream << Info();
     }
 
-
     void PrintData(std::ostream& OStream) const override
     {
     }
-
-
 
     ///@}
     ///@name Friends
@@ -327,7 +313,6 @@ private:
     ///@name Private Operations
     ///@{
 
-
     void SolveOneStep(VectorType &rX, VectorType& rB)
     {
         if(mml_solver->GetNumberOfLevels() == 1)
@@ -360,10 +345,6 @@ private:
 }; // Class MultilevelSolver
 
 ///@}
-
-
-///@}
-
 ///@name Type Definitions
 ///@{
 
@@ -373,28 +354,7 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MultilevelPreconditioner<TSparseSpaceType, TDenseSpaceType>& rThis)
-{
-    return IStream;
-}
-
-
-/// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& OStream, const MultilevelPreconditioner<TSparseSpaceType, TDenseSpaceType>& rThis)
-{
-    rThis.PrintInfo(OStream);
-    OStream << std::endl;
-    rThis.PrintData(OStream);
-    return OStream;
-}
 ///@}
-
-
 }  // namespace Kratos.
 
-
 #endif // KRATOS_BUI_MULTILEVEL_PRECONDITIONER_H_INCLUDED  defined
-
