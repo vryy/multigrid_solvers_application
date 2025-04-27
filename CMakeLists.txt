@@ -1,50 +1,24 @@
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
+message("")
 message("**** configuring KratosMultigridSolversApplication ****")
 
-######### add include directory here
-include_directories( ${CMAKE_SOURCE_DIR}/kratos )
-include_directories( ${CMAKE_SOURCE_DIR}/applications )
-#######################################################################
+if(${CMAKE_SYSTEM_NAME} MATCHES "Android")
+    message("KratosMultigridSolversApplication is compiled on Android")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists2.txt)
+else()
+    if((${PYTHON_VERSION_MAJOR} MATCHES "2") OR (${KRATOS_USE_BOOST_PYTHON} MATCHES ON))
+        if((${PYTHON_VERSION_MAJOR} MATCHES "3") AND (${KRATOS_USE_BOOST_PYTHON} MATCHES ON))
+            message("KratosMultigridSolversApplication is compiled with Python 3 (Boost.Python)")
+        else()
+            message("KratosMultigridSolversApplication is compiled with Python 2")
+        endif()
+        include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists2.txt)
+    elseif(${PYTHON_VERSION_MAJOR} MATCHES "3")
+        message("KratosMultigridSolversApplication is compiled with Python 3")
+        include(${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists3.txt)
+    else()
+        message("KratosMultigridSolversApplication does not detect the Python version")
+    endif()
+endif()
 
-
-######### add compilation units here
-set( KRATOS_MULTIGRID_SOLVERS_APPLICATION_SOURCES
-    # main application compilation unit
-    ${CMAKE_CURRENT_SOURCE_DIR}/multigrid_solvers_application.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_level_to_python.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_amg_to_python.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_gmg_to_python.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/custom_python/add_linear_solvers_to_python.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/custom_python/multigrid_solvers_python_application.cpp
-)
-#######################################################################
-
-
-## define library Kratos which defines the basic python interface
-add_library(KratosMultigridSolversApplication SHARED ${KRATOS_MULTIGRID_SOLVERS_APPLICATION_SOURCES})
-target_link_libraries(KratosMultigridSolversApplication KratosCore)
-set_target_properties(KratosMultigridSolversApplication PROPERTIES PREFIX "")
-install(TARGETS KratosMultigridSolversApplication DESTINATION libs )
-#######################################################################
-
-
-## changing the .dll suffix to .pyd for Windows compatibility
-if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-	set_target_properties(KratosMultigridSolversApplication PROPERTIES SUFFIX .pyd)
-endif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
-#######################################################################
-
-
-## install application's python script if required
-if(${INSTALL_PYTHON_FILES} MATCHES ON)
-  get_filename_component (CURRENT_DIR_NAME ${CMAKE_CURRENT_SOURCE_DIR} NAME)
-  install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/python_scripts DESTINATION applications/${CURRENT_DIR_NAME}  FILES_MATCHING PATTERN "*.py"  PATTERN ".svn" EXCLUDE)
-endif(${INSTALL_PYTHON_FILES} MATCHES ON)
-#######################################################################
-
-
-## Add to the KratosMultiphysics Python module
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/MultigridSolversApplication.py" DESTINATION KratosMultiphysics )
-#######################################################################
-
+message("**** finish configuring KratosMultigridSolversApplication ****")
+message("")
