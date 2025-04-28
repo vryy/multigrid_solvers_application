@@ -49,22 +49,12 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define  KRATOS_MATRIX_BASED_MULTIGRID_LEVEL_H_INCLUDED
 
 
-
 // System includes
-#include <string>
-#include <iostream>
-#include <sstream>
-#include <cstddef>
-
 
 // External includes
 
-
 // Project includes
-#include "includes/define.h"
-#include "linear_solvers/linear_solver.h"
-#include "custom_utilities/mg_projector.h"
-
+#include "custom_utilities/mg_level.h"
 
 namespace Kratos
 {
@@ -91,8 +81,8 @@ namespace Kratos
 /**
  * Abstract class for a level in mutigrid hierarchy
  */
-template<class TSparseSpaceType, class TDenseSpaceType>
-class MatrixBasedMGLevel : public MGLevel<TSparseSpaceType, TDenseSpaceType>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
+class MatrixBasedMGLevel : public MGLevel<TSparseSpaceType, TDenseSpaceType, TModelPartType>
 {
 public:
     ///@name Type Definitions
@@ -101,7 +91,7 @@ public:
     /// Pointer definition of MatrixBasedMGLevel
     KRATOS_CLASS_POINTER_DEFINITION(MatrixBasedMGLevel);
 
-    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> BaseType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType, TModelPartType> BaseType;
 
     typedef typename BaseType::SparseMatrixType SparseMatrixType;
 

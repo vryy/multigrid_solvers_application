@@ -63,17 +63,15 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 // Project includes
-#include "includes/define.h"
 #include "includes/model_part.h"
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/matrix_based_mg_level.h"
 #include "custom_utilities/matrix_based_mg_projector.h"
 #include "custom_utilities/amg_utils.h"
-#include "custom_utilities/parameter_list.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_linear_solvers/multilevel_solver.h"
 
-#define DEBUG_MULTILEVEL_SOLVER_FACTORY
+// #define DEBUG_MULTILEVEL_SOLVER_FACTORY
 
 namespace Kratos
 {
@@ -98,7 +96,7 @@ namespace Kratos
 ///@{
 
 template<class TSparseSpaceType, class TDenseSpaceType>
-class RugeStuebenSolverFactory : public MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>
+class RugeStuebenSolverFactory : public MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType, ModelPart>
 {
 public:
     ///@name Type Definitions
@@ -109,17 +107,17 @@ public:
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart> LinearSolverType;
 
-    typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> BaseType;
+    typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType, ModelPart> BaseType;
 
     typedef typename LinearSolverType::Pointer LinearSolverPointerType;
 
-    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
+    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType, ModelPart> MultilevelSolverType;
 
     typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
     typedef typename BaseType::SparseMatrixPointerType SparseMatrixPointerType;
 
-    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType, ModelPart> LevelType;
 
     typedef typename LevelType::Pointer LevelPointerType;
 
@@ -160,7 +158,7 @@ public:
     {}
 
     /// Destructor.
-    virtual ~RugeStuebenSolverFactory()
+    ~RugeStuebenSolverFactory() override
     {}
 
 
@@ -180,11 +178,11 @@ public:
     ///@name Operations
     ///@{
 
-    virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
+    void InitializeMultilevelSolver(MultilevelSolverType& solver) const override
     {
     }
 
-    virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
+    void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const override
     {
         #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
         std::cout << "##################################" << std::endl;
@@ -270,7 +268,7 @@ public:
                 TSparseSpaceType::Copy(*A, C);
             }
             else
-                KRATOS_THROW_ERROR(std::logic_error, "strength_name is undefined or not supported:", strength_name)
+                KRATOS_ERROR << "strength_name " << strength_name << " is undefined or not supported";
 
             #ifdef DEBUG_MULTILEVEL_SOLVER_FACTORY
             std::cout << " completed" << std::endl;
@@ -518,10 +516,10 @@ private:
 ///@{
 
 
+///@}
+
 }  // namespace Kratos.
 
 #undef DEBUG_MULTILEVEL_SOLVER_FACTORY
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_SMOOTHED_AGGREGATION_SOLVER_FACTORY_H_INCLUDED  defined
-
-

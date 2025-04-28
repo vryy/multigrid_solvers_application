@@ -196,7 +196,7 @@ void MultigridSolversApp_AddLevelToPython()
    // level definition
    //****************************************************************************************************
 
-    typedef MGLevel<SparseSpaceType, LocalSpaceType> MGLevelType;
+    typedef MGLevel<SparseSpaceType, LocalSpaceType, ModelPart> MGLevelType;
     class_<MGLevelType, MGLevelType::Pointer, boost::noncopyable>
     ( "MGLevel", init<const typename MGLevelType::IndexType&>())
     .def(self_ns::str(self))
@@ -214,10 +214,9 @@ void MultigridSolversApp_AddLevelToPython()
     .def("ApplyProlongation", &MGLevelType::ApplyProlongation)
     ;
 
-    typedef MatrixBasedMGLevel<SparseSpaceType, LocalSpaceType> MatrixBasedMGLevelType;
-    class_<MatrixBasedMGLevelType, MatrixBasedMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
-    ( "MatrixBasedMGLevel", init<const typename MGLevelType::IndexType&>())
-    .def(self_ns::str(self))
+    typedef MatrixBasedMGLevel<SparseSpaceType, LocalSpaceType, ModelPart> MatrixBasedMGLevelType;
+    class_<MatrixBasedMGLevelType, typename MatrixBasedMGLevelType::Pointer, bases<MGLevelType>, boost::noncopyable>
+    ( "MatrixBasedMGLevel", init<const typename MGLevelType::IndexType>())
     .def("GetCoarseMatrix", &MatrixBasedMGLevelType::GetCoarseMatrix)
     .def("GetCoarseUpdateVector", &MatrixBasedMGLevelType::GetCoarseUpdateVector)
     .def("GetCoarseVector", &MatrixBasedMGLevelType::GetCoarseVector)

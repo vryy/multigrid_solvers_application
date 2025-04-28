@@ -64,7 +64,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "linear_solvers/linear_solver.h"
 #include "custom_utilities/parameter_list.h"
 #include "custom_linear_solvers/multilevel_solver.h"
 
@@ -91,7 +90,7 @@ namespace Kratos
 ///@name Kratos Classes
 ///@{
 
-template<class TSparseSpaceType, class TDenseSpaceType>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
 class MultilevelSolverFactory
 {
 public:
@@ -101,7 +100,7 @@ public:
     /// Pointer definition of MultilevelSolverFactory
     KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolverFactory);
 
-    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
+    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType, TModelPartType> MultilevelSolverType;
 
     typedef typename TSparseSpaceType::MatrixType SparseMatrixType;
 
@@ -120,7 +119,7 @@ public:
     ///@{
 
     /// Default constructor.
-    MultilevelSolverFactory(ParameterListType& mg_parameter_list)
+    MultilevelSolverFactory(const ParameterListType& mg_parameter_list)
     : mmg_parameter_list(mg_parameter_list), mIsMute(false)
     {}
 
@@ -133,7 +132,6 @@ public:
     /// Destructor.
     virtual ~MultilevelSolverFactory()
     {}
-
 
     ///@}
     ///@name Operators
@@ -157,13 +155,13 @@ public:
     virtual void InitializeMultilevelSolver(MultilevelSolverType& solver) const
     {
         if (!mIsMute)
-            KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+            KRATOS_ERROR << "Calling base class function";
     }
 
     virtual void GenerateMultilevelSolver(MultilevelSolverType& solver, SparseMatrixType& rA) const
     {
         if (!mIsMute)
-            KRATOS_THROW_ERROR(std::logic_error, "Calling the base class function", __FUNCTION__);
+            KRATOS_ERROR << "Calling base class function";
     }
 
     ///@}
@@ -292,17 +290,16 @@ private:
 ///@name Input and output
 ///@{
 
-
 /// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
+inline std::istream& operator >> (std::istream& IStream, MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType, TModelPartType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
+inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType, TModelPartType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;
@@ -310,11 +307,9 @@ inline std::ostream& operator << (std::ostream& rOStream, const MultilevelSolver
 
     return rOStream;
 }
-///@}
 
+///@}
 
 }  // namespace Kratos.
 
 #endif // KRATOS_MULTILEVEL_SOLVER_FACTORY_H_INCLUDED  defined
-
-

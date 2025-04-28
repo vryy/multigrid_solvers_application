@@ -57,15 +57,16 @@ namespace Kratos
 ///@{
 
 // forward declaration
-template<class TSparseSpaceType, class TDenseSpaceType>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
 class MultilevelSolverFactory;
 
-template<class TSparseSpaceType, class TDenseSpaceType>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
 class MultilevelPreconditioner;
 
 template<class TSparseSpaceType, class TDenseSpaceType,
+         class TModelPartType,
          class TReordererType = Reorderer<TSparseSpaceType, TDenseSpaceType> >
-class MultilevelSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType>
+class MultilevelSolver : public LinearSolver<TSparseSpaceType, TDenseSpaceType, TModelPartType, TReordererType>
 {
 public:
     ///@name Type Definitions
@@ -74,7 +75,7 @@ public:
     /// Pointer definition of MultilevelSolver
     KRATOS_CLASS_POINTER_DEFINITION(MultilevelSolver);
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, TReordererType> BaseType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TModelPartType, TReordererType> BaseType;
 
     typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
@@ -87,11 +88,11 @@ public:
     typedef typename BaseType::SizeType SizeType;
     typedef typename BaseType::IndexType IndexType;
 
-    typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> FactoryType;
+    typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType, TModelPartType> FactoryType;
 
     typedef typename FactoryType::Pointer FactoryPointerType;
 
-    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    typedef MGLevel<TSparseSpaceType, TDenseSpaceType, TModelPartType> LevelType;
 
     typedef typename BaseType::Pointer LinearSolverPointerType;
 
@@ -261,8 +262,8 @@ public:
         SparseMatrixType& rA,
         VectorType& rX,
         VectorType& rB,
-        typename ModelPart::DofsArrayType& rdof_set,
-        ModelPart& r_model_part
+        typename TModelPartType::DofsArrayType& rdof_set,
+        TModelPartType& r_model_part
     ) override
     {
         // DO NOTHING
@@ -279,8 +280,8 @@ public:
         SparseMatrixType& rA,
         VectorType& rX,
         VectorType& rB,
-        typename ModelPart::DofsArrayType& rdof_set,
-        ModelPart& r_model_part
+        typename TModelPartType::DofsArrayType& rdof_set,
+        TModelPartType& r_model_part
     )
     {
         if (lvl < mLevels.size())
@@ -662,8 +663,8 @@ public:
     ///@}
     ///@name Friends
     ///@{
-    friend class MultilevelPreconditioner<TSparseSpaceType, TDenseSpaceType>;
 
+    friend class MultilevelPreconditioner<TSparseSpaceType, TDenseSpaceType, TModelPartType>;
 
     ///@}
 
@@ -712,6 +713,7 @@ private:
     ///@}
     ///@name Member Variables
     ///@{
+
     std::vector<typename LevelType::Pointer> mLevels;
     LinearSolverPointerType mpCoarseSolver;
     std::string mCycle;
@@ -909,24 +911,6 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType, class TReordererType>
-inline std::istream& operator >> (std::istream& IStream,
-                                  MultilevelSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType, class TReordererType>
-inline std::ostream& operator << (std::ostream& rOStream,
-                                  const MultilevelSolver<TSparseSpaceType, TDenseSpaceType, TReordererType>& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
 
 }  // namespace Kratos.

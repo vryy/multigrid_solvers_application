@@ -53,7 +53,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "includes/model_part.h"
+#include "linear_solvers/preconditioner.h"
 #include "custom_linear_solvers/multilevel_solver.h"
 
 namespace Kratos
@@ -83,8 +83,8 @@ namespace Kratos
 ///@{
 
 /// MultilevelPreconditioner class.
-template<class TSparseSpaceType, class TDenseSpaceType>
-class MultilevelPreconditioner : public Preconditioner<TSparseSpaceType, TDenseSpaceType, ModelPart>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
+class MultilevelPreconditioner : public Preconditioner<TSparseSpaceType, TDenseSpaceType, TModelPartType>
 {
 public:
     ///@name Type Definitions
@@ -93,7 +93,7 @@ public:
     /// Pointer definition of Block2PhasePreconditioner
     KRATOS_CLASS_POINTER_DEFINITION (MultilevelPreconditioner);
 
-    typedef Preconditioner<TSparseSpaceType, TDenseSpaceType, ModelPart> BaseType;
+    typedef Preconditioner<TSparseSpaceType, TDenseSpaceType, TModelPartType> BaseType;
 
     typedef typename BaseType::SparseMatrixType SparseMatrixType;
 
@@ -103,7 +103,7 @@ public:
 
     typedef typename TSparseSpaceType::SizeType SizeType;
 
-    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType> MultilevelSolverType;
+    typedef MultilevelSolver<TSparseSpaceType, TDenseSpaceType, TModelPartType> MultilevelSolverType;
 
     typedef typename MultilevelSolverType::Pointer MultilevelSolverPointerType;
 
@@ -340,6 +340,7 @@ private:
 
 
 ///@}
+
 }  // namespace Kratos.
 
 #endif // KRATOS_BUI_MULTILEVEL_PRECONDITIONER_H_INCLUDED  defined

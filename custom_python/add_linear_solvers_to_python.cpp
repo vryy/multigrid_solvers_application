@@ -106,32 +106,26 @@ namespace Python
         .def(init<>())
         .def(init<unsigned int>())
         .def(init<unsigned int, std::string>())
-        .def(self_ns::str(self))
         ;
 
         typedef JacobiIterativeSolver<SparseSpaceType, LocalSpaceType> JacobiIterativeSolverType;
         class_<JacobiIterativeSolverType, JacobiIterativeSolverType::Pointer, bases<LinearSolverType> >( "JacobiIterativeSolver")
         .def(init<>())
         .def(init<unsigned int, double>())
-        .def(self_ns::str(self))
         ;
 
         typedef VankaSmoother<SparseSpaceType, LocalSpaceType> VankaSmootherType;
         class_<VankaSmootherType, VankaSmootherType::Pointer, bases<LinearSolverType> >
         ( "VankaSmoother", init<ModelPart::Pointer>())
         .def(init<ModelPart::Pointer, double>())
-        .def(self_ns::str(self))
         ;
 
         /* multilevel solver */
-        typedef MultilevelSolver<SparseSpaceType, LocalSpaceType> MultilevelSolverType;
+        typedef MultilevelSolver<SparseSpaceType, LocalSpaceType, ModelPart> MultilevelSolverType;
         class_<MultilevelSolverType, MultilevelSolverType::Pointer, bases<LinearSolverType> >("MultilevelSolver", init<>())
         .def(init<LinearSolverType::Pointer >())
         .def(init<LinearSolverType::Pointer, std::string >())
         .def(init<double, unsigned int, LinearSolverType::Pointer, std::string >())
-        .def(self_ns::str(self))
-        .def("AdditionalPhysicalDataIsNeeded", &MultilevelSolverType::AdditionalPhysicalDataIsNeeded)
-        .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalData)
         .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalDataForLevel)
         .def("AddPreSmoother", &MultilevelSolverType::AddPreSmoother)
         .def("SetNumPreSmooth", &MultilevelSolverType::SetNumPreSmooth)
@@ -157,7 +151,7 @@ namespace Python
         //preconditioners
         //****************************************************************************************************
 
-        typedef MultilevelPreconditioner<SparseSpaceType, LocalSpaceType> MultilevelPreconditionerType;
+        typedef MultilevelPreconditioner<SparseSpaceType, LocalSpaceType, ModelPart> MultilevelPreconditionerType;
         class_<MultilevelPreconditionerType, MultilevelPreconditionerType::Pointer, bases<PreconditionerType> >("MultilevelPreconditioner", init<MultilevelSolverType::Pointer>())
         .def("SetMultilevelSolver", &MultilevelPreconditionerType::SetMultilevelSolver)
         ;
@@ -166,9 +160,9 @@ namespace Python
         //factories
         //***************************************************************************
 
-        typedef MultilevelSolverFactory<SparseSpaceType, LocalSpaceType> MultilevelSolverFactoryType;
+        typedef MultilevelSolverFactory<SparseSpaceType, LocalSpaceType, ModelPart> MultilevelSolverFactoryType;
         class_<MultilevelSolverFactoryType, MultilevelSolverFactoryType::Pointer, boost::noncopyable >
-        ( "MultilevelSolverFactory", init<ParameterListType&>())
+        ( "MultilevelSolverFactory", init<const ParameterListType&>())
         .def(self_ns::str(self))
         .def("SetMute", &MultilevelSolverFactoryType::SetMute)
         .def("InitializeMultilevelSolver", &MultilevelSolverFactoryType::InitializeMultilevelSolver)
@@ -178,7 +172,6 @@ namespace Python
         typedef RugeStuebenSolverFactory<SparseSpaceType, LocalSpaceType> RugeStuebenSolverFactoryType;
         class_<RugeStuebenSolverFactoryType, RugeStuebenSolverFactoryType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
         ( "RugeStuebenSolverFactory", init<ParameterListType&>())
-        .def(self_ns::str(self))
         ;
 
         // typedef SmoothedAggregationSolverFactory<SparseSpaceType, LocalSpaceType> SmoothedAggregationSolverFactoryType;
@@ -186,24 +179,22 @@ namespace Python
 //        ( "SmoothedAggregationSolverFactory", init<ParameterListType& >())
 //        ;
 
-        typedef GMGStructuredSolverFactory<SparseSpaceType, LocalSpaceType, 2> GMGStructuredSolverFactory2DType;
+        typedef GMGStructuredSolverFactory<SparseSpaceType, LocalSpaceType, ModelPart, 2> GMGStructuredSolverFactory2DType;
         class_<GMGStructuredSolverFactory2DType, GMGStructuredSolverFactory2DType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
         ( "GMGStructuredSolverFactory2D", init<ParameterListType&>())
         .def("SetModelPart", &GMGStructuredSolverFactory2DType::SetModelPart)
         .def("SetRestrictionOperator", &GMGStructuredSolverFactory2DType::SetRestrictionOperator)
         .def("SetTransferOperator", &GMGStructuredSolverFactory2DType::SetTransferOperator)
         .def("SetProlongationOperator", &GMGStructuredSolverFactory2DType::SetProlongationOperator)
-        .def(self_ns::str(self))
         ;
 
-        typedef GMGStructuredSolverFactory<SparseSpaceType, LocalSpaceType, 3> GMGStructuredSolverFactory3DType;
+        typedef GMGStructuredSolverFactory<SparseSpaceType, LocalSpaceType, ModelPart, 3> GMGStructuredSolverFactory3DType;
         class_<GMGStructuredSolverFactory3DType, GMGStructuredSolverFactory3DType::Pointer, bases<MultilevelSolverFactoryType>, boost::noncopyable >
         ( "GMGStructuredSolverFactory3D", init<ParameterListType&>())
         .def("SetModelPart", &GMGStructuredSolverFactory3DType::SetModelPart)
         .def("SetRestrictionOperator", &GMGStructuredSolverFactory3DType::SetRestrictionOperator)
         .def("SetTransferOperator", &GMGStructuredSolverFactory3DType::SetTransferOperator)
         .def("SetProlongationOperator", &GMGStructuredSolverFactory3DType::SetProlongationOperator)
-        .def(self_ns::str(self))
         ;
 
     }

@@ -63,16 +63,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
 // Project includes
-#include "includes/define.h"
-#include "includes/model_part.h"
-#include "linear_solvers/linear_solver.h"
-#include "custom_utilities/parameter_list.h"
-#include "custom_linear_solvers/multilevel_solver.h"
 #include "custom_utilities/structured_mesh_mg_projector.h"
 #include "custom_utilities/multilevel_solver_factory.h"
 #include "custom_utilities/gmg_utils.h"
 
-#define DEBUG_MULTILEVEL_SOLVER_FACTORY
+// #define DEBUG_MULTILEVEL_SOLVER_FACTORY
 
 namespace Kratos
 {
@@ -99,8 +94,8 @@ namespace Kratos
 /**
  ** Solver factory for geometric multigrid (GMG). With GMG, it's important to not delete the row/column of Dirichlet BC.
  */
-template<class TSparseSpaceType, class TDenseSpaceType, std::size_t TDim>
-class GMGStructuredSolverFactory : public MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType, std::size_t TDim>
+class GMGStructuredSolverFactory : public MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType, TModelPartType>
 {
 public:
     ///@name Type Definitions
@@ -109,7 +104,7 @@ public:
     /// Pointer definition of GMGStructuredSolverFactory
     KRATOS_CLASS_POINTER_DEFINITION(GMGStructuredSolverFactory);
 
-    typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType> BaseType;
+    typedef MultilevelSolverFactory<TSparseSpaceType, TDenseSpaceType, TModelPartType> BaseType;
 
     typedef typename BaseType::MultilevelSolverType MultilevelSolverType;
 
@@ -119,13 +114,13 @@ public:
 
     typedef typename BaseType::ParameterListType ParameterListType;
 
-    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
+    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType, TModelPartType> LevelType;
 
     typedef StructuredMeshMGProjector<TSparseSpaceType, TDim> StructuredMeshMGProjectorType;
 
     typedef typename LevelType::Pointer LevelPointerType;
 
-    typedef GMGUtils<TSparseSpaceType, TDenseSpaceType, ModelPart> GMGUtilsType;
+    typedef GMGUtils<TSparseSpaceType, TDenseSpaceType, TModelPartType> GMGUtilsType;
 
     typedef typename BaseType::SizeType SizeType;
 
@@ -174,18 +169,18 @@ public:
     ///@name Operations
     ///@{
 
-    ModelPart::Pointer GetModelPart(const std::size_t& lvl)
+    typename TModelPartType::Pointer GetModelPart(const std::size_t lvl)
     {
         return mpModelParts[lvl];
     }
 
-    ModelPart::Pointer GetModelPart(const std::size_t& lvl) const
+    typename TModelPartType::Pointer GetModelPart(const std::size_t lvl) const
     {
         return mpModelParts[lvl];
     }
 
     /// Set the model_part at specific level
-    void SetModelPart(const std::size_t& lvl, ModelPart::Pointer pModelPart)
+    void SetModelPart(const std::size_t lvl, typename TModelPartType::Pointer pModelPart)
     {
         if (lvl < mpModelParts.size())
             mpModelParts[lvl] = pModelPart;
@@ -451,7 +446,7 @@ private:
     ///@name Member Variables
     ///@{
 
-    std::vector<ModelPart::Pointer> mpModelParts;
+    std::vector<typename TModelPartType::Pointer> mpModelParts;
     std::vector<typename StructuredMeshMGProjectorType::Pointer> mpProlongationType;
     std::vector<typename StructuredMeshMGProjectorType::Pointer> mpRestrictionType;
     std::vector<typename StructuredMeshMGProjectorType::Pointer> mpTransferType;

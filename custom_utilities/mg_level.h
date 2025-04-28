@@ -62,7 +62,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 // Project includes
 #include "includes/define.h"
-#include "includes/model_part.h"
 #include "linear_solvers/linear_solver.h"
 #include "custom_utilities/mg_projector.h"
 
@@ -92,7 +91,7 @@ namespace Kratos
 /**
  * Abstract class for a level in mutigrid hierarchy
  */
-template<class TSparseSpaceType, class TDenseSpaceType>
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
 class MGLevel
 {
 public:
@@ -116,7 +115,7 @@ public:
 
     typedef Reorderer<TSparseSpaceType, TDenseSpaceType> ReordererType;
 
-    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, ModelPart, ReordererType> LinearSolverType;
+    typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TModelPartType, ReordererType> LinearSolverType;
 
     typedef typename LinearSolverType::Pointer LinearSolverPointerType;
 
@@ -149,7 +148,6 @@ public:
     /// Destructor.
     virtual ~MGLevel()
     {}
-
 
     ///@}
     ///@name Operators
@@ -437,15 +435,15 @@ private:
 ///@{
 
 /// input stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::istream& operator >> (std::istream& IStream, MGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
+inline std::istream& operator >> (std::istream& IStream, MGLevel<TSparseSpaceType, TDenseSpaceType, TModelPartType>& rThis)
 {
     return IStream;
 }
 
 /// output stream function
-template<class TSparseSpaceType, class TDenseSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const MGLevel<TSparseSpaceType, TDenseSpaceType>& rThis)
+template<class TSparseSpaceType, class TDenseSpaceType, class TModelPartType>
+inline std::ostream& operator << (std::ostream& rOStream, const MGLevel<TSparseSpaceType, TDenseSpaceType, TModelPartType>& rThis)
 {
     rThis.PrintInfo(rOStream);
     rOStream << std::endl;

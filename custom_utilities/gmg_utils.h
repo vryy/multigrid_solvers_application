@@ -137,9 +137,7 @@ public:
 
 //    typedef boost::shared_ptr<IndexVectorType> IndexVectorPointerType;
 
-    typedef MGLevel<TSparseSpaceType, TDenseSpaceType> LevelType;
-
-    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType> MatrixBasedLevelType;
+    typedef MatrixBasedMGLevel<TSparseSpaceType, TDenseSpaceType, TModelPartType> MatrixBasedLevelType;
 
     typedef LinearSolver<TSparseSpaceType, TDenseSpaceType, TModelPartType> LinearSolverType;
 
