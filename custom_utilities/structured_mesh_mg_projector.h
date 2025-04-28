@@ -328,7 +328,6 @@ private:
 
 
     ///@}
-
 };
 
 ///@}
@@ -349,4 +348,3 @@ private:
 #undef CHECK_SIZE
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_STRUCTURED_MESH_BASED_MG_PROJECTOR_H_INCLUDED  defined
-

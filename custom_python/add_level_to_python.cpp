@@ -241,13 +241,11 @@ void MultigridSolversApp_AddLevelToPython()
     typedef MGNullProjector<SparseSpaceType> MGNullProjectorType;
     class_<MGNullProjectorType, MGNullProjectorType::Pointer, bases<MGProjectorType>, boost::noncopyable>
     ("MGNullProjector", init<>())
-    .def(self_ns::str(self))
     ;
 
     typedef MGTransposeProjector<SparseSpaceType> MGTransposeProjectorType;
     class_<MGTransposeProjectorType, MGTransposeProjectorType::Pointer, bases<MGProjectorType>, boost::noncopyable>
     ("MGTransposeProjector", init<typename MGProjectorType::Pointer>())
-    .def(self_ns::str(self))
     ;
 
     typedef IndexBasedMGProjector<SparseSpaceType> IndexBasedMGProjectorType;
@@ -255,7 +253,6 @@ void MultigridSolversApp_AddLevelToPython()
     ("IndexBasedMGProjector", init<const std::size_t&, const std::size_t&>())
     .def("SetStride", &IndexBasedMGProjectorType::SetStride)
     .def("AssembleOperator", &MGProjector_AssembleOperator<IndexBasedMGProjectorType>)
-    .def(self_ns::str(self))
     ;
 
     typedef MatrixBasedMGProjector<SparseSpaceType> MatrixBasedMGProjectorType;
@@ -265,7 +262,6 @@ void MultigridSolversApp_AddLevelToPython()
     .def("SetOperator", &MatrixBasedMGProjectorType::SetOperator)
     .def("AssembleOperator", &MGProjector_AssembleOperator<MatrixBasedMGProjectorType>)
     .def("AssembleOperator", &MGProjector_AssembleOperatorByBlock<MatrixBasedMGProjectorType>)
-    .def(self_ns::str(self))
     ;
 
     typedef MeshBasedMGProjector<SparseSpaceType> MeshBasedMGProjectorType;
@@ -274,7 +270,6 @@ void MultigridSolversApp_AddLevelToPython()
     .def("SetBlockSize", &MeshBasedMGProjectorType::SetBlockSize)
     .def("SetCoarseModelPart", &MeshBasedMGProjectorType::SetCoarseModelPart)
     .def("SetFineModelPart", &MeshBasedMGProjectorType::SetFineModelPart)
-    .def(self_ns::str(self))
     ;
 
     MultigridSolversApp_AddStructuredMeshMGProjectorToPython<SparseSpaceType, 2>();

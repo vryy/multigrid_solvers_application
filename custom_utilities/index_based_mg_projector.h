@@ -124,7 +124,7 @@ public:
     {}
 
     /// Destructor.
-    virtual ~IndexBasedMGProjector()
+    ~IndexBasedMGProjector() override
     {}
 
     /// Copy constructor
@@ -133,7 +133,6 @@ public:
     , m_nrows(rOther.m_nrows), m_ncols(rOther.m_ncols)
     , m_stride(rOther.m_stride)
     {}
-
 
     ///@}
     ///@name Operators
@@ -150,7 +149,7 @@ public:
     ///@{
 
     /// Initialize the operator
-    virtual void Initialize()
+    void Initialize() override
     {
         m_row_indices.resize(m_nrows);
         m_row_values.resize(m_nrows);
@@ -198,7 +197,7 @@ public:
     }
 
     /// Apply the projection, rX: input, rY: output
-    virtual int Apply(VectorType& rX, VectorType& rY) const
+    int Apply(VectorType& rX, VectorType& rY) const override
     {
         int err = BaseType::ConsistencyCheck(rX, rY);
         if(err != 0) return err;
@@ -219,7 +218,7 @@ public:
 
     /// Apply the transpose of the projection, rX: input, rY: output
     /// It is noted that the GetBaseSize() and GetProjectedSize() is only applied for Apply operation. For ApplyTranspose it is reversed.
-    virtual int ApplyTranspose(VectorType& rX, VectorType& rY) const
+    int ApplyTranspose(VectorType& rX, VectorType& rY) const override
     {
         int err = BaseType::ConsistencyCheck(rY, rX);
         if(err != 0) return err;
@@ -248,13 +247,13 @@ public:
     ///@{
 
     /// Get the size of the base space
-    virtual SizeType GetBaseSize() const
+    SizeType GetBaseSize() const override
     {
         return m_ncols*m_stride;
     }
 
     /// Get the size of the projected space
-    virtual SizeType GetProjectedSize() const
+    SizeType GetProjectedSize() const override
     {
         return m_nrows*m_stride;
     }
@@ -264,7 +263,7 @@ public:
     ///@{
 
     /// Turn back information as a string.
-    virtual std::string Info() const
+    std::string Info() const override
     {
         std::stringstream ss;
         ss << "IndexBasedMGProjector(" << m_nrows << ", " << m_ncols << ")";
@@ -272,16 +271,15 @@ public:
     }
 
     /// Print information about this object.
-    virtual void PrintInfo(std::ostream& rOStream) const
+    void PrintInfo(std::ostream& rOStream) const override
     {
         rOStream << Info();
     }
 
     /// Print object's data.
-    virtual void PrintData(std::ostream& rOStream) const
+    void PrintData(std::ostream& rOStream) const override
     {
     }
-
 
     ///@}
     ///@name Friends
@@ -390,27 +388,8 @@ private:
 ///@{
 
 
-/// input stream function
-template<class TSpaceType>
-inline std::istream& operator >> (std::istream& IStream, IndexBasedMGProjector<TSpaceType>& rThis)
-{
-    return IStream;
-}
-
-/// output stream function
-template<class TSpaceType>
-inline std::ostream& operator << (std::ostream& rOStream, const IndexBasedMGProjector<TSpaceType>& rThis)
-{
-    rThis.PrintInfo(rOStream);
-    rOStream << std::endl;
-    rThis.PrintData(rOStream);
-
-    return rOStream;
-}
 ///@}
-
 
 } // namespace Kratos.
 
 #endif // KRATOS_MULTIGRID_SOLVERS_APP_INDEX_BASED_MG_PROJECTOR_H_INCLUDED  defined
-
