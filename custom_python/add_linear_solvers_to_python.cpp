@@ -77,10 +77,12 @@ namespace Python
         typedef UblasSpace<double, CompressedMatrix, Vector> SparseSpaceType;
         typedef UblasSpace<double, Matrix, Vector> LocalSpaceType;
 
-        typedef LinearSolver<SparseSpaceType, LocalSpaceType, ModelPart> LinearSolverType;
-        typedef DirectSolver<SparseSpaceType, LocalSpaceType, ModelPart> DirectSolverType;
-        typedef IterativeSolver<SparseSpaceType, LocalSpaceType, ModelPart> IterativeSolverType;
+        typedef Reorderer<SparseSpaceType, LocalSpaceType> ReordererType;
+
+        typedef LinearSolver<SparseSpaceType, LocalSpaceType, ModelPart, ReordererType> LinearSolverType;
+        typedef DirectSolver<SparseSpaceType, LocalSpaceType, ModelPart, ReordererType> DirectSolverType;
         typedef Preconditioner<SparseSpaceType, LocalSpaceType, ModelPart> PreconditionerType;
+        typedef IterativeSolver<SparseSpaceType, LocalSpaceType, ModelPart, PreconditionerType, ReordererType> IterativeSolverType;
 
         using namespace boost::python;
 
@@ -101,7 +103,7 @@ namespace Python
         //linear solvers
         //***************************************************************************
 
-        typedef GaussSeidelIterativeSolver<SparseSpaceType, LocalSpaceType> GaussSeidelIterativeSolverType;
+        typedef GaussSeidelIterativeSolver<SparseSpaceType, LocalSpaceType, ReordererType> GaussSeidelIterativeSolverType;
         class_<GaussSeidelIterativeSolverType, GaussSeidelIterativeSolverType::Pointer, bases<LinearSolverType> >( "GaussSeidelIterativeSolver")
         .def(init<>())
         .def(init<unsigned int>())
@@ -109,14 +111,14 @@ namespace Python
         .def(self_ns::str(self))
         ;
 
-        typedef JacobiIterativeSolver<SparseSpaceType, LocalSpaceType> JacobiIterativeSolverType;
+        typedef JacobiIterativeSolver<SparseSpaceType, LocalSpaceType, ReordererType> JacobiIterativeSolverType;
         class_<JacobiIterativeSolverType, JacobiIterativeSolverType::Pointer, bases<LinearSolverType> >( "JacobiIterativeSolver")
         .def(init<>())
         .def(init<unsigned int, double>())
         .def(self_ns::str(self))
         ;
 
-        typedef VankaSmoother<SparseSpaceType, LocalSpaceType> VankaSmootherType;
+        typedef VankaSmoother<SparseSpaceType, LocalSpaceType, ReordererType> VankaSmootherType;
         class_<VankaSmootherType, VankaSmootherType::Pointer, bases<LinearSolverType> >
         ( "VankaSmoother", init<ModelPart::Pointer>())
         .def(init<ModelPart::Pointer, double>())
@@ -124,11 +126,13 @@ namespace Python
         ;
 
         /* multilevel solver */
-        typedef MultilevelSolver<SparseSpaceType, LocalSpaceType, ModelPart> MultilevelSolverType;
+        typedef MultilevelSolver<SparseSpaceType, LocalSpaceType, ModelPart, ReordererType> MultilevelSolverType;
         class_<MultilevelSolverType, MultilevelSolverType::Pointer, bases<LinearSolverType> >("MultilevelSolver", init<>())
-        .def(init<LinearSolverType::Pointer >())
-        .def(init<LinearSolverType::Pointer, std::string >())
-        .def(init<double, unsigned int, LinearSolverType::Pointer, std::string >())
+        .def(init<LinearSolverType::Pointer>())
+        .def(init<LinearSolverType::Pointer, std::string>())
+        .def(init<double, unsigned int, LinearSolverType::Pointer, std::string>())
+        .def("AdditionalPhysicalDataIsNeeded", &MultilevelSolverType::AdditionalPhysicalDataIsNeeded)
+        .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalData)
         .def("ProvideAdditionalData", &MultilevelSolverType::ProvideAdditionalDataForLevel)
         .def("AddPreSmoother", &MultilevelSolverType::AddPreSmoother)
         .def("SetNumPreSmooth", &MultilevelSolverType::SetNumPreSmooth)
