@@ -106,18 +106,21 @@ namespace Python
         .def(init<>())
         .def(init<unsigned int>())
         .def(init<unsigned int, std::string>())
+        .def(self_ns::str(self))
         ;
 
         typedef JacobiIterativeSolver<SparseSpaceType, LocalSpaceType> JacobiIterativeSolverType;
         class_<JacobiIterativeSolverType, JacobiIterativeSolverType::Pointer, bases<LinearSolverType> >( "JacobiIterativeSolver")
         .def(init<>())
         .def(init<unsigned int, double>())
+        .def(self_ns::str(self))
         ;
 
         typedef VankaSmoother<SparseSpaceType, LocalSpaceType> VankaSmootherType;
         class_<VankaSmootherType, VankaSmootherType::Pointer, bases<LinearSolverType> >
         ( "VankaSmoother", init<ModelPart::Pointer>())
         .def(init<ModelPart::Pointer, double>())
+        .def(self_ns::str(self))
         ;
 
         /* multilevel solver */
@@ -145,6 +148,7 @@ namespace Python
         .def("SetMaxCoarseSize", &MultilevelSolverType::SetMaxCoarseSize)
         .def("SetFactory", &MultilevelSolverType::SetFactory)
         .def("SetEchoLevel", &MultilevelSolverType::SetEchoLevel)
+        .def(self_ns::str(self))
         ;
 
         //****************************************************************************************************
@@ -154,6 +158,7 @@ namespace Python
         typedef MultilevelPreconditioner<SparseSpaceType, LocalSpaceType, ModelPart> MultilevelPreconditionerType;
         class_<MultilevelPreconditionerType, MultilevelPreconditionerType::Pointer, bases<PreconditionerType> >("MultilevelPreconditioner", init<MultilevelSolverType::Pointer>())
         .def("SetMultilevelSolver", &MultilevelPreconditionerType::SetMultilevelSolver)
+        .def(self_ns::str(self))
         ;
 
         //***************************************************************************
